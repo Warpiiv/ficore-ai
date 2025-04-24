@@ -2,15 +2,15 @@ from flask import Flask, render_template, request, redirect, url_for
 import os
 import pandas as pd
 import smtplib
-import numpy as np
 import time
 import re
+import json
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-from google.oauth2.credentials import Credentials
+from google.oauth2 import service_account
 from googleapiclient.discovery import build
-from google_auth_oauthlib.flow import InstalledAppFlow
-from google.auth.transport.requests import Request
+from google.oauth2.transport.requests import Request
+from datetime import datetime
 from dotenv import load_dotenv
 
 # Load environment variables at the start
@@ -33,25 +33,27 @@ FEEDBACK_FORM_URL = 'https://forms.gle/ficoreai-feedback'
 # --- Helper Functions ---
 
 def authenticate_google_sheets():
-    """Authenticate with Google Sheets API using OAuth credentials."""
-    creds = None
-    if os.path.exists('token.json'):
-        creds = Credentials.from_authorized_user_file('token.json', SCOPES)
-    if not creds or not creds.valid:
-        if creds and creds.expired and creds.refresh_token:
+    """Authenticate with Google Sheets API using Service Account credentials from environment variable."""
+    creds_json = os.environ.get('GOOGLE_CREDENTIALS_JSON')
+    if not creds_json:
+        raise Exception("GOOGLE_CREDENTIALS_JSON environment variable not set on Render.")
+    try:
+        creds_info = json.loads(creds_json)
+        creds = service_account.Credentials.from_service_account_info(creds_info, scopes=SCOPES)
+        if not creds.valid:
             creds.refresh(Request())
-        else:
-            flow = InstalledAppFlow.from_client_secrets_file('client_secret.json', SCOPES)
-            creds = flow.run_local_server(port=0)
-        with open('token.json', 'w') as token:
-            token.write(creds.to_json())
-    return creds
+        return build('sheets', 'v4', credentials=creds)
+    except json.JSONDecodeError as e:
+        raise Exception(f"Error decoding GOOGLE_CREDENTIALS_JSON: {e}")
+    except Exception as e:
+        raise Exception(f"Error authenticating with Google Sheets: {e}")
 
 def fetch_data_from_sheet():
     """Fetch data from Sheet1 in the Google Sheet."""
     try:
-        creds = authenticate_google_sheets()
-        service = build('sheets', 'v4', credentials=creds)
+        service = authenticate_google_sheets()
+        if not service:
+            raise Exception("Google Sheets authentication failed.")
         sheet = service.spreadsheets()
         result = sheet.values().get(spreadsheetId=SPREADSHEET_ID, range=DATA_RANGE_NAME).execute()
         values = result.get('values', [])
@@ -61,15 +63,27 @@ def fetch_data_from_sheet():
     except Exception as e:
         raise Exception(f"Failed to fetch data from Google Sheet: {str(e)}")
 
-def send_email(to_email, first_name, last_name, rank, timestamp, health_score, score_description, server):
+def send_email(to_email, first_name, last_name, rank, timestamp, health_score, score_description):
     """Send an email with the Financial Health Score and advice to the user."""
     max_retries = 3
     retry_delay = 5
     full_name = f"{first_name} {last_name}".strip()
+
+    # Initialize SMTP server
+    sender_email = os.environ.get('SENDER_EMAIL')
+    sender_password = os.environ.get('SENDER_PASSWORD')
+    if not sender_email or not sender_password:
+        raise Exception("SENDER_EMAIL or SENDER_PASSWORD environment variables not set.")
+
     for attempt in range(max_retries):
         try:
+            # Connect to Gmail's SMTP server
+            server = smtplib.SMTP('smtp.gmail.com', 587)
+            server.starttls()
+            server.login(sender_email, sender_password)
+
             msg = MIMEMultipart()
-            msg['From'] = server.user
+            msg['From'] = sender_email
             msg['To'] = to_email
             msg['Subject'] = f"Ficore AI: Your Financial Health Score, {full_name}"
             html = (
@@ -102,12 +116,13 @@ def send_email(to_email, first_name, last_name, rank, timestamp, health_score, s
                 '            <a href="https://forms.gle/ficoreai-feedback" style="background-color: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block; margin-right: 10px;">Help us improve! Share your feedback (takes 1 min)</a>\n'
                 '            <a href="https://calendly.com/ficoreai" style="background-color: #28a745; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block;">Book Consultation</a>\n'
                 '        </div>\n'
-                '        <p>Best regards,<br>Hassan<br>Ficore AI - Empowering African Financial Growth<br>Email: {server.user} | Website: ficore.com.ng (coming soon)</p>\n'
+                f'        <p>Best regards,<br>Hassan<br>Ficore AI - Empowering African Financial Growth<br>Email: {sender_email} | Website: ficore.com.ng (coming soon)</p>\n'
                 '    </body>\n'
                 '</html>'
             )
             msg.attach(MIMEText(html, 'html'))
             server.send_message(msg)
+            server.quit()
             time.sleep(1)
             break
         except Exception as e:
@@ -161,8 +176,9 @@ def calculate_health_score(df):
 def create_results_sheet():
     """Create the FicoreAIResults sheet if it doesn't exist and set up headers."""
     try:
-        creds = authenticate_google_sheets()
-        service = build('sheets', 'v4', credentials=creds)
+        service = authenticate_google_sheets()
+        if not service:
+            raise Exception("Google Sheets authentication failed.")
         spreadsheet = service.spreadsheets()
         sheets = spreadsheet.get(spreadsheetId=SPREADSHEET_ID).execute().get('sheets', [])
         sheet_names = [sheet['properties']['title'] for sheet in sheets]
@@ -178,8 +194,9 @@ def create_results_sheet():
 def write_results_to_sheet(df):
     """Write Health Scores and Ranks to the FicoreAIResults sheet."""
     try:
-        creds = authenticate_google_sheets()
-        service = build('sheets', 'v4', credentials=creds)
+        service = authenticate_google_sheets()
+        if not service:
+            raise Exception("Google Sheets authentication failed.")
         spreadsheet = service.spreadsheets()
         clear_range = f'{RESULTS_SHEET_NAME}!A2:C'
         spreadsheet.values().clear(spreadsheetId=SPREADSHEET_ID, range=clear_range).execute()
@@ -197,8 +214,9 @@ def write_results_to_sheet(df):
 def append_to_sheet(data):
     """Append form submission data to Sheet1 and apply formatting."""
     try:
-        creds = authenticate_google_sheets()
-        service = build('sheets', 'v4', credentials=creds)
+        service = authenticate_google_sheets()
+        if not service:
+            raise Exception("Google Sheets authentication failed.")
         spreadsheet = service.spreadsheets()
         range_name = 'Sheet1!A:K'
         # Append the data
@@ -247,7 +265,7 @@ def append_to_sheet(data):
                         "startRowIndex": new_row_index,
                         "endRowIndex": new_row_index + 1,
                         "startColumnIndex": 2,  # Column C (IncomeRevenue)
-                        "endColumnIndex": 5     # Column F (DebtsLoans)
+                        "endColumnIndex": 5      # Column F (DebtsLoans)
                     },
                     "cell": {
                         "userEnteredFormat": {
@@ -291,7 +309,7 @@ def append_to_sheet(data):
                         "startRowIndex": new_row_index,
                         "endRowIndex": new_row_index + 1,
                         "startColumnIndex": 0,  # Column A (Timestamp)
-                        "endColumnIndex": 2,    # Column B (Business Name)
+                        "endIndex": 2      # Column B (Business Name)
                     },
                     "cell": {
                         "userEnteredFormat": {
@@ -308,7 +326,7 @@ def append_to_sheet(data):
                         "startRowIndex": new_row_index,
                         "endRowIndex": new_row_index + 1,
                         "startColumnIndex": 6,  # Column G (AutoEmail)
-                        "endColumnIndex": 11    # Column K (EntityType)
+                        "endColumnIndex": 11     # Column K (PhoneNumber)
                     },
                     "cell": {
                         "userEnteredFormat": {
@@ -319,95 +337,10 @@ def append_to_sheet(data):
                 }
             }
         ]
-
-        # Execute the formatting requests
-        body = {"requests": requests}
-        spreadsheet.batchUpdate(spreadsheetId=SPREADSHEET_ID, body=body).execute()
+        # Apply formatting
+        spreadsheet.batchUpdate(spreadsheetId=SPREADSHEET_ID, body={'requests': requests}).execute()
     except Exception as e:
-        raise Exception(f"Failed to append data to Google Sheet or apply formatting: {str(e)}")
-
-def process_financial_data():
-    """Process financial data: calculate Health Scores, rank users, send emails, and update results sheet."""
-    try:
-        create_results_sheet()
-        values = fetch_data_from_sheet()
-        if not values:
-            raise Exception("No data found in Sheet1 to process.")
-        headers = values[0]
-        data = values[1:]
-        max_cols = len(headers)
-        data = [row + [''] * (max_cols - len(row)) for row in data]
-        df = pd.DataFrame(data, columns=headers)
-
-        # Validate required columns
-        required_columns = ['Timestamp', 'Business Name', 'IncomeRevenue', 'ExpensesCosts', 'DebtsLoans', 'DebtInterestRate', 'AutoEmail', 'EmailTyped', 'First Name', 'Last Name', 'Are you an Individual or SME?']
-        if 'First Name' not in df.columns:
-            df['First Name'] = ''
-        if 'Last Name' not in df.columns:
-            df['Last Name'] = ''
-        if 'Are you an Individual or SME?' not in df.columns:
-            df['Are you an Individual or SME?'] = 'Unknown'
-        if 'Business Name' not in df.columns:
-            df['Business Name'] = df['First Name'] + ' ' + df['Last Name']
-        df['Name'] = df['First Name'] + ' ' + df['Last Name']
-        df['Name'] = df['Name'].str.strip()
-        df['Name'] = df['Name'].replace('', 'Unknown User')
-        if not all(col in df.columns for col in required_columns):
-            missing = set(required_columns) - set(df.columns)
-            raise Exception(f"Missing required columns in Sheet1: {', '.join(missing)}")
-
-        # Clean and transform data
-        df = df.rename(columns={
-            'DebtsLoans': 'DebtLoan',
-            'EmailTyped': 'Email',
-            'Are you an Individual or SME?': 'EntityType'
-        })
-        df['ID'] = range(1, len(df) + 1)
-        numeric_cols = ['IncomeRevenue', 'ExpensesCosts', 'DebtLoan', 'DebtInterestRate']
-        for col in numeric_cols:
-            df[col] = pd.to_numeric(df[col].str.replace(',', ''), errors='coerce').fillna(0)
-        df['Email'] = df['Email'].replace('', np.nan)
-        df['Email'] = df['Email'].fillna(df['AutoEmail'])
-        df['Email'] = df['Email'].fillna('')
-        df.to_csv('financials_df.csv', index=False)
-
-        # Calculate Health Scores and rank
-        df = calculate_health_score(df)
-        df_sorted = df.sort_values('HealthScore', ascending=False)
-        df_sorted['Rank'] = range(1, len(df_sorted) + 1)
-        df.to_csv('financials_with_healthscore.csv', index=False)
-
-        # Send emails
-        sender_email = os.getenv('SENDER_EMAIL')
-        sender_password = os.getenv('SENDER_PASSWORD')
-        if not sender_email or not sender_password:
-            raise Exception("Missing SENDER_EMAIL or SENDER_PASSWORD in .env file. Please add them to your .env file and restart the app.")
-        emails_sent = 0
-        server = smtplib.SMTP_SSL('smtp.gmail.com', 465)
-        try:
-            server.login(sender_email, sender_password)
-            for index, row in df_sorted.iterrows():
-                email = row['Email']
-                if pd.isna(email) or (isinstance(email, str) and email.strip() == ''):
-                    continue
-                send_email(
-                    to_email=email,
-                    first_name=row['First Name'],
-                    last_name=row['Last Name'],
-                    rank=row['Rank'],
-                    timestamp=row['Timestamp'],
-                    health_score=row['HealthScore'],
-                    score_description=row['ScoreDescription'],
-                    server=server
-                )
-                emails_sent += 1
-        finally:
-            server.quit()
-
-        # Write results to sheet
-        write_results_to_sheet(df_sorted[['Email', 'HealthScore', 'Rank']].copy())
-    except Exception as e:
-        raise Exception(f"Pipeline error: {str(e)}")
+        raise Exception(f"Failed to append data to Google Sheet: {str(e)}")
 
 # --- Flask Routes ---
 
@@ -418,71 +351,80 @@ def index():
 
 @app.route('/submit', methods=['POST'])
 def submit():
-    """Handle form submission: append data to Sheet1, process financial data, and show success/error page."""
+    """Handle form submission, calculate score, and send email."""
     try:
-        data = request.form.to_dict()
-        
-        # Validate required form fields
-        required_fields = ['business_name', 'income_revenue', 'expenses_costs', 'debts_loans', 
-                         'debt_interest_rate', 'email_typed', 'first_name', 'last_name', 'entity_type']
-        missing_fields = [field for field in required_fields if not data.get(field)]
-        if missing_fields:
-            raise Exception(f"Please fill in all required fields: {', '.join(missing_fields)}")
+        # Get form data
+        timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        business_name = request.form.get('business_name', '').strip()
+        income_revenue = float(request.form.get('income_revenue', 0))
+        expenses_costs = float(request.form.get('expenses_costs', 0))
+        debt_loan = float(request.form.get('debt_loan', 0))
+        debt_interest_rate = float(request.form.get('debt_interest_rate', 0))
+        auto_email = request.form.get('auto_email', '').strip()
+        first_name = request.form.get('first_name', '').strip()
+        last_name = request.form.get('last_name', '').strip()
+        email = request.form.get('email', '').strip()
+        phone_number = request.form.get('phone_number', '').strip()
 
-        # Validate email format
-        email = data['email_typed']
-        if not re.match(r"[^@]+@[^@]+\.[^@]+", email):
-            raise Exception("Please enter a valid email address.")
-
-        # Validate numeric fields
-        numeric_fields = ['income_revenue', 'expenses_costs', 'debts_loans', 'debt_interest_rate']
-        for field in numeric_fields:
-            try:
-                float(data[field])
-            except ValueError:
-                raise Exception(f"Please enter a valid number for {field.replace('_', ' ').title()}.")
+        # Validate email
+        email_pattern = r'^[\w\.-]+@[\w\.-]+\.\w+$'
+        if not re.match(email_pattern, email):
+            return render_template('error.html', error_message="Invalid email address.")
 
         # Prepare data for Google Sheet
-        timestamp = pd.Timestamp.now().strftime('%Y-%m-%d %H:%M:%S')
-        sheet_data = [
-            timestamp,
-            data['business_name'],
-            data['income_revenue'],
-            data['expenses_costs'],
-            data['debts_loans'],
-            data['debt_interest_rate'],
-            data.get('auto_email', ''),
-            data['email_typed'],
-            data['first_name'],
-            data['last_name'],
-            data['entity_type']
+        data = [
+            timestamp, business_name, income_revenue, expenses_costs, debt_loan,
+            debt_interest_rate, auto_email, first_name, last_name, email, phone_number
         ]
 
-        # Append to Google Sheet and process data
-        append_to_sheet(sheet_data)
-        process_financial_data()
-        return render_template('success.html', data=data)
+        # Append data to Sheet1
+        append_to_sheet(data)
+
+        # Fetch all data from Sheet1
+        sheet_data = fetch_data_from_sheet()
+        if not sheet_data:
+            return render_template('error.html', error_message="No data found in Google Sheet.")
+
+        # Convert to DataFrame
+        headers = sheet_data[0]
+        rows = sheet_data[1:]
+        df = pd.DataFrame(rows, columns=headers)
+
+        # Convert numeric columns to float
+        numeric_cols = ['IncomeRevenue', 'ExpensesCosts', 'DebtLoan', 'DebtInterestRate']
+        for col in numeric_cols:
+            df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0)
+
+        # Calculate Health Score
+        df = calculate_health_score(df)
+
+        # Sort by HealthScore (descending) and assign ranks
+        df = df.sort_values(by='HealthScore', ascending=False)
+        df['Rank'] = range(1, len(df) + 1)
+
+        # Get the current submission's details
+        current_row = df[df['Email'] == email].iloc[-1]  # Latest submission
+        health_score = current_row['HealthScore']
+        rank = current_row['Rank']
+        score_description = current_row['ScoreDescription']
+
+        # Create or update the FicoreAIResults sheet
+        create_results_sheet()
+        write_results_to_sheet(df)
+
+        # Send email if auto_email is 'Yes'
+        if auto_email.lower() == 'yes':
+            send_email(email, first_name, last_name, rank, timestamp, health_score, score_description)
+
+        # Render success page
+        return render_template('success.html', first_name=first_name, health_score=health_score,
+                             rank=rank, score_description=score_description)
 
     except Exception as e:
-        # Categorize and simplify error messages for users
-        error_message = str(e)
-        if "Missing required columns" in error_message:
-            user_message = "There was an issue with the Google Sheet configuration. Please contact support."
-        elif "Failed to append data" in error_message:
-            user_message = "We couldn’t save your submission due to a Google Sheets error. Please try again later."
-        elif "Failed to send email" in error_message:
-            user_message = "Your submission was saved, but we couldn’t send the confirmation email. Please check your inbox later."
-        elif "Missing SENDER_EMAIL or SENDER_PASSWORD" in error_message:
-            user_message = "Server configuration error. Please contact support."
-        elif "Please fill in all required fields" in error_message:
-            user_message = error_message
-        elif "Please enter a valid email address" in error_message:
-            user_message = error_message
-        elif "Please enter a valid number" in error_message:
-            user_message = error_message
-        else:
-            user_message = "An unexpected error occurred. Please try again or contact support."
-        return render_template('error.html', error=user_message)
+        error_message = f"An error occurred: {str(e)}"
+        return render_template('error.html', error_message=error_message)
 
-if __name__ == '__main__':
-    app.run(debug=True, port=5001)
+# Run the app
+if __name__ == '__ individuo__':
+    port = int(os.environ.get('PORT', 5001))
+    app.run(host='0.0.0.0', port=port, debug=False)
