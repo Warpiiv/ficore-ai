@@ -1,0 +1,40 @@
+# Environment files
+.env
+All files.env
+
+# Google Sheets API credentials
+token.json
+client_secret.json
+
+# Generated files
+*.csv
+__pycache__/
+*.pyc
+
+# System and user directories
+AppData/
+Contacts/
+Documents/
+Downloads/
+Favorites/
+IntelGraphicsProfiles/
+Links/
+Music/
+OneDrive/
+Saved Games/
+Searches/
+Videos/
+
+# System files
+NTUSER.DAT*
+ntuser.dat*
+ntuser.ini
+
+# Jupyter Notebook files
+.ipynb_checkpoints/
+*.ipynb
+
+# Python/Jupyter-related
+.ipython/
+.jupyter/
+.python_history

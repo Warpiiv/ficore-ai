@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ficore AI - Financial Health Score</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+        }
+        form {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        label {
+            display: block;
+            margin: 10px 0 5px;
+            font-weight: bold;
+        }
+        input[type="text"], input[type="email"], input[type="number"], select {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        input[type="submit"] {
+            background-color: #28a745;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            width: 100%;
+        }
+        input[type="submit"]:hover {
+            background-color: #218838;
+        }
+    </style>
+</head>
+<body>
+    <h1>Ficore AI - Calculate Your Financial Health Score</h1>
+    <form action="/submit" method="POST">
+        <label for="first_name">First Name *</label>
+        <input type="text" id="first_name" name="first_name" required>
+
+        <label for="last_name">Last Name *</label>
+        <input type="text" id="last_name" name="last_name" required>
+
+        <label for="business_name">Business Name (If no business, type your full name: FirstName LastName) *</label>
+        <input type="text" id="business_name" name="business_name" required>
+
+        <label for="entity_type">Are you an Individual or SME? *</label>
+        <select id="entity_type" name="entity_type" required>
+            <option value="Individual">Individual</option>
+            <option value="SME">SME</option>
+        </select>
+
+        <label for="income_revenue">Income/Revenue *</label>
+        <input type="number" id="income_revenue" name="income_revenue" required>
+
+        <label for="expenses_costs">Expenses/Costs *</label>
+        <input type="number" id="expenses_costs" name="expenses_costs" required>
+
+        <label for="debts_loans">Debts/Loans *</label>
+        <input type="number" id="debts_loans" name="debts_loans" required>
+
+        <label for="debt_interest_rate">Debt Interest Rate (%) *</label>
+        <input type="number" id="debt_interest_rate" name="debt_interest_rate" step="0.01" required>
+
+        <label for="auto_email">Auto-Generated Email (Optional)</label>
+        <input type="email" id="auto_email" name="auto_email">
+
+        <label for="email_typed">Your Email (Preferred) *</label>
+        <input type="email" id="email_typed" name="email_typed" required>
+
+        <input type="submit" value="Calculate My Financial Health Score">
+    </form>
+</body>
+</html>

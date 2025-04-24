@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Submission Successful - Ficore AI</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f4f4f4;
+            text-align: center;
+        }
+        h1 {
+            color: #28a745;
+        }
+        p {
+            color: #333;
+        }
+        a {
+            color: #007bff;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <h1>Submission Successful!</h1>
+    <p>Thank you, {{ data.first_name }} {{ data.last_name }}! Your financial data has been submitted successfully.</p>
+    <p>You’ll receive an email at <strong>{{ data.email_typed }}</strong> with your Financial Health Score and personalized advice shortly.</p>
+    <p><a href="/">Submit another entry</a></p>
+</body>
+</html>
