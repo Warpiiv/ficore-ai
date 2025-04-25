@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ficore AI Dashboard</title>
+    <!-- Include Plotly.js -->
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+        }
+        h2 {
+            color: #34495e;
+        }
+        .metrics {
+            display: flex;
+            justify-content: space-around;
+            margin: 20px 0;
+        }
+        .metric {
+            text-align: center;
+            background-color: #ecf0f1;
+            padding: 15px;
+            border-radius: 8px;
+            width: 30%;
+        }
+        .metric h3 {
+            margin: 0;
+            color: #7f8c8d;
+        }
+        .metric p {
+            font-size: 24px;
+            margin: 10px 0 0;
+            color: #2c3e50;
+        }
+        .chart {
+            margin: 20px 0;
+        }
+        .coming-soon {
+            background-color: #e8f4f8;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            color: #2980b9;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Ficore AI Financial Health Dashboard 📊</h1>
+
+        <!-- Financial Health Overview -->
+        <h2>Your Financial Health Overview</h2>
+        <div class="metrics">
+            <div class="metric">
+                <h3>Financial Health Score</h3>
+                <p>{{ health_score }}/100</p>
+            </div>
+            <div class="metric">
+                <h3>Rank</h3>
+                <p>{{ rank }} out of {{ total_users }}</p>
+            </div>
+            <div class="metric">
+                <h3>Advice</h3>
+                <p>{{ score_description }}</p>
+            </div>
+        </div>
+
+        <!-- Score Breakdown -->
+        <h2>Score Breakdown</h2>
+        <div class="chart">
+            {{ breakdown_plot | safe }}
+        </div>
+
+        <!-- Comparison to Others -->
+        <h2>How You Compare to Others</h2>
+        <p>You rank #{{ rank }} out of {{ total_users }} users.</p>
+        <div class="chart">
+            {{ comparison_plot | safe }}
+        </div>
+
+        <!-- Coming Soon -->
+        <h2>Coming Soon</h2>
+        <div class="coming-soon">
+            Downloadable PDF reports and deeper analytics will be available in the next update!
+        </div>
+    </div>
+</body>
+</html>
