@@ -436,10 +436,10 @@ def submit():
         user_type = request.form.get('user_type', '').strip()
         email = request.form.get('email', '').strip()
 
-        # Validate email (both auto_email and email)
+        # Validate primary email (email field)
         email_pattern = r'^[\w\.-]+@[\w\.-]+\.\w+$'
-        if not re.match(email_pattern, email) or not re.match(email_pattern, auto_email):
-            return render_template('error.html', error_message="Invalid email address.")
+        if not re.match(email_pattern, email):
+            return render_template('error.html', error_message="Invalid primary email address.")
 
         # Prepare data for Google Sheet
         data = [
