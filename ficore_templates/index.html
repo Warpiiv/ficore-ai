@@ -3,37 +3,237 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ficore AI</title>
+    <title>Ficore AI - Financial Health Score</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background-color: #f4f4f4; }
-        .container { max-width: 600px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
-        h1 { text-align: center; color: #2c3e50; }
-        form { display: flex; flex-direction: column; gap: 15px; }
-        input, select, button { padding: 10px; font-size: 16px; border: 1px solid #ddd; border-radius: 4px; }
-        button { background-color: #007bff; color: white; border: none; cursor: pointer; }
-        button:hover { background-color: #0056b3; }
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .container {
+            background: white;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 600px;
+            box-sizing: border-box;
+        }
+
+        h2 {
+            text-align: center;
+            color: #2E7D32; /* Finance-related green */
+            margin-bottom: 0.5rem; /* Reduced margin to bring subheading closer */
+            font-size: 1.8rem;
+        }
+
+        .subheading {
+            text-align: center;
+            font-style: italic;
+            color: #1976D2; /* Trustworthy blue */
+            font-size: 0.9rem;
+            margin-top: 0;
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.2rem;
+            font-weight: bold;
+            font-size: 1rem;
+            color: #333;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 1rem;
+            box-sizing: border-box;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 5px rgba(0, 123, 255, 0.3);
+        }
+
+        button {
+            width: 100%;
+            padding: 1rem;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #218838;
+        }
+
+        .note {
+            font-size: 0.9rem;
+            color: #666;
+            margin-bottom: 0.5rem;
+        }
+
+        /* Mobile-specific styles */
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+
+            .container {
+                padding: 1.5rem;
+                max-width: 100%;
+            }
+
+            h2 {
+                font-size: 1.5rem;
+            }
+
+            .subheading {
+                font-size: 0.8rem;
+                margin-bottom: 1rem;
+            }
+
+            label {
+                font-size: 0.9rem;
+            }
+
+            input, select {
+                font-size: 0.9rem;
+                padding: 0.6rem;
+            }
+
+            button {
+                font-size: 1rem;
+                padding: 0.8rem;
+            }
+
+            .note {
+                font-size: 0.8rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            h2 {
+                font-size: 1.3rem;
+            }
+
+            .subheading {
+                font-size: 0.75rem;
+                margin-bottom: 0.8rem;
+            }
+
+            label {
+                font-size: 0.85rem;
+            }
+
+            input, select {
+                font-size: 0.85rem;
+                padding: 0.5rem;
+            }
+
+            button {
+                font-size: 0.9rem;
+                padding: 0.7rem;
+            }
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Ficore AI Financial Health Check</h1>
+        <h2>Ficore AI Financial Health Score</h2>
+        <p class="subheading">Financial growth passport for Africa - democratizing finances for Africa’s SMEs and individuals</p>
         <form action="/submit" method="POST">
-            <input type="email" name="email" placeholder="Your Email" required>
-            <input type="text" name="business_name" placeholder="Business Name" required>
-            <input type="number" name="income_revenue" placeholder="Income/Revenue (₦)" required>
-            <input type="number" name="expenses_costs" placeholder="Expenses/Costs (₦)" required>
-            <input type="number" name="debt_loan" placeholder="Debt/Loan (₦)" required>
-            <input type="number" name="debt_interest_rate" placeholder="Debt Interest Rate (%)" required>
-            <input type="text" name="phone_number" placeholder="Phone Number" required>
-            <input type="text" name="first_name" placeholder="First Name" required>
-            <input type="text" name="last_name" placeholder="Last Name" required>
-            <select name="user_type" required>
-                <option value="" disabled selected>Select User Type</option>
-                <option value="SME">SME</option>
-                <option value="Individual">Individual</option>
-            </select>
+            <div class="form-group">
+                <label for="business_name">Business Name *</label>
+                <div class="note">If you don't have a business, enter your full name.</div>
+                <input type="text" id="business_name" name="business_name" required>
+            </div>
+
+            <div class="form-group">
+                <label for="income_revenue">Monthly Income/Revenue (₦) *</label>
+                <input type="text" id="income_revenue" name="income_revenue" required oninput="formatNumber(this)">
+            </div>
+
+            <div class="form-group">
+                <label for="expenses_costs">Monthly Expenses/Costs (₦) *</label>
+                <input type="text" id="expenses_costs" name="expenses_costs" required oninput="formatNumber(this)">
+            </div>
+
+            <div class="form-group">
+                <label for="debt_loan">Total Debt/Loan (₦) *</label>
+                <input type="text" id="debt_loan" name="debt_loan" required oninput="formatNumber(this)">
+            </div>
+
+            <div class="form-group">
+                <label for="debt_interest_rate">Debt Interest Rate (%) *</label>
+                <input type="text" id="debt_interest_rate" name="debt_interest_rate" required oninput="formatNumber(this)">
+            </div>
+
+            <div class="form-group">
+                <label for="auto_email">Your Email Address (for receiving your Health Score) *</label>
+                <input type="email" id="auto_email" name="auto_email" required>
+            </div>
+
+            <div class="form-group">
+                <label for="phone_number">Phone Number *</label>
+                <input type="text" id="phone_number" name="phone_number" required>
+            </div>
+
+            <div class="form-group">
+                <label for="first_name">First Name *</label>
+                <input type="text" id="first_name" name="first_name" required>
+            </div>
+
+            <div class="form-group">
+                <label for="last_name">Last Name *</label>
+                <input type="text" id="last_name" name="last_name" required>
+            </div>
+
+            <div class="form-group">
+                <label for="user_type">Are you an Individual or SME? *</label>
+                <div class="note">INDIVIDUAL or BUSINESS?</div>
+                <select id="user_type" name="user_type" required>
+                    <option value="" disabled selected>Select an option</option>
+                    <option value="Individual">Individual</option>
+                    <option value="SME">SME</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="email">Confirm Email Address *</label>
+                <input type="email" id="email" name="email" required>
+            </div>
+
             <button type="submit">Submit</button>
         </form>
     </div>
+
+    <script>
+        function formatNumber(input) {
+            let value = input.value.replace(/,/g, '');
+            if (!isNaN(value) && value !== '') {
+                input.value = parseFloat(value).toLocaleString('en-US');
+            }
+        }
+    </script>
 </body>
 </html>
