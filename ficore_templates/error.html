@@ -3,48 +3,86 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Error - Ficore AI</title>
+    <title>Ficore AI - Error</title>
     <style>
         body {
             font-family: Arial, sans-serif;
             background-color: #f4f4f4;
-            text-align: center;
-            padding: 50px;
-        }
-        .container {
-            background-color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
             padding: 20px;
-            border-radius: 5px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            box-sizing: border-box;
+        }
+
+        .container {
+            background: white;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            width: 100%;
             max-width: 600px;
-            margin: auto;
+            text-align: center;
+            box-sizing: border-box;
         }
-        h1 {
-            color: #d9534f;
+
+        h2 {
+            color: #d32f2f;
+            font-size: 1.8rem;
+            margin-bottom: 1rem;
         }
+
         p {
+            font-size: 1rem;
             color: #333;
+            margin-bottom: 1rem;
         }
+
         a {
-            display: inline-block;
-            margin-top: 20px;
-            padding: 10px 20px;
-            background-color: #007bff;
-            color: white;
+            color: #007bff;
             text-decoration: none;
-            border-radius: 5px;
         }
+
         a:hover {
-            background-color: #0056b3;
+            text-decoration: underline;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+
+            .container {
+                padding: 1.5rem;
+            }
+
+            h2 {
+                font-size: 1.5rem;
+            }
+
+            p {
+                font-size: 0.9rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            h2 {
+                font-size: 1.3rem;
+            }
+
+            p {
+                font-size: 0.85rem;
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Oops! Something Went Wrong</h1>
-        <p>{{ error }}</p>
-        <p>We encountered an unexpected issue while processing your request. Please try submitting the form again. If the problem continues, please reach out to our support team at <a href="mailto:Ficoreai@outlook.com">itzhassanu@gmail.com</a>.</p>
-        <a href="/">Go Back to Form</a>
+        <h2>Oops, Something Went Wrong</h2>
+        <p>{{ message }}</p>
+        <p>Need help? Contact us at <a href="mailto:Ficoreai@outlook.com">Ficoreai@outlook.com</a>.</p>
     </div>
 </body>
 </html>
