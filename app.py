@@ -12,7 +12,8 @@ from googleapiclient.discovery import build
 from datetime import datetime
 from dotenv import load_dotenv
 
-app = Flask(__name__)
+# Initialize Flask app with custom templates directory
+app = Flask(__name__, template_folder='ficore_templates')
 
 # Load environment variables
 load_dotenv()
