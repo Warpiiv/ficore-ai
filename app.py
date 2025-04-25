@@ -26,8 +26,8 @@ SPREADSHEET_ID = '13hbiMTMRBHo9MHjWwcugngY_aSiuxII67HCf03MiZ8I'
 DATA_RANGE_NAME = 'Sheet1!A1:L'
 RESULTS_SHEET_NAME = 'FicoreAIResults'
 RESULTS_HEADER = ['Email', 'FicoreAIScore', 'FicoreAIRank']
-FEEDBACK_FORM_URL = 'https://forms.gle/ficoreai-feedback'
-WAITLIST_FORM_URL = 'https://forms.gle/ficoreai-premium-waitlist'
+FEEDBACK_FORM_URL = 'https://forms.gle/NkiLicSykLyMnhJk7'
+WAITLIST_FORM_URL = 'https://forms.gle/3kXnJuDatTm8bT3x7'
 PREDETERMINED_HEADERS = [
     'Timestamp', 'BusinessName', 'IncomeRevenue', 'ExpensesCosts', 'DebtLoan',
     'DebtInterestRate', 'AutoEmail', 'PhoneNumber', 'FirstName', 'LastName', 'UserType', 'Email'
@@ -150,27 +150,41 @@ def send_email(recipient_email, user_name, health_score, score_description, rank
     if not sender_email or not sender_password:
         raise Exception("SENDER_EMAIL or SENDER_PASSWORD environment variable not set.")
 
-    subject = f"🔥 You're Top {int((rank/total_users)*100)}%! Your Ficore Score Report Awaits!"
-    body = f"""
-Dear {user_name},
+    # Determine gamified subject line
+    top_10_percent = (rank / total_users) <= 0.1
+    if top_10_percent:
+        subject = "🔥 You're Top 10%! Your Ficore Score Report Awaits!"
+    else:
+        subject = f"📊 Your Ficore Score Report is Ready, {user_name}!"
 
-We have calculated your Ficore AI Financial Health Score based on your recent submission.
+    # HTML email body with styled heading and subheading
+    html_body = f"""
+    <html>
+    <body style="font-family: Arial, sans-serif; color: #333;">
+        <h2 style="color: #2E7D32;">Ficore AI Financial Health Score</h2>
+        <p style="font-style: italic; color: #1976D2; font-size: 0.9rem; margin-top: -10px; margin-bottom: 20px;">
+            Financial growth passport for Africa
+        </p>
+        <p>Dear {user_name},</p>
+        <p>We have calculated your Ficore AI Financial Health Score based on your recent submission.</p>
+        <ul>
+            <li><strong>Score</strong>: {health_score}/100</li>
+            <li><strong>Advice</strong>: {score_description}</li>
+            <li><strong>Rank</strong>: #{int(rank)} out of {total_users} users</li>
+        </ul>
+        <p>Follow the advice above to improve your financial health. We’re here to support you every step of the way—take one small action today to grow stronger financially for your business, your goals, and your future!</p>
+        <p>Please provide feedback on your experience: <a href="{FEEDBACK_FORM_URL}">Feedback Form</a></p>
+        <p>Want Smart Insights? Join the waitlist for Ficore Premium: <a href="{WAITLIST_FORM_URL}">Join Waitlist</a></p>
+        <p>Best regards,<br>The Ficore AI Team</p>
+    </body>
+    </html>
+    """
 
-- **Score**: {health_score}/100
-- **Advice**: {score_description}
-- **Rank**: #{int(rank)} out of {total_users} users
-
-Please provide feedback on your experience: {FEEDBACK_FORM_URL}
-Want Smart Insights? Join the waitlist for Ficore Premium: {WAITLIST_FORM_URL}
-
-Best regards,
-The Ficore AI Team
-"""
     msg = MIMEMultipart()
     msg['From'] = sender_email
     msg['To'] = recipient_email
     msg['Subject'] = subject
-    msg.attach(MIMEText(body, 'plain'))
+    msg.attach(MIMEText(html_body, 'html'))
 
     for attempt in range(3):
         try:
@@ -198,16 +212,19 @@ def submit():
         # Extract form data
         timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         business_name = request.form.get('business_name')
-        income_revenue = float(request.form.get('income_revenue'))
-        expenses_costs = float(request.form.get('expenses_costs'))
-        debt_loan = float(request.form.get('debt_loan'))
-        debt_interest_rate = float(request.form.get('debt_interest_rate'))
-        auto_email = 'TRUE'
+        income_revenue = float(request.form.get('income_revenue').replace(',', ''))
+        expenses_costs = float(request.form.get('expenses_costs').replace(',', ''))
+        debt_loan = float(request.form.get('debt_loan').replace(',', ''))
+        debt_interest_rate = float(request.form.get('debt_interest_rate').replace(',', ''))
+        auto_email = request.form.get('auto_email')
         phone_number = request.form.get('phone_number')
         first_name = request.form.get('first_name')
         last_name = request.form.get('last_name')
         user_type = request.form.get('user_type')
         email = request.form.get('email')
+
+        if auto_email != email:
+            return "Error: Email addresses do not match.", 400
 
         # Prepare data for Google Sheet
         data = [
@@ -220,7 +237,7 @@ def submit():
         # Fetch updated data
         sheet_data = fetch_data_from_sheet()
         if not sheet_data:
-            return "Error: No data found in Google Sheet.", 500
+            return render_template('error.html', message="No data found in Google Sheet. Please try again later or contact Ficoreai@outlook.com for support."), 500
 
         # Convert to DataFrame
         headers = sheet_data[0]
@@ -242,7 +259,7 @@ def submit():
         # Filter for the current user
         user_df = all_users_df[all_users_df['Email'] == email]
         if user_df.empty:
-            return f"Error: No data found for user with email: {email}", 500
+            return render_template('error.html', message=f"No data found for user with email: {email}. Please contact Ficoreai@outlook.com for support."), 500
 
         # Extract user data
         user_row = user_df.iloc[0]
@@ -257,9 +274,11 @@ def submit():
 
         # Redirect to dashboard
         return redirect(url_for('dashboard', email=email))
+    except ValueError as e:
+        return render_template('error.html', message=f"Invalid input format: {str(e)}. Please ensure all numeric fields contain valid numbers. Contact Ficoreai@outlook.com for support."), 400
     except Exception as e:
         print(f"Error in form submission: {e}")
-        return f"Error processing your submission: {str(e)}", 500
+        return render_template('error.html', message=f"Error processing your submission: {str(e)}. We’re sorry for the inconvenience—please try again later or contact Ficoreai@outlook.com for support."), 500
 
 # Dashboard route
 @app.route('/dashboard')
@@ -271,7 +290,7 @@ def dashboard():
         # Fetch data from Google Sheets
         sheet_data = fetch_data_from_sheet()
         if not sheet_data:
-            return "Error: No data found in Google Sheet.", 500
+            return render_template('error.html', message="No data found in Google Sheet. Please try again later or contact Ficoreai@outlook.com for support."), 500
 
         # Convert to DataFrame
         headers = sheet_data[0]
@@ -293,7 +312,7 @@ def dashboard():
         # Filter for the current user
         user_df = all_users_df[all_users_df['Email'] == email]
         if user_df.empty:
-            return f"Error: No data found for user with email: {email}", 500
+            return render_template('error.html', message=f"No data found for user with email: {email}. Please contact Ficoreai@outlook.com for support."), 500
 
         # Extract user data
         user_row = user_df.iloc[0]
@@ -365,7 +384,7 @@ def dashboard():
         )
     except Exception as e:
         print(f"Error rendering dashboard: {e}")
-        return f"Error rendering dashboard: {str(e)}", 500
+        return render_template('error.html', message=f"Error rendering dashboard: {str(e)}. We’re sorry for the inconvenience—please try again later or contact Ficoreai@outlook.com for support."), 500
 
 if __name__ == "__main__":
     # For Render, bind to 0.0.0.0 and use the PORT environment variable
