@@ -1,6 +1,4 @@
 from flask import Flask, render_template, request, redirect, url_for
-import subprocess
-import time
 import os
 import pandas as pd
 import smtplib
@@ -11,6 +9,9 @@ from google.oauth2 import service_account
 from googleapiclient.discovery import build
 from datetime import datetime
 from dotenv import load_dotenv
+import plotly.express as px
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
 
 # Initialize Flask app with custom templates directory
 app = Flask(__name__, template_folder='ficore_templates')
@@ -178,24 +179,6 @@ The Ficore AI Team
     print(f"Failed to send email to {recipient_email} (primary email) after 3 attempts")
     return False
 
-# Ensure the Streamlit app is running
-streamlit_process = None
-
-def start_streamlit():
-    global streamlit_process
-    if streamlit_process is None:
-        # Start Streamlit in a subprocess
-        streamlit_process = subprocess.Popen(
-            ["streamlit", "run", "dashboard.py", "--server.port", "8501"],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE
-        )
-        # Wait for Streamlit to start
-        time.sleep(3)
-
-# Start Streamlit when the Flask app starts
-start_streamlit()
-
 # Homepage route
 @app.route('/')
 def home():
@@ -272,14 +255,104 @@ def submit():
 def dashboard():
     # Get the user's email from query parameters
     email = request.args.get('email', 'test@example.com')
-    # Pass the email to the Streamlit app via query parameters
-    streamlit_url = f"http://localhost:8501/?email={email}"
-    return render_template('dashboard.html', streamlit_url=streamlit_url)
+
+    # Fetch data from Google Sheets
+    sheet_data = fetch_data_from_sheet()
+    if not sheet_data:
+        return "Error: No data found in Google Sheet.", 500
+
+    # Convert to DataFrame
+    headers = sheet_data[0]
+    rows = sheet_data[1:]
+    all_users_df = pd.DataFrame(rows, columns=headers)
+
+    # Convert numeric columns to float
+    numeric_cols = ['IncomeRevenue', 'ExpensesCosts', 'DebtLoan', 'DebtInterestRate']
+    for col in numeric_cols:
+        all_users_df[col] = pd.to_numeric(all_users_df[col], errors='coerce').fillna(0)
+
+    # Calculate health scores for all users
+    all_users_df = calculate_health_score(all_users_df)
+
+    # Sort by HealthScore and assign ranks
+    all_users_df = all_users_df.sort_values(by='HealthScore', ascending=False)
+    all_users_df['Rank'] = range(1, len(all_users_df) + 1)
+
+    # Filter for the current user
+    user_df = all_users_df[all_users_df['Email'] == email]
+    if user_df.empty:
+        return f"Error: No data found for user with email: {email}", 500
+
+    # Extract user data
+    user_row = user_df.iloc[0]
+    health_score = user_row['HealthScore']
+    rank = user_row['Rank']
+    total_users = len(all_users_df)
+    score_description = user_row['ScoreDescription']
+    cash_flow_score = round(user_row['NormCashFlow'] * 100, 2)
+    debt_to_income_score = round(user_row['NormDebtToIncome'] * 100, 2)
+    debt_interest_score = round(user_row['NormDebtInterest'] * 100, 2)
+
+    # Create Plotly charts
+    # Score Breakdown Bar Chart
+    breakdown_data = {
+        "Component": ["Cash Flow", "Debt-to-Income Ratio", "Debt Interest Burden"],
+        "Score": [cash_flow_score, debt_to_income_score, debt_interest_score]
+    }
+    breakdown_df = pd.DataFrame(breakdown_data)
+    fig_breakdown = px.bar(
+        breakdown_df,
+        x="Score",
+        y="Component",
+        orientation='h',
+        title="Score Breakdown",
+        labels={"Score": "Score (out of 100)"},
+        color="Component",
+        color_discrete_sequence=px.colors.qualitative.Plotly
+    )
+    fig_breakdown.update_layout(showlegend=False)
+    breakdown_plot = fig_breakdown.to_html(full_html=False, include_plotlyjs=False)
+
+    # Comparison Line Chart
+    fig_comparison = go.Figure()
+    fig_comparison.add_trace(
+        go.Scatter(
+            x=list(range(1, len(all_users_df) + 1)),
+            y=all_users_df['HealthScore'],
+            mode='lines+markers',
+            name='All Users',
+            line=dict(color='blue')
+        )
+    )
+    fig_comparison.add_trace(
+        go.Scatter(
+            x=[int(rank)],
+            y=[health_score],
+            mode='markers',
+            name='Your Score',
+            marker=dict(color='red', size=12, symbol='star')
+        )
+    )
+    fig_comparison.update_layout(
+        title="How You Compare to Others",
+        xaxis_title="User Rank",
+        yaxis_title="Health Score",
+        showlegend=True
+    )
+    comparison_plot = fig_comparison.to_html(full_html=False, include_plotlyjs=False)
+
+    # Render the dashboard template
+    return render_template(
+        'dashboard.html',
+        health_score=health_score,
+        rank=int(rank),
+        total_users=total_users,
+        score_description=score_description,
+        breakdown_plot=breakdown_plot,
+        comparison_plot=comparison_plot
+    )
 
 if __name__ == "__main__":
-    try:
-        app.run(debug=True, port=5000)
-    finally:
-        # Clean up Streamlit process on shutdown
-        if streamlit_process:
-            streamlit_process.terminate()
+    # For Render, bind to 0.0.0.0 and use the PORT environment variable
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port, debug=False)
