@@ -9,7 +9,6 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
-from google.oauth2.transport.requests import Request
 from datetime import datetime
 from dotenv import load_dotenv
 
@@ -40,8 +39,6 @@ def authenticate_google_sheets():
     try:
         creds_info = json.loads(creds_json)
         creds = service_account.Credentials.from_service_account_info(creds_info, scopes=SCOPES)
-        if not creds.valid:
-            creds.refresh(Request())
         return build('sheets', 'v4', credentials=creds)
     except json.JSONDecodeError as e:
         raise Exception(f"Error decoding GOOGLE_CREDENTIALS_JSON: {e}")
@@ -63,8 +60,8 @@ def fetch_data_from_sheet():
     except Exception as e:
         raise Exception(f"Failed to fetch data from Google Sheet: {str(e)}")
 
-def send_email(to_email, first_name, last_name, rank, timestamp, health_score, score_description):
-    """Send an email with the Financial Health Score and advice to the user."""
+def send_email(to_email, first_name, last_name, rank, timestamp, health_score, score_description, cash_flow_ratio, debt_to_income_ratio, debt_interest_burden):
+    """Send an email with the Financial Health Score, breakdown, and advice to the user."""
     max_retries = 3
     retry_delay = 5
     full_name = f"{first_name} {last_name}".strip()
@@ -74,6 +71,26 @@ def send_email(to_email, first_name, last_name, rank, timestamp, health_score, s
     sender_password = os.environ.get('SENDER_PASSWORD')
     if not sender_email or not sender_password:
         raise Exception("SENDER_EMAIL or SENDER_PASSWORD environment variables not set.")
+
+    # Format the breakdown metrics as percentages
+    cash_flow_score = round(cash_flow_ratio * 100, 2)
+    debt_to_income_score = round((1 - debt_to_income_ratio) * 100, 2)
+    debt_interest_score = round((1 - debt_interest_burden) * 100, 2)
+
+    # Determine status for each metric
+    def get_status(score):
+        if score >= 75:
+            return "Excellent"
+        elif score >= 50:
+            return "Good"
+        elif score >= 25:
+            return "Needs Attention"
+        else:
+            return "Critical"
+
+    cash_flow_status = get_status(cash_flow_score)
+    debt_to_income_status = get_status(debt_to_income_score)
+    debt_interest_status = get_status(debt_interest_score)
 
     for attempt in range(max_retries):
         try:
@@ -94,7 +111,8 @@ def send_email(to_email, first_name, last_name, rank, timestamp, health_score, s
                 '        </div>\n'
                 '        <h2 style="color: #2c3e50; text-align: center;">Ficore AI Financial Health Score</h2>\n'
                 f'        <p>Hi {first_name},</p>\n'
-                '        <p>Here’s your Ficore AI Financial Health Score and advice to improve your financial health, based on your recent submission.</p>\n'
+                '        <p>We’re excited to share your Ficore AI Financial Health Score! This score reflects your financial strength based on three key factors: your cash flow, debt-to-income ratio, and debt interest burden. Let’s break it down for you.</p>\n'
+                '        <h3 style="color: #2c3e50;">Your Financial Health Overview</h3>\n'
                 '        <table style="border-collapse: collapse; width: 100%; max-width: 600px; margin: 20px 0;">\n'
                 '            <tr style="background-color: #2c3e50; color: white;">\n'
                 '                <th style="border: 1px solid #ddd; padding: 8px;">Rank</th>\n'
@@ -111,7 +129,14 @@ def send_email(to_email, first_name, last_name, rank, timestamp, health_score, s
                 f'                <td style="border: 1px solid #ddd; padding: 8px;">{score_description}</td>\n'
                 '            </tr>\n'
                 '        </table>\n'
-                f'        <p>{first_name}, take one step today to grow stronger financially — for your business, your goals, your future. We want you to grow, and the time is Now!</p>\n'
+                '        <h3 style="color: #2c3e50;">How We Calculated Your Score</h3>\n'
+                '        <p>Your Financial Health Score is a combination of three factors, each contributing equally to your overall score (out of 100). Here’s how you performed in each area:</p>\n'
+                '        <ul>\n'
+                f'            <li><strong>Cash Flow ({cash_flow_score}% - {cash_flow_status}):</strong> This measures how much money you have left after expenses. A higher percentage means you’re managing your expenses well relative to your income.</li>\n'
+                f'            <li><strong>Debt-to-Income Ratio ({debt_to_income_score}% - {debt_to_income_status}):</strong> This shows how much of your income goes toward debt. A higher percentage indicates you have less debt relative to your income, which is a good sign.</li>\n'
+                f'            <li><strong>Debt Interest Burden ({debt_interest_score}% - {debt_interest_status}):</strong> This reflects the impact of interest rates on your debt. A higher percentage means your debt interest rates are manageable.</li>\n'
+                '        </ul>\n'
+                f'        <p>{first_name}, your score of {health_score} is a great starting point! Follow the advice above to improve your financial health. We’re here to support you every step of the way—take one small action today to grow stronger financially for your business, your goals, and your future.</p>\n'
                 '        <div style="text-align: center; margin: 20px 0;">\n'
                 '            <a href="https://forms.gle/ficoreai-feedback" style="background-color: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block; margin-right: 10px;">Help us improve! Share your feedback (takes 1 min)</a>\n'
                 '            <a href="https://calendly.com/ficoreai" style="background-color: #28a745; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block;">Book Consultation</a>\n'
@@ -351,7 +376,7 @@ def index():
 
 @app.route('/submit', methods=['POST'])
 def submit():
-    """Handle form submission, calculate score, and send email."""
+    """Handle form submission, calculate score for the new user only, and send email to the new user."""
     try:
         # Get form data
         timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
@@ -380,41 +405,63 @@ def submit():
         # Append data to Sheet1
         append_to_sheet(data)
 
-        # Fetch all data from Sheet1
-        sheet_data = fetch_data_from_sheet()
-        if not sheet_data:
-            return render_template('error.html', error_message="No data found in Google Sheet.")
+        # Create a DataFrame for the new user to calculate their health score
+        headers = ['Timestamp', 'BusinessName', 'IncomeRevenue', 'ExpensesCosts', 'DebtLoan',
+                   'DebtInterestRate', 'AutoEmail', 'FirstName', 'LastName', 'Email', 'PhoneNumber']
+        new_user_df = pd.DataFrame([data], columns=headers)
 
-        # Convert to DataFrame
-        headers = sheet_data[0]
-        rows = sheet_data[1:]
-        df = pd.DataFrame(rows, columns=headers)
-
-        # Convert numeric columns to float
+        # Convert numeric columns to float for the new user
         numeric_cols = ['IncomeRevenue', 'ExpensesCosts', 'DebtLoan', 'DebtInterestRate']
         for col in numeric_cols:
-            df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0)
+            new_user_df[col] = pd.to_numeric(new_user_df[col], errors='coerce').fillna(0)
 
-        # Calculate Health Score
-        df = calculate_health_score(df)
+        # Calculate Health Score for the new user
+        new_user_df = calculate_health_score(new_user_df)
 
-        # Sort by HealthScore (descending) and assign ranks
-        df = df.sort_values(by='HealthScore', ascending=False)
-        df['Rank'] = range(1, len(df) + 1)
+        # Get the new user's health score and description
+        health_score = new_user_df['HealthScore'].iloc[0]
+        score_description = new_user_df['ScoreDescription'].iloc[0]
+        cash_flow_ratio = new_user_df['NormCashFlow'].iloc[0]  # Already clipped between 0 and 1
+        debt_to_income_ratio = new_user_df['DebtToIncomeRatio'].iloc[0]  # Raw ratio for calculation
+        debt_interest_burden = new_user_df['DebtInterestBurden'].iloc[0]  # Already clipped between 0 and 1
 
-        # Get the current submission's details
-        current_row = df[df['Email'] == email].iloc[-1]  # Latest submission
-        health_score = current_row['HealthScore']
-        rank = current_row['Rank']
-        score_description = current_row['ScoreDescription']
+        # Fetch all data from Sheet1 to determine the rank
+        sheet_data = fetch_data_from_sheet()
+        if not sheet_data:
+            # If no previous data, the new user is rank 1
+            rank = 1
+            all_users_df = new_user_df
+        else:
+            # Convert existing data to DataFrame
+            headers = sheet_data[0]
+            rows = sheet_data[1:]
+            all_users_df = pd.DataFrame(rows, columns=headers)
 
-        # Create or update the FicoreAIResults sheet
+            # Convert numeric columns to float for existing users
+            for col in numeric_cols:
+                all_users_df[col] = pd.to_numeric(all_users_df[col], errors='coerce').fillna(0)
+
+            # Calculate health scores for existing users (to determine rank)
+            all_users_df = calculate_health_score(all_users_df)
+
+            # Append the new user to the DataFrame
+            all_users_df = pd.concat([all_users_df, new_user_df], ignore_index=True)
+
+            # Sort by HealthScore (descending) and assign ranks
+            all_users_df = all_users_df.sort_values(by='HealthScore', ascending=False)
+            all_users_df['Rank'] = range(1, len(all_users_df) + 1)
+
+            # Get the new user's rank
+            rank = all_users_df[all_users_df['Email'] == email]['Rank'].iloc[-1]
+
+        # Create or update the FicoreAIResults sheet with the new rankings
         create_results_sheet()
-        write_results_to_sheet(df)
+        write_results_to_sheet(all_users_df)
 
-        # Send email if auto_email is 'Yes'
+        # Send email to the new user only if auto_email is 'Yes'
         if auto_email.lower() == 'yes':
-            send_email(email, first_name, last_name, rank, timestamp, health_score, score_description)
+            send_email(email, first_name, last_name, rank, timestamp, health_score, score_description,
+                       cash_flow_ratio, debt_to_income_ratio, debt_interest_burden)
 
         # Render success page
         return render_template('success.html', first_name=first_name, health_score=health_score,
@@ -425,6 +472,6 @@ def submit():
         return render_template('error.html', error_message=error_message)
 
 # Run the app
-if __name__ == '__ individuo__':
-    port = int(os.environ.get('PORT', 5001))
+if __name__ == '__main__':
+    port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port, debug=False)
