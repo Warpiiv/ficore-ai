@@ -1,3 +1,4 @@
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -27,7 +28,7 @@
             margin: 10px 0 5px;
             font-weight: bold;
         }
-        input[type="text"], input[type="email"], input[type="number"], select {
+        input[type="text"], input[type="email"], select {
             width: 100%;
             padding: 8px;
             margin-bottom: 10px;
@@ -47,45 +48,81 @@
         input[type="submit"]:hover {
             background-color: #218838;
         }
+        .note {
+            font-size: 0.9em;
+            color: #666;
+            margin-bottom: 10px;
+        }
     </style>
+    <script>
+        // Function to format numbers with commas as the user types
+        function formatNumberWithCommas(input) {
+            // Remove any non-digit characters except for decimal points and commas
+            let value = input.value.replace(/[^0-9.]/g, '');
+            // Split into integer and decimal parts
+            let parts = value.split('.');
+            // Format the integer part with commas
+            parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+            // Rejoin the parts (keep decimal if present)
+            input.value = parts.join('.');
+        }
+
+        // Apply formatting to all numeric inputs
+        document.addEventListener('DOMContentLoaded', function() {
+            const numericInputs = document.querySelectorAll('input[data-type="numeric"]');
+            numericInputs.forEach(input => {
+                input.addEventListener('input', function() {
+                    formatNumberWithCommas(this);
+                });
+            });
+        });
+    </script>
 </head>
 <body>
     <h1>Ficore AI - Calculate Your Financial Health Score</h1>
     <form action="/submit" method="POST">
+        <label for="business_name">Business Name *</label>
+        <div class="note">If you don't have a business, enter your full name (FirstName LastName).</div>
+        <input type="text" id="business_name" name="business_name" required>
+
+        <label for="income_revenue">Total Monthly Income (Revenue) in Naira, only. *</label>
+        <input type="text" id="income_revenue" name="income_revenue" data-type="numeric" pattern="[0-9,]*\.?[0-9]*" required>
+
+        <label for="expenses_costs">Total Monthly Expenses or Operating Costs *</label>
+        <input type="text" id="expenses_costs" name="expenses_costs" data-type="numeric" pattern="[0-9,]*\.?[0-9]*" required>
+
+        <label for="debt_loan">Total Debts (Loans), Sum of ALL debts *</label>
+        <input type="text" id="debt_loan" name="debt_loan" data-type="numeric" pattern="[0-9,]*\.?[0-9]*" required>
+
+        <label for="debt_interest_rate">Interest Rate of Debt/Loan, Enter 0 if NONE *</label>
+        <input type="text" id="debt_interest_rate" name="debt_interest_rate" data-type="numeric" pattern="[0-9,]*\.?[0-9]*" required>
+
+        <label for="auto_email">Your Email Address (for receiving your Health Score) *</label>
+        <input type="email" id="auto_email" name="auto_email" required>
+
+        <label for="phone_number">Phone Number for Ficore AI Updates *</label>
+        <input type="text" id="phone_number" name="phone_number" required>
+
         <label for="first_name">First Name *</label>
+        <div class="note">Personal Name</div>
         <input type="text" id="first_name" name="first_name" required>
 
         <label for="last_name">Last Name *</label>
+        <div class="note">Family Name/Father/Mother</div>
         <input type="text" id="last_name" name="last_name" required>
 
-        <label for="business_name">Business Name (If no business, type your full name: FirstName LastName) *</label>
-        <input type="text" id="business_name" name="business_name" required>
-
-        <label for="entity_type">Are you an Individual or SME? *</label>
-        <select id="entity_type" name="entity_type" required>
+        <label for="user_type">Are you an Individual or SME? *</label>
+        <div class="note">INDIVIDUAL or BUSINESS?</div>
+        <select id="user_type" name="user_type" required>
             <option value="Individual">Individual</option>
             <option value="SME">SME</option>
         </select>
 
-        <label for="income_revenue">Income/Revenue *</label>
-        <input type="number" id="income_revenue" name="income_revenue" required>
-
-        <label for="expenses_costs">Expenses/Costs *</label>
-        <input type="number" id="expenses_costs" name="expenses_costs" required>
-
-        <label for="debts_loans">Debts/Loans *</label>
-        <input type="number" id="debts_loans" name="debts_loans" required>
-
-        <label for="debt_interest_rate">Debt Interest Rate (%) *</label>
-        <input type="number" id="debt_interest_rate" name="debt_interest_rate" step="0.01" required>
-
-        <label for="auto_email">Auto-Generated Email (Optional)</label>
-        <input type="email" id="auto_email" name="auto_email">
-
-        <label for="email_typed">Your Email (Preferred) *</label>
-        <input type="email" id="email_typed" name="email_typed" required>
+        <label for="email">Type Your Email Address Here *</label>
+        <input type="email" id="email" name="email" required>
 
         <input type="submit" value="Calculate My Financial Health Score">
     </form>
 </body>
 </html>
+```
