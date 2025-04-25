@@ -3,103 +3,127 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ficore AI Dashboard</title>
-    <!-- Include Plotly.js -->
+    <title>Ficore AI - Dashboard</title>
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 20px;
             background-color: #f4f4f4;
-        }
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
-        }
-        h1 {
-            text-align: center;
-            color: #2c3e50;
-        }
-        h2 {
-            color: #34495e;
-        }
-        .metrics {
-            display: flex;
-            justify-content: space-around;
-            margin: 20px 0;
-        }
-        .metric {
-            text-align: center;
-            background-color: #ecf0f1;
-            padding: 15px;
-            border-radius: 8px;
-            width: 30%;
-        }
-        .metric h3 {
             margin: 0;
-            color: #7f8c8d;
+            padding: 20px;
+            box-sizing: border-box;
         }
-        .metric p {
-            font-size: 24px;
-            margin: 10px 0 0;
-            color: #2c3e50;
+
+        .container {
+            background: white;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            max-width: 800px;
+            margin: 0 auto;
+            box-sizing: border-box;
         }
-        .chart {
-            margin: 20px 0;
-        }
-        .coming-soon {
-            background-color: #e8f4f8;
-            padding: 15px;
-            border-radius: 8px;
+
+        h2 {
             text-align: center;
-            color: #2980b9;
+            color: #2c3e50;
+            font-size: 1.8rem;
+            margin-bottom: 1rem;
+        }
+
+        p {
+            font-size: 1rem;
+            color: #333;
+            margin-bottom: 1rem;
+        }
+
+        .coming-soon {
+            background-color: #e9ecef;
+            padding: 1rem;
+            border-radius: 5px;
+            margin-top: 1.5rem;
+        }
+
+        .coming-soon h3 {
+            margin-top: 0;
+            font-size: 1.2rem;
+            color: #555;
+        }
+
+        .back-button {
+            display: inline-block;
+            margin-top: 1.5rem;
+            padding: 0.75rem 1.5rem;
+            background-color: #007bff;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            font-size: 1rem;
+            transition: background-color 0.3s;
+        }
+
+        .back-button:hover {
+            background-color: #0056b3;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+
+            .container {
+                padding: 1.5rem;
+            }
+
+            h2 {
+                font-size: 1.5rem;
+            }
+
+            p {
+                font-size: 0.9rem;
+            }
+
+            .back-button {
+                font-size: 0.9rem;
+                padding: 0.6rem 1.2rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            h2 {
+                font-size: 1.3rem;
+            }
+
+            p {
+                font-size: 0.85rem;
+            }
+
+            .back-button {
+                font-size: 0.85rem;
+                padding: 0.5rem 1rem;
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Ficore AI Financial Health Dashboard 📊</h1>
+        <h2>Your Financial Health Dashboard</h2>
+        <p><strong>Financial Health Score:</strong> {{ health_score }}/100</p>
+        <p><strong>Rank:</strong> #{{ rank }} out of {{ total_users }} users</p>
+        <p><strong>Advice:</strong> {{ score_description }}</p>
 
-        <!-- Financial Health Overview -->
-        <h2>Your Financial Health Overview</h2>
-        <div class="metrics">
-            <div class="metric">
-                <h3>Financial Health Score</h3>
-                <p>{{ health_score }}/100</p>
-            </div>
-            <div class="metric">
-                <h3>Rank</h3>
-                <p>{{ rank }} out of {{ total_users }}</p>
-            </div>
-            <div class="metric">
-                <h3>Advice</h3>
-                <p>{{ score_description }}</p>
-            </div>
-        </div>
+        <h3>Score Breakdown</h3>
+        {{ breakdown_plot | safe }}
 
-        <!-- Score Breakdown -->
-        <h2>Score Breakdown</h2>
-        <div class="chart">
-            {{ breakdown_plot | safe }}
-        </div>
+        <h3>Comparison with Others</h3>
+        {{ comparison_plot | safe }}
 
-        <!-- Comparison to Others -->
-        <h2>How You Compare to Others</h2>
-        <p>You rank #{{ rank }} out of {{ total_users }} users.</p>
-        <div class="chart">
-            {{ comparison_plot | safe }}
-        </div>
-
-        <!-- Coming Soon -->
-        <h2>Coming Soon</h2>
         <div class="coming-soon">
-            Downloadable PDF reports and deeper analytics will be available in the next update!
+            <h3>Coming Soon</h3>
+            <p>Downloadable PDF reports and deeper analytics to help you grow.</p>
         </div>
+
+        <a href="/" class="back-button">Back to Home</a>
     </div>
 </body>
 </html>
