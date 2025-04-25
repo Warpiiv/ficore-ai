@@ -29,9 +29,17 @@
 
         h2 {
             text-align: center;
-            color: #2c3e50;
-            margin-bottom: 1.5rem;
+            color: #2E7D32; /* Green color for financial growth */
+            margin-bottom: 0.5rem; /* Reduced margin to bring subheading closer */
             font-size: 1.8rem;
+        }
+
+        .subheading {
+            text-align: center;
+            color: #1976D2; /* Blue color for trust and reliability */
+            font-style: italic;
+            font-size: 1rem;
+            margin-bottom: 1.5rem;
         }
 
         .form-group {
@@ -98,6 +106,10 @@
                 font-size: 1.5rem;
             }
 
+            .subheading {
+                font-size: 0.9rem;
+            }
+
             label {
                 font-size: 0.9rem;
             }
@@ -122,6 +134,10 @@
                 font-size: 1.3rem;
             }
 
+            .subheading {
+                font-size: 0.8rem;
+            }
+
             label {
                 font-size: 0.85rem;
             }
@@ -141,6 +157,7 @@
 <body>
     <div class="container">
         <h2>Ficore AI Financial Health Score</h2>
+        <div class="subheading">Financial growth passport for Africa</div>
         <form action="/submit" method="POST">
             <div class="form-group">
                 <label for="business_name">Business Name *</label>
