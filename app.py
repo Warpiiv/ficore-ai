@@ -24,10 +24,16 @@ app = Flask(__name__, template_folder=TEMPLATES_FOLDER)
 # Constants for Google Sheets
 SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
 SPREADSHEET_ID = '13hbiMTMRBHo9MHjWwcugngY_aSiuxII67HCf03MiZ8I'
-DATA_RANGE_NAME = 'Sheet1!A1:K'
+DATA_RANGE_NAME = 'Sheet1!A1:L'
 RESULTS_SHEET_NAME = 'FicoreAIResults'
 RESULTS_HEADER = ['Email', 'FicoreAIScore', 'FicoreAIRank']
 FEEDBACK_FORM_URL = 'https://forms.gle/ficoreai-feedback'
+
+# Predetermined headers for Sheet1 (in Google Form order, including AutoEmail)
+PREDETERMINED_HEADERS = [
+    'Timestamp', 'BusinessName', 'IncomeRevenue', 'ExpensesCosts', 'DebtLoan',
+    'DebtInterestRate', 'AutoEmail', 'PhoneNumber', 'FirstName', 'LastName', 'UserType', 'Email'
+]
 
 # --- Helper Functions ---
 
@@ -45,6 +51,27 @@ def authenticate_google_sheets():
     except Exception as e:
         raise Exception(f"Error authenticating with Google Sheets: {e}")
 
+def set_sheet_headers():
+    """Set the headers in Sheet1 to the predetermined headers."""
+    try:
+        service = authenticate_google_sheets()
+        if not service:
+            raise Exception("Google Sheets authentication failed.")
+        spreadsheet = service.spreadsheets()
+        
+        # Update the headers in Sheet1
+        header_range = 'Sheet1!A1:L1'
+        body = {'values': [PREDETERMINED_HEADERS]}
+        spreadsheet.values().update(
+            spreadsheetId=SPREADSHEET_ID,
+            range=header_range,
+            valueInputOption='USER_ENTERED',
+            body=body
+        ).execute()
+        print("Sheet1 headers set to predetermined values.")
+    except Exception as e:
+        raise Exception(f"Failed to set Sheet1 headers: {str(e)}")
+
 def fetch_data_from_sheet():
     """Fetch data from Sheet1 in the Google Sheet."""
     try:
@@ -60,17 +87,11 @@ def fetch_data_from_sheet():
     except Exception as e:
         raise Exception(f"Failed to fetch data from Google Sheet: {str(e)}")
 
-def send_email(to_email, first_name, last_name, rank, timestamp, health_score, score_description, cash_flow_ratio, debt_to_income_ratio, debt_interest_burden):
-    """Send an email with the Financial Health Score, breakdown, and advice to the user."""
+def send_email(primary_email, fallback_email, first_name, last_name, rank, timestamp, health_score, score_description, cash_flow_ratio, debt_to_income_ratio, debt_interest_burden):
+    """Send an email with the Financial Health Score, breakdown, and advice to the user, with a fallback email option."""
     max_retries = 3
     retry_delay = 5
     full_name = f"{first_name} {last_name}".strip()
-
-    # Initialize SMTP server
-    sender_email = os.environ.get('SENDER_EMAIL')
-    sender_password = os.environ.get('SENDER_PASSWORD')
-    if not sender_email or not sender_password:
-        raise Exception("SENDER_EMAIL or SENDER_PASSWORD environment variables not set.")
 
     # Format the breakdown metrics as percentages
     cash_flow_score = round(cash_flow_ratio * 100, 2)
@@ -92,69 +113,89 @@ def send_email(to_email, first_name, last_name, rank, timestamp, health_score, s
     debt_to_income_status = get_status(debt_to_income_score)
     debt_interest_status = get_status(debt_interest_score)
 
-    for attempt in range(max_retries):
-        try:
-            # Connect to Gmail's SMTP server
-            server = smtplib.SMTP('smtp.gmail.com', 587)
-            server.starttls()
-            server.login(sender_email, sender_password)
+    # Email content (same for both attempts)
+    sender_email = os.environ.get('SENDER_EMAIL')
+    sender_password = os.environ.get('SENDER_PASSWORD')
+    if not sender_email or not sender_password:
+        raise Exception("SENDER_EMAIL or SENDER_PASSWORD environment variables not set.")
 
-            msg = MIMEMultipart()
-            msg['From'] = sender_email
-            msg['To'] = to_email
-            msg['Subject'] = f"Ficore AI: Your Financial Health Score, {full_name}"
-            html = (
-                '<html>\n'
-                '    <body style="font-family: Arial, sans-serif; color: #333;">\n'
-                '        <div style="text-align: center;">\n'
-                '            <img src="https://www.freepik.com/free-photos-vectors/personal-finance-logo" alt="Ficore AI Logo" style="width: 150px; margin-bottom: 20px;" />\n'
-                '        </div>\n'
-                '        <h2 style="color: #2c3e50; text-align: center;">Ficore AI Financial Health Score</h2>\n'
-                f'        <p>Hi {first_name},</p>\n'
-                '        <p>We’re excited to share your Ficore AI Financial Health Score! This score reflects your financial strength based on three key factors: your cash flow, debt-to-income ratio, and debt interest burden. Let’s break it down for you.</p>\n'
-                '        <h3 style="color: #2c3e50;">Your Financial Health Overview</h3>\n'
-                '        <table style="border-collapse: collapse; width: 100%; max-width: 600px; margin: 20px 0;">\n'
-                '            <tr style="background-color: #2c3e50; color: white;">\n'
-                '                <th style="border: 1px solid #ddd; padding: 8px;">Rank</th>\n'
-                '                <th style="border: 1px solid #ddd; padding: 8px;">Timestamp</th>\n'
-                '                <th style="border: 1px solid #ddd; padding: 8px;">Name</th>\n'
-                '                <th style="border: 1px solid #ddd; padding: 8px;">Health Score</th>\n'
-                '                <th style="border: 1px solid #ddd; padding: 8px;">Advice</th>\n'
-                '            </tr>\n'
-                '            <tr>\n'
-                f'                <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">{rank}</td>\n'
-                f'                <td style="border: 1px solid #ddd; padding: 8px;">{timestamp}</td>\n'
-                f'                <td style="border: 1px solid #ddd; padding: 8px;">{full_name}</td>\n'
-                f'                <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">{health_score}</td>\n'
-                f'                <td style="border: 1px solid #ddd; padding: 8px;">{score_description}</td>\n'
-                '            </tr>\n'
-                '        </table>\n'
-                '        <h3 style="color: #2c3e50;">How We Calculated Your Score</h3>\n'
-                '        <p>Your Financial Health Score is a combination of three factors, each contributing equally to your overall score (out of 100). Here’s how you performed in each area:</p>\n'
-                '        <ul>\n'
-                f'            <li><strong>Cash Flow ({cash_flow_score}% - {cash_flow_status}):</strong> This measures how much money you have left after expenses. A higher percentage means you’re managing your expenses well relative to your income.</li>\n'
-                f'            <li><strong>Debt-to-Income Ratio ({debt_to_income_score}% - {debt_to_income_status}):</strong> This shows how much of your income goes toward debt. A higher percentage indicates you have less debt relative to your income, which is a good sign.</li>\n'
-                f'            <li><strong>Debt Interest Burden ({debt_interest_score}% - {debt_interest_status}):</strong> This reflects the impact of interest rates on your debt. A higher percentage means your debt interest rates are manageable.</li>\n'
-                '        </ul>\n'
-                f'        <p>{first_name}, your score of {health_score} is a great starting point! Follow the advice above to improve your financial health. We’re here to support you every step of the way—take one small action today to grow stronger financially for your business, your goals, and your future.</p>\n'
-                '        <div style="text-align: center; margin: 20px 0;">\n'
-                '            <a href="https://forms.gle/ficoreai-feedback" style="background-color: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block; margin-right: 10px;">Help us improve! Share your feedback (takes 1 min)</a>\n'
-                '            <a href="https://calendly.com/ficoreai" style="background-color: #28a745; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block;">Book Consultation</a>\n'
-                '        </div>\n'
-                f'        <p>Best regards,<br>Hassan<br>Ficore AI - Empowering African Financial Growth<br>Email: {sender_email} | Website: ficore.com.ng (coming soon)</p>\n'
-                '    </body>\n'
-                '</html>'
-            )
-            msg.attach(MIMEText(html, 'html'))
-            server.send_message(msg)
-            server.quit()
-            time.sleep(1)
-            break
-        except Exception as e:
-            if attempt < max_retries - 1:
-                time.sleep(retry_delay)
-            else:
-                raise Exception(f"Failed to send email to {to_email} for {full_name} after {max_retries} attempts: {str(e)}")
+    msg = MIMEMultipart()
+    msg['From'] = sender_email
+    msg['Subject'] = f"Ficore AI: Your Financial Health Score, {full_name}"
+    html = (
+        '<html>\n'
+        '    <body style="font-family: Arial, sans-serif; color: #333;">\n'
+        '        <div style="text-align: center;">\n'
+        '            <img src="https://www.freepik.com/free-photos-vectors/personal-finance-logo" alt="Ficore AI Logo" style="width: 150px; margin-bottom: 20px;" />\n'
+        '        </div>\n'
+        '        <h2 style="color: #2c3e50; text-align: center;">Ficore AI Financial Health Score</h2>\n'
+        f'        <p>Hi {first_name},</p>\n'
+        '        <p>We’re excited to share your Ficore AI Financial Health Score! This score reflects your financial strength based on three key factors: your cash flow, debt-to-income ratio, and debt interest burden. Let’s break it down for you.</p>\n'
+        '        <h3 style="color: #2c3e50;">Your Financial Health Overview</h3>\n'
+        '        <table style="border-collapse: collapse; width: 100%; max-width: 600px; margin: 20px 0;">\n'
+        '            <tr style="background-color: #2c3e50; color: white;">\n'
+        '                <th style="border: 1px solid #ddd; padding: 8px;">Rank</th>\n'
+        '                <th style="border: 1px solid #ddd; padding: 8px;">Timestamp</th>\n'
+        '                <th style="border: 1px solid #ddd; padding: 8px;">Name</th>\n'
+        '                <th style="border: 1px solid #ddd; padding: 8px;">Health Score</th>\n'
+        '                <th style="border: 1px solid #ddd; padding: 8px;">Advice</th>\n'
+        '            </tr>\n'
+        '            <tr>\n'
+        f'                <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">{rank}</td>\n'
+        f'                <td style="border: 1px solid #ddd; padding: 8px;">{timestamp}</td>\n'
+        f'                <td style="border: 1px solid #ddd; padding: 8px;">{full_name}</td>\n'
+        f'                <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">{health_score}</td>\n'
+        f'                <td style="border: 1px solid #ddd; padding: 8px;">{score_description}</td>\n'
+        '            </tr>\n'
+        '        </table>\n'
+        '        <h3 style="color: #2c3e50;">How We Calculated Your Score</h3>\n'
+        '        <p>Your Financial Health Score is a combination of three factors, each contributing equally to your overall score (out of 100). Here’s how you performed in each area:</p>\n'
+        '        <ul>\n'
+        f'            <li><strong>Cash Flow ({cash_flow_score}% - {cash_flow_status}):</strong> This measures how much money you have left after expenses. A higher percentage means you’re managing your expenses well relative to your income.</li>\n'
+        f'            <li><strong>Debt-to-Income Ratio ({debt_to_income_score}% - {debt_to_income_status}):</strong> This shows how much of your income goes toward debt. A higher percentage indicates you have less debt relative to your income, which is a good sign.</li>\n'
+        f'            <li><strong>Debt Interest Burden ({debt_interest_score}% - {debt_interest_status}):</strong> This reflects the impact of interest rates on your debt. A higher percentage means your debt interest rates are manageable.</li>\n'
+        '        </ul>\n'
+        f'        <p>{first_name}, your score of {health_score} is a great starting point! Follow the advice above to improve your financial health. We’re here to support you every step of the way—take one small action today to grow stronger financially for your business, your goals, and your future.</p>\n'
+        '        <div style="text-align: center; margin: 20px 0;">\n'
+        '            <a href="https://forms.gle/ficoreai-feedback" style="background-color: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block; margin-right: 10px;">Help us improve! Share your feedback (takes 1 min)</a>\n'
+        '            <a href="https://calendly.com/ficoreai" style="background-color: #28a745; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block;">Book Consultation</a>\n'
+        '        </div>\n'
+        f'        <p>Best regards,<br>Hassan<br>Ficore AI - Empowering African Financial Growth<br>Email: {sender_email} | Website: ficore.com.ng (coming soon)</p>\n'
+        '    </body>\n'
+        '</html>'
+    )
+    msg.attach(MIMEText(html, 'html'))
+
+    # Try sending to the primary email first
+    email_addresses = [(primary_email, "primary email"), (fallback_email, "fallback email")]
+    email_sent = False
+
+    for email_address, email_type in email_addresses:
+        if not email_address:
+            continue
+        for attempt in range(max_retries):
+            try:
+                server = smtplib.SMTP('smtp.gmail.com', 587)
+                server.starttls()
+                server.login(sender_email, sender_password)
+                msg['To'] = email_address
+                server.send_message(msg)
+                server.quit()
+                time.sleep(1)
+                print(f"Email successfully sent to {email_address} ({email_type})")
+                email_sent = True
+                break  # Exit retry loop on success
+            except Exception as e:
+                if attempt < max_retries - 1:
+                    print(f"Attempt {attempt + 1} failed for {email_address} ({email_type}): {str(e)}. Retrying...")
+                    time.sleep(retry_delay)
+                else:
+                    print(f"Failed to send email to {email_address} ({email_type}) after {max_retries} attempts: {str(e)}")
+        if email_sent:
+            break  # Exit email address loop if email was sent successfully
+
+    if not email_sent:
+        raise Exception(f"Failed to send email to both {primary_email} (primary) and {fallback_email} (fallback) after all attempts.")
 
 def calculate_health_score(df):
     """Calculate the Financial Health Score based on income, expenses, debt, and interest rate."""
@@ -239,11 +280,14 @@ def write_results_to_sheet(df):
 def append_to_sheet(data):
     """Append form submission data to Sheet1 and apply formatting."""
     try:
+        # Ensure the headers are set to the predetermined values before appending data
+        set_sheet_headers()
+
         service = authenticate_google_sheets()
         if not service:
             raise Exception("Google Sheets authentication failed.")
         spreadsheet = service.spreadsheets()
-        range_name = 'Sheet1!A:K'
+        range_name = 'Sheet1!A:L'
         # Append the data
         body = {'values': [data]}
         result = spreadsheet.values().append(spreadsheetId=SPREADSHEET_ID, range=range_name,
@@ -282,7 +326,7 @@ def append_to_sheet(data):
                     "fields": "pixelSize"
                 }
             },
-            # Apply currency formatting to IncomeRevenue, ExpensesCosts, DebtsLoans
+            # Apply currency formatting to IncomeRevenue, ExpensesCosts, DebtLoan
             {
                 "repeatCell": {
                     "range": {
@@ -290,13 +334,13 @@ def append_to_sheet(data):
                         "startRowIndex": new_row_index,
                         "endRowIndex": new_row_index + 1,
                         "startColumnIndex": 2,  # Column C (IncomeRevenue)
-                        "endColumnIndex": 5      # Column F (DebtsLoans)
+                        "endColumnIndex": 5      # Column F (DebtLoan)
                     },
                     "cell": {
                         "userEnteredFormat": {
                             "numberFormat": {
                                 "type": "CURRENCY",
-                                "pattern": "$#,##0.00"
+                                "pattern": "₦#,##0.00"  # Use Naira symbol
                             },
                             "horizontalAlignment": "RIGHT"
                         }
@@ -351,7 +395,7 @@ def append_to_sheet(data):
                         "startRowIndex": new_row_index,
                         "endRowIndex": new_row_index + 1,
                         "startColumnIndex": 6,  # Column G (AutoEmail)
-                        "endColumnIndex": 11     # Column K (PhoneNumber)
+                        "endColumnIndex": 12     # Column L (Email)
                     },
                     "cell": {
                         "userEnteredFormat": {
@@ -381,25 +425,26 @@ def submit():
         # Get form data
         timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         business_name = request.form.get('business_name', '').strip()
-        income_revenue = float(request.form.get('income_revenue', 0))
-        expenses_costs = float(request.form.get('expenses_costs', 0))
-        debt_loan = float(request.form.get('debt_loan', 0))
-        debt_interest_rate = float(request.form.get('debt_interest_rate', 0))
+        income_revenue = float(request.form.get('income_revenue', '0').replace(',', ''))
+        expenses_costs = float(request.form.get('expenses_costs', '0').replace(',', ''))
+        debt_loan = float(request.form.get('debt_loan', '0').replace(',', ''))
+        debt_interest_rate = float(request.form.get('debt_interest_rate', '0').replace(',', ''))
         auto_email = request.form.get('auto_email', '').strip()
+        phone_number = request.form.get('phone_number', '').strip()
         first_name = request.form.get('first_name', '').strip()
         last_name = request.form.get('last_name', '').strip()
+        user_type = request.form.get('user_type', '').strip()
         email = request.form.get('email', '').strip()
-        phone_number = request.form.get('phone_number', '').strip()
 
-        # Validate email
+        # Validate email (both auto_email and email)
         email_pattern = r'^[\w\.-]+@[\w\.-]+\.\w+$'
-        if not re.match(email_pattern, email):
+        if not re.match(email_pattern, email) or not re.match(email_pattern, auto_email):
             return render_template('error.html', error_message="Invalid email address.")
 
         # Prepare data for Google Sheet
         data = [
             timestamp, business_name, income_revenue, expenses_costs, debt_loan,
-            debt_interest_rate, auto_email, first_name, last_name, email, phone_number
+            debt_interest_rate, auto_email, phone_number, first_name, last_name, user_type, email
         ]
 
         # Append data to Sheet1
@@ -407,7 +452,7 @@ def submit():
 
         # Create a DataFrame for the new user to calculate their health score
         headers = ['Timestamp', 'BusinessName', 'IncomeRevenue', 'ExpensesCosts', 'DebtLoan',
-                   'DebtInterestRate', 'AutoEmail', 'FirstName', 'LastName', 'Email', 'PhoneNumber']
+                   'DebtInterestRate', 'AutoEmail', 'PhoneNumber', 'FirstName', 'LastName', 'UserType', 'Email']
         new_user_df = pd.DataFrame([data], columns=headers)
 
         # Convert numeric columns to float for the new user
@@ -458,10 +503,9 @@ def submit():
         create_results_sheet()
         write_results_to_sheet(all_users_df)
 
-        # Send email to the new user only if auto_email is 'Yes'
-        if auto_email.lower() == 'yes':
-            send_email(email, first_name, last_name, rank, timestamp, health_score, score_description,
-                       cash_flow_ratio, debt_to_income_ratio, debt_interest_burden)
+        # Send email to the new user with fallback option
+        send_email(email, auto_email, first_name, last_name, rank, timestamp, health_score, score_description,
+                   cash_flow_ratio, debt_to_income_ratio, debt_interest_burden)
 
         # Render success page
         return render_template('success.html', first_name=first_name, health_score=health_score,
