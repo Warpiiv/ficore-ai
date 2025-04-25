@@ -12,6 +12,7 @@ from dotenv import load_dotenv
 import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
+import time
 
 # Initialize Flask app with custom templates directory
 app = Flask(__name__, template_folder='ficore_templates')
@@ -19,7 +20,7 @@ app = Flask(__name__, template_folder='ficore_templates')
 # Load environment variables
 load_dotenv()
 
-# Constants for Google Sheets (same as in the notebook)
+# Constants for Google Sheets
 SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
 SPREADSHEET_ID = '13hbiMTMRBHo9MHjWwcugngY_aSiuxII67HCf03MiZ8I'
 DATA_RANGE_NAME = 'Sheet1!A1:L'
@@ -95,6 +96,9 @@ def fetch_data_from_sheet():
         if not values:
             return None
         return values
+    except Exception as e:
+        print(f"Error fetching data from Google Sheet: {e}")
+        raise
 
 # Calculate Financial Health Score
 def calculate_health_score(df):
@@ -135,6 +139,9 @@ def calculate_health_score(df):
 
         df['ScoreDescription'] = df.apply(score_description, axis=1)
         return df
+    except Exception as e:
+        print(f"Error calculating health score: {e}")
+        raise
 
 # Send Email
 def send_email(recipient_email, user_name, health_score, score_description, rank, total_users):
@@ -143,7 +150,7 @@ def send_email(recipient_email, user_name, health_score, score_description, rank
     if not sender_email or not sender_password:
         raise Exception("SENDER_EMAIL or SENDER_PASSWORD environment variable not set.")
 
-    subject = "Your Ficore AI Financial Health Score"
+    subject = f"🔥 You're Top {int((rank/total_users)*100)}%! Your Ficore Score Report Awaits!"
     body = f"""
 Dear {user_name},
 
@@ -154,7 +161,7 @@ We have calculated your Ficore AI Financial Health Score based on your recent su
 - **Rank**: #{int(rank)} out of {total_users} users
 
 Please provide feedback on your experience: {FEEDBACK_FORM_URL}
-Join the waitlist for Ficore AI Premium: {WAITLIST_FORM_URL}
+Want Smart Insights? Join the waitlist for Ficore Premium: {WAITLIST_FORM_URL}
 
 Best regards,
 The Ficore AI Team
@@ -187,170 +194,178 @@ def home():
 # Form submission route
 @app.route('/submit', methods=['POST'])
 def submit():
-    # Extract form data
-    timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-    business_name = request.form.get('business_name')
-    income_revenue = float(request.form.get('income_revenue'))
-    expenses_costs = float(request.form.get('expenses_costs'))
-    debt_loan = float(request.form.get('debt_loan'))
-    debt_interest_rate = float(request.form.get('debt_interest_rate'))
-    auto_email = 'TRUE'
-    phone_number = request.form.get('phone_number')
-    first_name = request.form.get('first_name')
-    last_name = request.form.get('last_name')
-    user_type = request.form.get('user_type')
-    email = request.form.get('email')
+    try:
+        # Extract form data
+        timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        business_name = request.form.get('business_name')
+        income_revenue = float(request.form.get('income_revenue'))
+        expenses_costs = float(request.form.get('expenses_costs'))
+        debt_loan = float(request.form.get('debt_loan'))
+        debt_interest_rate = float(request.form.get('debt_interest_rate'))
+        auto_email = 'TRUE'
+        phone_number = request.form.get('phone_number')
+        first_name = request.form.get('first_name')
+        last_name = request.form.get('last_name')
+        user_type = request.form.get('user_type')
+        email = request.form.get('email')
 
-    # Prepare data for Google Sheet
-    data = [
-        timestamp, business_name, income_revenue, expenses_costs, debt_loan,
-        debt_interest_rate, auto_email, phone_number, first_name, last_name,
-        user_type, email
-    ]
-    append_to_sheet(data)
+        # Prepare data for Google Sheet
+        data = [
+            timestamp, business_name, income_revenue, expenses_costs, debt_loan,
+            debt_interest_rate, auto_email, phone_number, first_name, last_name,
+            user_type, email
+        ]
+        append_to_sheet(data)
 
-    # Fetch updated data
-    sheet_data = fetch_data_from_sheet()
-    if not sheet_data:
-        return "Error: No data found in Google Sheet.", 500
+        # Fetch updated data
+        sheet_data = fetch_data_from_sheet()
+        if not sheet_data:
+            return "Error: No data found in Google Sheet.", 500
 
-    # Convert to DataFrame
-    headers = sheet_data[0]
-    rows = sheet_data[1:]
-    all_users_df = pd.DataFrame(rows, columns=headers)
+        # Convert to DataFrame
+        headers = sheet_data[0]
+        rows = sheet_data[1:]
+        all_users_df = pd.DataFrame(rows, columns=headers)
 
-    # Convert numeric columns to float
-    numeric_cols = ['IncomeRevenue', 'ExpensesCosts', 'DebtLoan', 'DebtInterestRate']
-    for col in numeric_cols:
-        all_users_df[col] = pd.to_numeric(all_users_df[col], errors='coerce').fillna(0)
+        # Convert numeric columns to float
+        numeric_cols = ['IncomeRevenue', 'ExpensesCosts', 'DebtLoan', 'DebtInterestRate']
+        for col in numeric_cols:
+            all_users_df[col] = pd.to_numeric(all_users_df[col], errors='coerce').fillna(0)
 
-    # Calculate health scores
-    all_users_df = calculate_health_score(all_users_df)
+        # Calculate health scores
+        all_users_df = calculate_health_score(all_users_df)
 
-    # Sort by HealthScore and assign ranks
-    all_users_df = all_users_df.sort_values(by='HealthScore', ascending=False)
-    all_users_df['Rank'] = range(1, len(all_users_df) + 1)
+        # Sort by HealthScore and assign ranks
+        all_users_df = all_users_df.sort_values(by='HealthScore', ascending=False)
+        all_users_df['Rank'] = range(1, len(all_users_df) + 1)
 
-    # Filter for the current user
-    user_df = all_users_df[all_users_df['Email'] == email]
-    if user_df.empty:
-        return f"Error: No data found for user with email: {email}", 500
+        # Filter for the current user
+        user_df = all_users_df[all_users_df['Email'] == email]
+        if user_df.empty:
+            return f"Error: No data found for user with email: {email}", 500
 
-    # Extract user data
-    user_row = user_df.iloc[0]
-    health_score = user_row['HealthScore']
-    rank = user_row['Rank']
-    total_users = len(all_users_df)
-    score_description = user_row['ScoreDescription']
+        # Extract user data
+        user_row = user_df.iloc[0]
+        health_score = user_row['HealthScore']
+        rank = user_row['Rank']
+        total_users = len(all_users_df)
+        score_description = user_row['ScoreDescription']
 
-    # Send email
-    user_name = f"{first_name} {last_name}"
-    send_email(email, user_name, health_score, score_description, rank, total_users)
+        # Send email
+        user_name = f"{first_name} {last_name}"
+        send_email(email, user_name, health_score, score_description, rank, total_users)
 
-    # Redirect to dashboard
-    return redirect(url_for('dashboard', email=email))
+        # Redirect to dashboard
+        return redirect(url_for('dashboard', email=email))
+    except Exception as e:
+        print(f"Error in form submission: {e}")
+        return f"Error processing your submission: {str(e)}", 500
 
 # Dashboard route
 @app.route('/dashboard')
 def dashboard():
-    # Get the user's email from query parameters
-    email = request.args.get('email', 'test@example.com')
+    try:
+        # Get the user's email from query parameters
+        email = request.args.get('email', 'test@example.com')
 
-    # Fetch data from Google Sheets
-    sheet_data = fetch_data_from_sheet()
-    if not sheet_data:
-        return "Error: No data found in Google Sheet.", 500
+        # Fetch data from Google Sheets
+        sheet_data = fetch_data_from_sheet()
+        if not sheet_data:
+            return "Error: No data found in Google Sheet.", 500
 
-    # Convert to DataFrame
-    headers = sheet_data[0]
-    rows = sheet_data[1:]
-    all_users_df = pd.DataFrame(rows, columns=headers)
+        # Convert to DataFrame
+        headers = sheet_data[0]
+        rows = sheet_data[1:]
+        all_users_df = pd.DataFrame(rows, columns=headers)
 
-    # Convert numeric columns to float
-    numeric_cols = ['IncomeRevenue', 'ExpensesCosts', 'DebtLoan', 'DebtInterestRate']
-    for col in numeric_cols:
-        all_users_df[col] = pd.to_numeric(all_users_df[col], errors='coerce').fillna(0)
+        # Convert numeric columns to float
+        numeric_cols = ['IncomeRevenue', 'ExpensesCosts', 'DebtLoan', 'DebtInterestRate']
+        for col in numeric_cols:
+            all_users_df[col] = pd.to_numeric(all_users_df[col], errors='coerce').fillna(0)
 
-    # Calculate health scores for all users
-    all_users_df = calculate_health_score(all_users_df)
+        # Calculate health scores for all users
+        all_users_df = calculate_health_score(all_users_df)
 
-    # Sort by HealthScore and assign ranks
-    all_users_df = all_users_df.sort_values(by='HealthScore', ascending=False)
-    all_users_df['Rank'] = range(1, len(all_users_df) + 1)
+        # Sort by HealthScore and assign ranks
+        all_users_df = all_users_df.sort_values(by='HealthScore', ascending=False)
+        all_users_df['Rank'] = range(1, len(all_users_df) + 1)
 
-    # Filter for the current user
-    user_df = all_users_df[all_users_df['Email'] == email]
-    if user_df.empty:
-        return f"Error: No data found for user with email: {email}", 500
+        # Filter for the current user
+        user_df = all_users_df[all_users_df['Email'] == email]
+        if user_df.empty:
+            return f"Error: No data found for user with email: {email}", 500
 
-    # Extract user data
-    user_row = user_df.iloc[0]
-    health_score = user_row['HealthScore']
-    rank = user_row['Rank']
-    total_users = len(all_users_df)
-    score_description = user_row['ScoreDescription']
-    cash_flow_score = round(user_row['NormCashFlow'] * 100, 2)
-    debt_to_income_score = round(user_row['NormDebtToIncome'] * 100, 2)
-    debt_interest_score = round(user_row['NormDebtInterest'] * 100, 2)
+        # Extract user data
+        user_row = user_df.iloc[0]
+        health_score = user_row['HealthScore']
+        rank = user_row['Rank']
+        total_users = len(all_users_df)
+        score_description = user_row['ScoreDescription']
+        cash_flow_score = round(user_row['NormCashFlow'] * 100, 2)
+        debt_to_income_score = round(user_row['NormDebtToIncome'] * 100, 2)
+        debt_interest_score = round(user_row['NormDebtInterest'] * 100, 2)
 
-    # Create Plotly charts
-    # Score Breakdown Bar Chart
-    breakdown_data = {
-        "Component": ["Cash Flow", "Debt-to-Income Ratio", "Debt Interest Burden"],
-        "Score": [cash_flow_score, debt_to_income_score, debt_interest_score]
-    }
-    breakdown_df = pd.DataFrame(breakdown_data)
-    fig_breakdown = px.bar(
-        breakdown_df,
-        x="Score",
-        y="Component",
-        orientation='h',
-        title="Score Breakdown",
-        labels={"Score": "Score (out of 100)"},
-        color="Component",
-        color_discrete_sequence=px.colors.qualitative.Plotly
-    )
-    fig_breakdown.update_layout(showlegend=False)
-    breakdown_plot = fig_breakdown.to_html(full_html=False, include_plotlyjs=False)
-
-    # Comparison Line Chart
-    fig_comparison = go.Figure()
-    fig_comparison.add_trace(
-        go.Scatter(
-            x=list(range(1, len(all_users_df) + 1)),
-            y=all_users_df['HealthScore'],
-            mode='lines+markers',
-            name='All Users',
-            line=dict(color='blue')
+        # Create Plotly charts
+        # Score Breakdown Bar Chart
+        breakdown_data = {
+            "Component": ["Cash Flow", "Debt-to-Income Ratio", "Debt Interest Burden"],
+            "Score": [cash_flow_score, debt_to_income_score, debt_interest_score]
+        }
+        breakdown_df = pd.DataFrame(breakdown_data)
+        fig_breakdown = px.bar(
+            breakdown_df,
+            x="Score",
+            y="Component",
+            orientation='h',
+            title="Score Breakdown",
+            labels={"Score": "Score (out of 100)"},
+            color="Component",
+            color_discrete_sequence=px.colors.qualitative.Plotly
         )
-    )
-    fig_comparison.add_trace(
-        go.Scatter(
-            x=[int(rank)],
-            y=[health_score],
-            mode='markers',
-            name='Your Score',
-            marker=dict(color='red', size=12, symbol='star')
-        )
-    )
-    fig_comparison.update_layout(
-        title="How You Compare to Others",
-        xaxis_title="User Rank",
-        yaxis_title="Health Score",
-        showlegend=True
-    )
-    comparison_plot = fig_comparison.to_html(full_html=False, include_plotlyjs=False)
+        fig_breakdown.update_layout(showlegend=False)
+        breakdown_plot = fig_breakdown.to_html(full_html=False, include_plotlyjs=False)
 
-    # Render the dashboard template
-    return render_template(
-        'dashboard.html',
-        health_score=health_score,
-        rank=int(rank),
-        total_users=total_users,
-        score_description=score_description,
-        breakdown_plot=breakdown_plot,
-        comparison_plot=comparison_plot
-    )
+        # Comparison Line Chart
+        fig_comparison = go.Figure()
+        fig_comparison.add_trace(
+            go.Scatter(
+                x=list(range(1, len(all_users_df) + 1)),
+                y=all_users_df['HealthScore'],
+                mode='lines+markers',
+                name='All Users',
+                line=dict(color='blue')
+            )
+        )
+        fig_comparison.add_trace(
+            go.Scatter(
+                x=[int(rank)],
+                y=[health_score],
+                mode='markers',
+                name='Your Score',
+                marker=dict(color='red', size=12, symbol='star')
+            )
+        )
+        fig_comparison.update_layout(
+            title="How You Compare to Others",
+            xaxis_title="User Rank",
+            yaxis_title="Health Score",
+            showlegend=True
+        )
+        comparison_plot = fig_comparison.to_html(full_html=False, include_plotlyjs=False)
+
+        # Render the dashboard template
+        return render_template(
+            'dashboard.html',
+            health_score=health_score,
+            rank=int(rank),
+            total_users=total_users,
+            score_description=score_description,
+            breakdown_plot=breakdown_plot,
+            comparison_plot=comparison_plot
+        )
+    except Exception as e:
+        print(f"Error rendering dashboard: {e}")
+        return f"Error rendering dashboard: {str(e)}", 500
 
 if __name__ == "__main__":
     # For Render, bind to 0.0.0.0 and use the PORT environment variable
