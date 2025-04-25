@@ -28,6 +28,7 @@ DATA_RANGE_NAME = 'Sheet1!A1:L'
 RESULTS_SHEET_NAME = 'FicoreAIResults'
 RESULTS_HEADER = ['Email', 'FicoreAIScore', 'FicoreAIRank']
 FEEDBACK_FORM_URL = 'https://forms.gle/ficoreai-feedback'
+WAITLIST_FORM_URL = 'https://forms.gle/ficoreai-premium-waitlist'  # Placeholder for waitlist form
 
 # Predetermined headers for Sheet1 (in Google Form order, including AutoEmail)
 PREDETERMINED_HEADERS = [
@@ -87,8 +88,8 @@ def fetch_data_from_sheet():
     except Exception as e:
         raise Exception(f"Failed to fetch data from Google Sheet: {str(e)}")
 
-def send_email(primary_email, fallback_email, first_name, last_name, rank, timestamp, health_score, score_description, cash_flow_ratio, debt_to_income_ratio, debt_interest_burden):
-    """Send an email with the Financial Health Score, breakdown, and advice to the user, with a fallback email option."""
+def send_email(primary_email, fallback_email, first_name, last_name, rank, total_users, timestamp, health_score, score_description, cash_flow_ratio, debt_to_income_ratio, debt_interest_burden):
+    """Send an email with the Financial Health Score, breakdown, advice, and graph to the user, with a fallback email option."""
     max_retries = 3
     retry_delay = 5
     full_name = f"{first_name} {last_name}".strip()
@@ -113,7 +114,11 @@ def send_email(primary_email, fallback_email, first_name, last_name, rank, times
     debt_to_income_status = get_status(debt_to_income_score)
     debt_interest_status = get_status(debt_interest_score)
 
-    # Email content (same for both attempts)
+    # Calculate if the user is in the top 10%
+    top_10_percent = total_users * 0.1
+    is_top_10 = rank <= top_10_percent if total_users > 0 else False
+
+    # Email content
     sender_email = os.environ.get('SENDER_EMAIL')
     sender_password = os.environ.get('SENDER_PASSWORD')
     if not sender_email or not sender_password:
@@ -121,7 +126,15 @@ def send_email(primary_email, fallback_email, first_name, last_name, rank, times
 
     msg = MIMEMultipart()
     msg['From'] = sender_email
-    msg['Subject'] = f"Ficore AI: Your Financial Health Score, {full_name}"
+    # Gamified subject line
+    if is_top_10:
+        msg['Subject'] = f"🔥 You're Top 10%! Your Ficore Score Report Awaits!"
+    else:
+        msg['Subject'] = f"📊 Your Ficore Score Report is Ready!"
+
+    # Placeholder graph image for "Your Score Progress Over Time"
+    graph_placeholder_url = "https://via.placeholder.com/600x300.png?text=Your+Score+Progress+Over+Time"
+
     html = (
         '<html>\n'
         '    <body style="font-family: Arial, sans-serif; color: #333;">\n'
@@ -155,10 +168,16 @@ def send_email(primary_email, fallback_email, first_name, last_name, rank, times
         f'            <li><strong>Debt-to-Income Ratio ({debt_to_income_score}% - {debt_to_income_status}):</strong> This shows how much of your income goes toward debt. A higher percentage indicates you have less debt relative to your income, which is a good sign.</li>\n'
         f'            <li><strong>Debt Interest Burden ({debt_interest_score}% - {debt_interest_status}):</strong> This reflects the impact of interest rates on your debt. A higher percentage means your debt interest rates are manageable.</li>\n'
         '        </ul>\n'
+        '        <h3 style="color: #2c3e50;">Your Score Progress Over Time</h3>\n'
+        f'        <div style="text-align: center; margin: 20px 0;">\n'
+        f'            <img src="{graph_placeholder_url}" alt="Score Progress Graph" style="width: 100%; max-width: 600px;" />\n'
+        '            <p style="font-style: italic; color: #666;">(This is a placeholder graph. Future updates will show your score trends over time!)</p>\n'
+        '        </div>\n'
         f'        <p>{first_name}, your score of {health_score} is a great starting point! Follow the advice above to improve your financial health. We’re here to support you every step of the way—take one small action today to grow stronger financially for your business, your goals, and your future.</p>\n'
         '        <div style="text-align: center; margin: 20px 0;">\n'
-        '            <a href="https://forms.gle/ficoreai-feedback" style="background-color: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block; margin-right: 10px;">Help us improve! Share your feedback (takes 1 min)</a>\n'
-        '            <a href="https://calendly.com/ficoreai" style="background-color: #28a745; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block;">Book Consultation</a>\n'
+        f'            <a href="{FEEDBACK_FORM_URL}" style="background-color: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block; margin-right: 10px;">Help us improve! Share your feedback (takes 1 min)</a>\n'
+        '            <a href="https://calendly.com/ficoreai" style="background-color: #28a745; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block; margin-right: 10px;">Book Consultation</a>\n'
+        f'            <a href="{WAITLIST_FORM_URL}" style="background-color: #ff5733; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block;">Want Smart Insights? Join the waitlist for Ficore Premium</a>\n'
         '        </div>\n'
         f'        <p>Best regards,<br>Hassan<br>Ficore AI - Empowering African Financial Growth<br>Email: {sender_email} | Website: ficore.com.ng (coming soon)</p>\n'
         '    </body>\n'
@@ -470,11 +489,12 @@ def submit():
         debt_to_income_ratio = new_user_df['DebtToIncomeRatio'].iloc[0]  # Raw ratio for calculation
         debt_interest_burden = new_user_df['DebtInterestBurden'].iloc[0]  # Already clipped between 0 and 1
 
-        # Fetch all data from Sheet1 to determine the rank
+        # Fetch all data from Sheet1 to determine the rank and total users
         sheet_data = fetch_data_from_sheet()
         if not sheet_data:
             # If no previous data, the new user is rank 1
             rank = 1
+            total_users = 1
             all_users_df = new_user_df
         else:
             # Convert existing data to DataFrame
@@ -496,15 +516,16 @@ def submit():
             all_users_df = all_users_df.sort_values(by='HealthScore', ascending=False)
             all_users_df['Rank'] = range(1, len(all_users_df) + 1)
 
-            # Get the new user's rank
+            # Get the new user's rank and total users
             rank = all_users_df[all_users_df['Email'] == email]['Rank'].iloc[-1]
+            total_users = len(all_users_df)
 
         # Create or update the FicoreAIResults sheet with the new rankings
         create_results_sheet()
         write_results_to_sheet(all_users_df)
 
         # Send email to the new user with fallback option
-        send_email(email, auto_email, first_name, last_name, rank, timestamp, health_score, score_description,
+        send_email(email, auto_email, first_name, last_name, rank, total_users, timestamp, health_score, score_description,
                    cash_flow_ratio, debt_to_income_ratio, debt_interest_burden)
 
         # Render success page
