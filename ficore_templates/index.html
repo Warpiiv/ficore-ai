@@ -29,6 +29,13 @@
             max-width: 700px;
             box-sizing: border-box;
             animation: fadeIn 0.5s ease;
+            text-align: center;
+        }
+
+        .logo {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 1rem;
         }
 
         h2 {
@@ -137,6 +144,11 @@
                 max-width: 100%;
             }
 
+            .logo {
+                width: 60px;
+                height: 60px;
+            }
+
             h2 {
                 font-size: 1.8rem;
             }
@@ -161,6 +173,11 @@
         }
 
         @media (max-width: 480px) {
+            .logo {
+                width: 50px;
+                height: 50px;
+            }
+
             h2 {
                 font-size: 1.5rem;
             }
@@ -187,6 +204,7 @@
 </head>
 <body>
     <div class="container">
+        <img src="{{ url_for('static', filename='img/ficore_logo.png') }}" alt="Ficore Logo" class="logo">
         <h2>Ficore AI Financial Health Score</h2>
         <p class="subheading">Financial growth passport for Africa - democratizing finances for Africa’s SMEs and individuals...</p>
         <form action="/submit" method="POST">
