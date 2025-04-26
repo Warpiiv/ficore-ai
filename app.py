@@ -161,12 +161,13 @@ def fetch_data_from_sheet(max_retries=3, delay=1):
                     normalized_rows.append(row)
                 rows = normalized_rows
             
-            # Create DataFrame without specifying columns initially
+            # Create DataFrame with correct column names
             if not rows:
                 logger.info(f"Attempt {attempt + 1}: No data rows found, creating empty DataFrame.")
                 df = pd.DataFrame(columns=expected_columns)
             else:
-                df = pd.DataFrame(rows)
+                # Explicitly set the columns to the headers or expected_columns
+                df = pd.DataFrame(rows, columns=headers)
                 # Ensure all expected columns are present
                 for col in expected_columns:
                     if col not in df.columns:
@@ -175,6 +176,7 @@ def fetch_data_from_sheet(max_retries=3, delay=1):
                 df = df[expected_columns]
             
             logger.debug(f"Attempt {attempt + 1}: Created DataFrame with shape {df.shape}")
+            logger.debug(f"Attempt {attempt + 1}: DataFrame head:\n{df.head()}")
             return df
         
         except Exception as e:
