@@ -24,6 +24,13 @@
             color: #2E7D32;
             text-align: center;
         }
+        .tagline {
+            text-align: center;
+            font-style: italic;
+            color: #1E88E5; /* Different color (blue) from the heading */
+            margin-bottom: 20px;
+            font-size: 1rem;
+        }
         .form-group {
             margin-bottom: 15px;
         }
@@ -69,6 +76,9 @@
 <body>
     <div class="container">
         <h1>Ficore AI Financial Health Assessment</h1>
+        <div class="tagline">
+            Financial growth passport for Africa - democratizing finances for Africa’s SMEs and individuals
+        </div>
         {% if current_user.is_authenticated %}
             <div class="auth-links">
                 <p>Welcome, {{ current_user.first_name }}! <a href="{{ url_for('dashboard') }}">Go to Dashboard</a> | <a href="{{ url_for('logout') }}">Logout</a></p>
@@ -78,40 +88,87 @@
                 <a href="{{ url_for('login') }}">Login</a> | <a href="{{ url_for('register') }}">Register</a>
             </div>
         {% endif %}
-        <form method="POST" action="{{ url_for('submit') }}">
+        <form method="POST" action="{{ url_for('submit') }}" onsubmit="return validateForm()">
             <div class="form-group">
-                <label for="business_name">Business Name</label>
-                <input type="text" id="business_name" name="business_name" required>
+                <label for="business_name">Business Name (optional)</label>
+                <input type="text" id="business_name" name="business_name" placeholder="e.g., My Business">
             </div>
             <div class="form-group">
-                <label for="income_revenue">Income/Revenue</label>
-                <input type="number" id="income_revenue" name="income_revenue" step="0.01" required>
+                <label for="income_revenue">Income/Revenue (required)</label>
+                <input type="text" id="income_revenue" name="income_revenue" placeholder="e.g., 50,000" required onkeyup="formatNumber(this)">
+                <input type="hidden" id="income_revenue_hidden" name="income_revenue_hidden">
             </div>
             <div class="form-group">
-                <label for="expenses_costs">Expenses/Costs</label>
-                <input type="number" id="expenses_costs" name="expenses_costs" step="0.01" required>
+                <label for="expenses_costs">Expenses/Costs (required)</label>
+                <input type="text" id="expenses_costs" name="expenses_costs" placeholder="e.g., 30,000" required onkeyup="formatNumber(this)">
+                <input type="hidden" id="expenses_costs_hidden" name="expenses_costs_hidden">
             </div>
             <div class="form-group">
-                <label for="debt_loan">Debt/Loan</label>
-                <input type="number" id="debt_loan" name="debt_loan" step="0.01" required>
+                <label for="debt_loan">Debt/Loan (required)</label>
+                <input type="text" id="debt_loan" name="debt_loan" placeholder="e.g., 10,000" required onkeyup="formatNumber(this)">
+                <input type="hidden" id="debt_loan_hidden" name="debt_loan_hidden">
             </div>
             <div class="form-group">
-                <label for="debt_interest_rate">Debt Interest Rate (%)</label>
-                <input type="number" id="debt_interest_rate" name="debt_interest_rate" step="0.01" required>
+                <label for="debt_interest_rate">Debt Interest Rate (%) (required)</label>
+                <input type="text" id="debt_interest_rate" name="debt_interest_rate" placeholder="e.g., 5" step="0.01" required onkeyup="formatNumber(this)">
+                <input type="hidden" id="debt_interest_rate_hidden" name="debt_interest_rate_hidden">
             </div>
             <div class="form-group">
-                <label for="phone_number">Phone Number</label>
-                <input type="text" id="phone_number" name="phone_number">
+                <label for="phone_number">Phone Number (optional)</label>
+                <input type="text" id="phone_number" name="phone_number" placeholder="e.g., +1234567890">
             </div>
             <div class="form-group">
                 <label for="user_type">User Type</label>
                 <select id="user_type" name="user_type">
-                    <option value="Individual">Individual</option>
-                    <option value="Business">Business</option>
+                    <option value="individual">Individual</option>
+                    <option value="business">Business</option>
                 </select>
             </div>
-            <button type="submit">Submit</button>
+            <div class="form-group">
+                <label for="email">Email (optional, for report delivery)</label>
+                <input type="email" id="email" name="email" placeholder="e.g., user@example.com">
+            </div>
+            <button type="submit">Submit Assessment</button>
         </form>
     </div>
+
+    <script>
+        function formatNumber(input) {
+            // Remove non-numeric characters except for decimal point
+            let value = input.value.replace(/[^0-9.]/g, '');
+            // Ensure only one decimal point
+            const parts = value.split('.');
+            if (parts.length > 2) {
+                value = parts[0] + '.' + parts.slice(1).join('');
+            }
+            // Format the integer part with commas
+            const [integerPart, decimalPart] = value.split('.');
+            const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+            // Reconstruct the value
+            input.value = decimalPart !== undefined ? `${formattedInteger}.${decimalPart}` : formattedInteger;
+            // Update hidden input with unformatted value
+            const hiddenInput = document.getElementById(`${input.id}_hidden`);
+            hiddenInput.value = value.replace(/,/g, '');
+        }
+
+        function validateForm() {
+            const requiredFields = ['income_revenue', 'expenses_costs', 'debt_loan', 'debt_interest_rate'];
+            for (let field of requiredFields) {
+                const hiddenInput = document.getElementById(`${field}_hidden`);
+                const value = hiddenInput.value ? parseFloat(hiddenInput.value) : null;
+                if (!value || value < 0 || isNaN(value)) {
+                    alert(`Please enter a valid non-negative value for ${field.replace('_', ' ').replace('income revenue', 'Income/Revenue').replace('expenses costs', 'Expenses/Costs').replace('debt loan', 'Debt/Loan').replace('debt interest rate', 'Debt Interest Rate')}.`);
+                    return false;
+                }
+            }
+            // Update form inputs with unformatted values before submission
+            requiredFields.forEach(field => {
+                const input = document.getElementById(field);
+                const hiddenInput = document.getElementById(`${field}_hidden`);
+                input.value = hiddenInput.value;
+            });
+            return true;
+        }
+    </script>
 </body>
 </html>
