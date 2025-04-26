@@ -87,7 +87,7 @@
             background-color: #218838;
         }
 
-        .dashboard-link {
+        .dashboard-link, .register-link {
             display: inline-block;
             margin-top: 15px;
             padding: 10px 20px;
@@ -99,7 +99,7 @@
             transition: background-color 0.3s;
         }
 
-        .dashboard-link:hover {
+        .dashboard-link:hover, .register-link:hover {
             background-color: #1976D2;
         }
 
@@ -134,9 +134,18 @@
         </div>
         {% endif %}
 
+        {% if email != 'anonymous@ficore.ai' %}
         <a href="/download_report/{{ email }}" class="download-btn">📥 Download Your PDF Report</a>
+        {% else %}
+        <p style="margin-top: 25px; color: #777;">Register to download your PDF report!</p>
+        {% endif %}
 
+        {% if current_user.is_authenticated %}
         <a href="{{ url_for('dashboard') }}" class="dashboard-link">📊 View Your Dashboard</a>
+        {% else %}
+        <p style="margin-top: 15px; color: #777;">Want to save your submission history?</p>
+        <a href="{{ url_for('register') }}" class="register-link">📝 Register Now</a>
+        {% endif %}
 
         <div class="footer">
             Powered by Ficore AI - Financial Growth Passport for Africa 🌍
