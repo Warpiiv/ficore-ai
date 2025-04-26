@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ficore AI - Error</title>
+    <title>Error - Ficore AI</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -16,64 +16,61 @@
             padding: 20px;
             box-sizing: border-box;
         }
-
         .container {
             background: white;
             padding: 2rem;
             border-radius: 10px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
             width: 100%;
-            max-width: 600px;
+            max-width: 500px;
             text-align: center;
             box-sizing: border-box;
         }
-
         h2 {
-            color: #d32f2f;
-            font-size: 1.8rem;
+            color: #d32f2f; /* Red for error */
             margin-bottom: 1rem;
         }
-
         p {
             font-size: 1rem;
             color: #333;
             margin-bottom: 1rem;
         }
-
-        a {
-            color: #007bff;
+        .contact {
+            font-size: 0.9rem;
+            color: #1976D2; /* Blue for links */
+            margin-top: 1rem;
+        }
+        .back-button {
+            display: inline-block;
+            margin-top: 1rem;
+            padding: 0.75rem 1.5rem;
+            background-color: #28a745; /* Green to match Ficore AI theme */
+            color: white;
             text-decoration: none;
+            border-radius: 5px;
+            font-size: 1rem;
+            transition: background-color 0.3s;
         }
-
-        a:hover {
-            text-decoration: underline;
+        .back-button:hover {
+            background-color: #218838; /* Darker green on hover */
         }
-
         @media (max-width: 768px) {
-            body {
-                padding: 10px;
-            }
-
             .container {
                 padding: 1.5rem;
+                max-width: 90%;
             }
-
             h2 {
                 font-size: 1.5rem;
             }
-
             p {
                 font-size: 0.9rem;
             }
-        }
-
-        @media (max-width: 480px) {
-            h2 {
-                font-size: 1.3rem;
-            }
-
-            p {
+            .contact {
                 font-size: 0.85rem;
+            }
+            .back-button {
+                padding: 0.6rem 1.2rem;
+                font-size: 0.9rem;
             }
         }
     </style>
@@ -82,7 +79,8 @@
     <div class="container">
         <h2>Oops, Something Went Wrong</h2>
         <p>{{ message }}</p>
-        <p>Need help? Contact us at <a href="mailto:Ficoreai@outlook.com">Ficoreai@outlook.com</a>.</p>
+        <a href="{{ url_for('home') }}" class="back-button">Click Here to Go Back</a>
+        <p class="contact">Need help? Contact us at <a href="mailto:Ficoreai@outlook.com">Ficoreai@outlook.com</a>.</p>
     </div>
 </body>
 </html>
