@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Submission History - Ficore AI</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(to right, #e0f7fa, #f1f8e9);
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+        .container {
+            background: white;
+            max-width: 900px;
+            margin: auto;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+        h2, h3 {
+            color: #2E7D32;
+            text-align: center;
+        }
+        .message {
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        .message.info {
+            background-color: #E3F2FD;
+            color: #0D47A1;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            padding: 10px;
+            border: 1px solid #ddd;
+            text-align: left;
+        }
+        th {
+            background-color: #F1F8E9;
+            color: #1B5E20;
+        }
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        .chart-section {
+            background: #FAFAFA;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 25px;
+        }
+        .back-link {
+            text-align: center;
+            margin-top: 20px;
+        }
+        .back-link a {
+            color: #2196F3;
+            text-decoration: none;
+        }
+        .back-link a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>📜 Your Submission History</h2>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="message {{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        {% if submissions %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Business Name</th>
+                        <th>Health Score</th>
+                        <th>Advice</th>
+                        <th>Badges</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for submission in submissions %}
+                        <tr>
+                            <td>{{ submission.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                            <td>{{ submission.business_name }}</td>
+                            <td>{{ submission.health_score }}</td>
+                            <td>{{ submission.score_description }}</td>
+                            <td>{{ submission.badges }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            <div class="chart-section">
+                <h3>📈 Health Score Trend</h3>
+                {{ trend_plot | safe }}
+            </div>
+        {% else %}
+            <p>No submissions found.</p>
+        {% endif %}
+        <div class="back-link">
+            <a href="{{ url_for('dashboard') }}">Back to Dashboard</a>
+        </div>
+    </div>
+</body>
+</html>
