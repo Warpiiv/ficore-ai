@@ -349,6 +349,9 @@ def submit():
             debt_interest_rate, auto_email, phone_number, first_name, last_name,
             user_type, email, ""  # Empty Badges column
         ]
+        # Verify the number of columns matches PREDETERMINED_HEADERS
+        if len(data) != len(PREDETERMINED_HEADERS):
+            raise ValueError(f"Data column count ({len(data)}) does not match expected headers ({len(PREDETERMINED_HEADERS)}).")
         append_to_sheet(data)
 
         # Fetch updated data
