@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 
 # Initialize Flask app
 app = Flask(__name__, template_folder='ficore_templates')
-app.secret_key = os.urandom(24)  # Required for Flask-Login and sessions
+app.secret_key = os.urandom(24)
 
 # Load environment variables
 load_dotenv()
@@ -99,6 +99,11 @@ PREDETERMINED_HEADERS = [
 
 # Calculate Financial Health Score
 def calculate_health_score(df):
+    # Ensure numeric columns are float and handle missing/invalid values
+    numeric_cols = ['income_revenue', 'expenses_costs', 'debt_loan', 'debt_interest_rate']
+    for col in numeric_cols:
+        df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0)
+
     df['HealthScore'] = 0.0
     df['IncomeRevenueSafe'] = df['income_revenue'].replace(0, 1e-10)
     df['CashFlowRatio'] = (df['income_revenue'] - df['expenses_costs']) / df['IncomeRevenueSafe']
@@ -306,6 +311,7 @@ def logout():
 @app.route('/submit', methods=['POST'])
 def submit():
     try:
+        # Validate required fields
         required_fields = ['income_revenue', 'expenses_costs', 'debt_loan', 'debt_interest_rate']
         for field in required_fields:
             if field not in request.form or not request.form[field]:
@@ -346,6 +352,16 @@ def submit():
         if all_submissions.empty:
             all_submissions = pd.DataFrame(columns=PREDETERMINED_HEADERS + ['email'])
 
+        # Clean all_submissions to ensure required columns exist and are numeric
+        required_columns = ['income_revenue', 'expenses_costs', 'debt_loan', 'debt_interest_rate', 'email']
+        for col in required_columns:
+            if col not in all_submissions.columns:
+                all_submissions[col] = 0 if col != 'email' else 'anonymous@ficore.ai'
+        # Convert numeric columns to float, replacing invalid values with 0
+        numeric_cols = ['income_revenue', 'expenses_costs', 'debt_loan', 'debt_interest_rate']
+        for col in numeric_cols:
+            all_submissions[col] = pd.to_numeric(all_submissions[col], errors='coerce').fillna(0)
+
         temp_df = pd.DataFrame([data])
         temp_df = calculate_health_score(temp_df)
 
@@ -364,10 +380,24 @@ def submit():
             session.commit()
             session.close()
 
+        # Recalculate scores for all submissions
+        session = Session()
         all_submissions = pd.read_sql(session.query(Submission).statement, session.bind)
-        all_submissions = calculate_health_score(all_submissions)
-        all_submissions = all_submissions.sort_values(by='HealthScore', ascending=False)
-        all_submissions['Rank'] = range(1, len(all_submissions) + 1)
+        session.close()
+
+        # Clean again to ensure consistency
+        for col in required_columns:
+            if col not in all_submissions.columns:
+                all_submissions[col] = 0 if col != 'email' else 'anonymous@ficore.ai'
+        for col in numeric_cols:
+            all_submissions[col] = pd.to_numeric(all_submissions[col], errors='coerce').fillna(0)
+
+        if not all_submissions.empty:
+            all_submissions = calculate_health_score(all_submissions)
+            all_submissions = all_submissions.sort_values(by='HealthScore', ascending=False)
+            all_submissions['Rank'] = range(1, len(all_submissions) + 1)
+        else:
+            all_submissions = pd.DataFrame(columns=list(temp_df.columns) + ['Rank'])
 
         user_df = all_submissions[all_submissions['email'] == email] if current_user.is_authenticated else temp_df
         user_row = user_df.iloc[-1]
