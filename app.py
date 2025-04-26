@@ -23,20 +23,20 @@ load_dotenv()
 # Constants for Google Sheets
 SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
 SPREADSHEET_ID = '13hbiMTMRBHo9MHjWwcugngY_aSiuxII67HCf03MiZ8I'
-DATA_RANGE_NAME = 'Sheet1!A1:L'
+DATA_RANGE_NAME = 'Sheet1!A1:M'  # Updated range to include new Badges column
 RESULTS_SHEET_NAME = 'FicoreAIResults'
 RESULTS_HEADER = ['Email', 'FicoreAIScore', 'FicoreAIRank']
 FEEDBACK_FORM_URL = 'https://forms.gle/NkiLicSykLyMnhJk7'
 WAITLIST_FORM_URL = 'https://forms.gle/3kXnJuDatTm8bT3x7'
 CONSULTANCY_FORM_URL = 'https://forms.gle/rfHhpD71MjLpET2K9'
-# Course URLs (replace with actual links to courses)
-INVESTING_COURSE_URL = 'https://ficoreai.com/courses/investing-2025'
-SAVINGS_COURSE_URL = 'https://ficoreai.com/courses/savings-2025'
-DEBT_COURSE_URL = 'https://ficoreai.com/courses/debt-management-2025'
-RECOVERY_COURSE_URL = 'https://ficoreai.com/courses/financial-recovery-2025'
+# Course URLs updated to YouTube channel videos
+INVESTING_COURSE_URL = 'https://youtube.com/watch?v=investing-2025-video-id'
+SAVINGS_COURSE_URL = 'https://youtube.com/watch?v=savings-2025-video-id'
+DEBT_COURSE_URL = 'https://youtube.com/watch?v=debt-management-2025-video-id'
+RECOVERY_COURSE_URL = 'https://youtube.com/watch?v=financial-recovery-2025-video-id'
 PREDETERMINED_HEADERS = [
     'Timestamp', 'BusinessName', 'IncomeRevenue', 'ExpensesCosts', 'DebtLoan',
-    'DebtInterestRate', 'AutoEmail', 'PhoneNumber', 'FirstName', 'LastName', 'UserType', 'Email'
+    'DebtInterestRate', 'AutoEmail', 'PhoneNumber', 'FirstName', 'LastName', 'UserType', 'Email', 'Badges'
 ]
 
 # Authenticate with Google Sheets
@@ -106,7 +106,7 @@ def fetch_data_from_sheet():
         print(f"Error fetching data from Google Sheet: {e}")
         raise
 
-# Calculate Financial Health Score and determine course suggestion
+# Calculate Financial Health Score, determine course suggestion, and assign badges
 def calculate_health_score(df):
     try:
         df['HealthScore'] = 0.0
@@ -164,6 +164,74 @@ def calculate_health_score(df):
     except Exception as e:
         print(f"Error calculating health score: {e}")
         raise
+
+# Assign badges based on user submission
+def assign_badges(user_df, all_users_df):
+    badges = []
+    user_row = user_df.iloc[0]
+    email = user_row['Email']
+    health_score = user_row['HealthScore']
+    current_debt = user_row['DebtLoan']
+
+    # Check for "First Health Score Completed!" badge
+    user_submissions = all_users_df[all_users_df['Email'] == email]
+    if len(user_submissions) == 1:  # This is the user's first submission
+        badges.append("First Health Score Completed!")
+
+    # Check for "Financial Stability Achieved!" badge
+    if health_score > 80:
+        badges.append("Financial Stability Achieved!")
+
+    # Check for "Debt Slayer!" badge
+    if len(user_submissions) > 1:  # User has previous submissions
+        previous_submission = user_submissions.iloc[-2]  # Second-to-last submission
+        previous_debt = float(previous_submission['DebtLoan'])
+        if current_debt < previous_debt:
+            badges.append("Debt Slayer!")
+
+    return badges
+
+# Update badges in Google Sheet
+def update_badges_in_sheet(email, new_badges):
+    try:
+        service = authenticate_google_sheets()
+        sheet = service.spreadsheets()
+        result = sheet.values().get(spreadsheetId=SPREADSHEET_ID, range=DATA_RANGE_NAME).execute()
+        values = result.get('values', [])
+        if not values:
+            return
+
+        headers = values[0]
+        rows = values[1:]
+        badge_col_idx = headers.index('Badges')
+
+        # Find all rows for the user
+        user_row_indices = [i + 1 for i, row in enumerate(rows) if row[headers.index('Email')] == email]
+        if not user_row_indices:
+            return
+
+        # Get existing badges from the latest submission
+        latest_row_idx = user_row_indices[-1]
+        existing_badges = rows[latest_row_idx - 1][badge_col_idx] if badge_col_idx < len(rows[latest_row_idx - 1]) else ""
+        existing_badges_list = existing_badges.split(",") if existing_badges else []
+
+        # Combine existing and new badges, removing duplicates
+        combined_badges = list(set(existing_badges_list + new_badges))
+        if "" in combined_badges:
+            combined_badges.remove("")
+
+        # Update all rows for the user with the combined badges
+        for row_idx in user_row_indices:
+            range_to_update = f'Sheet1!{chr(65 + badge_col_idx)}{row_idx + 1}'
+            body = {'values': [[",".join(combined_badges)]]}
+            sheet.values().update(
+                spreadsheetId=SPREADSHEET_ID,
+                range=range_to_update,
+                valueInputOption='RAW',
+                body=body
+            ).execute()
+    except Exception as e:
+        print(f"Error updating badges in sheet: {e}")
 
 # Send Email with course suggestion
 def send_email(recipient_email, user_name, health_score, score_description, course_title, course_url, rank, total_users):
@@ -275,11 +343,11 @@ def submit():
         if auto_email != email:
             return "Error: Email addresses do not match.", 400
 
-        # Prepare data for Google Sheet
+        # Prepare data for Google Sheet (with empty Badges column initially)
         data = [
             timestamp, business_name, income_revenue, expenses_costs, debt_loan,
             debt_interest_rate, auto_email, phone_number, first_name, last_name,
-            user_type, email
+            user_type, email, ""  # Empty Badges column
         ]
         append_to_sheet(data)
 
@@ -319,12 +387,30 @@ def submit():
         course_title = user_row['CourseTitle']
         course_url = user_row['CourseURL']
 
+        # Assign badges
+        new_badges = assign_badges(user_df, all_users_df)
+        update_badges_in_sheet(email, new_badges)
+
+        # Fetch updated data again to get badges
+        sheet_data = fetch_data_from_sheet()
+        all_users_df = pd.DataFrame(sheet_data[1:], columns=sheet_data[0])
+        user_df = all_users_df[all_users_df['Email'] == email]
+        user_row = user_df.iloc[-1]  # Latest submission
+        badges = user_row['Badges'].split(",") if user_row['Badges'] else []
+
+        # Generate personalized message
+        personalized_message = ""
+        if "First Health Score Completed!" in new_badges:
+            personalized_message = "🎉 Congratulations, you earned your first badge: Financial Explorer!"
+        elif new_badges:
+            personalized_message = f"🎉 Great job! You earned a new badge: {new_badges[-1]}"
+
         # Send email with course suggestion
         user_name = f"{first_name} {last_name}"
         send_email(email, user_name, health_score, score_description, course_title, course_url, rank, total_users)
 
         # Redirect to dashboard
-        return redirect(url_for('dashboard', email=email))
+        return redirect(url_for('dashboard', email=email, personalized_message=personalized_message))
     except ValueError as e:
         return render_template('error.html', message=f"Invalid input format: {str(e)}. Please ensure all numeric fields contain valid numbers. Contact Ficoreai@outlook.com for support."), 400
     except Exception as e:
@@ -335,8 +421,9 @@ def submit():
 @app.route('/dashboard')
 def dashboard():
     try:
-        # Get the user's email from query parameters
+        # Get the user's email and personalized message from query parameters
         email = request.args.get('email', 'test@example.com')
+        personalized_message = request.args.get('personalized_message', '')
 
         # Fetch data from Google Sheets
         sheet_data = fetch_data_from_sheet()
@@ -365,14 +452,15 @@ def dashboard():
         if user_df.empty:
             return render_template('error.html', message=f"No data found for user with email: {email}. Please contact Ficoreai@outlook.com for support."), 500
 
-        # Extract user data
-        user_row = user_df.iloc[0]
+        # Extract user data (latest submission)
+        user_row = user_df.iloc[-1]
         health_score = user_row['HealthScore']
         rank = user_row['Rank']
         total_users = len(all_users_df)
         score_description = user_row['ScoreDescription']
         course_title = user_row['CourseTitle']
         course_url = user_row['CourseURL']
+        badges = user_row['Badges'].split(",") if user_row['Badges'] else []
         cash_flow_score = round(user_row['NormCashFlow'] * 100, 2)
         debt_to_income_score = round(user_row['NormDebtToIncome'] * 100, 2)
         debt_interest_score = round(user_row['NormDebtInterest'] * 100, 2)
@@ -434,6 +522,8 @@ def dashboard():
             score_description=score_description,
             course_title=course_title,
             course_url=course_url,
+            badges=badges,
+            personalized_message=personalized_message,
             breakdown_plot=breakdown_plot,
             comparison_plot=comparison_plot
         )
