@@ -4,172 +4,235 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ficore AI Dashboard</title>
-    <!-- Include Plotly.js for charts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <style>
-        /* General Styles */
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(to right, #e0f7fa, #f1f8e9);
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(to bottom, #F5F7FA, #E3F2FD);
             margin: 0;
-            padding: 20px;
-            color: #333;
+            padding: 40px;
+            color: #2D3748;
+            transition: all 0.3s ease;
         }
 
         .container {
-            background: white;
-            max-width: 900px;
+            max-width: 1200px;
             margin: auto;
-            padding: 30px;
-            border-radius: 15px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 2rem;
+            animation: fadeIn 0.5s ease;
         }
 
-        h2, h3 {
-            color: #2E7D32;
-            text-align: center;
+        .card {
+            background: #FFFFFF;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s ease;
         }
 
-        .welcome-message {
-            background-color: #C8E6C9;
-            padding: 15px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-            text-align: center;
+        .card:hover {
+            transform: translateY(-4px);
+        }
+
+        .profile-card {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            background: linear-gradient(135deg, #28A745, #1E88E5);
+            color: white;
+            padding: 2rem;
+            border-radius: 12px;
+        }
+
+        .profile-card img {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .profile-info h2 {
+            font-size: 1.8rem;
+            font-weight: 600;
+            margin: 0;
+        }
+
+        .profile-info p {
             font-size: 1rem;
+            font-weight: 300;
+            margin: 0.5rem 0;
         }
 
-        .welcome-message p {
-            margin: 5px 0;
-            color: #1B5E20;
+        .score-card h3 {
+            color: #28A745;
+            font-size: 1.8rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
         }
 
-        .spam-note {
-            font-size: 0.9rem;
-            color: #555;
-            margin-top: 5px;
-        }
-
-        .personalized-message {
-            background: #FFECB3;
-            padding: 15px;
-            border-radius: 10px;
-            text-align: center;
-            color: #6D4C41;
-            margin-bottom: 25px;
+        .score-card p {
             font-size: 1.1rem;
+            color: #718096;
+            margin: 0.5rem 0;
         }
 
-        .score-section {
-            background-color: #F1F8E9;
-            padding: 20px;
-            border-radius: 10px;
-            margin-bottom: 25px;
-        }
-
-        .score-section p {
-            font-size: 1.1rem;
-            margin: 5px 0;
-            text-align: center;
-        }
-
-        .badges-section {
-            background: #FFF8E1;
-            padding: 20px;
-            border-radius: 10px;
-            margin-bottom: 25px;
-            text-align: center;
+        .badges-card h3 {
+            color: #1E88E5;
+            font-size: 1.5rem;
+            font-weight: 500;
+            margin-bottom: 1rem;
         }
 
         .badge {
-            display: inline-block;
-            background-color: #FFCA28;
-            color: #333;
-            padding: 8px 15px;
-            margin: 5px;
+            display: inline-flex;
+            align-items: center;
+            background: #FFCA28;
+            color: #2D3748;
+            padding: 0.6rem 1.2rem;
+            margin: 0.5rem;
             border-radius: 20px;
             font-size: 0.95rem;
-            font-weight: bold;
+            font-weight: 500;
             box-shadow: 0 2px 5px rgba(0,0,0,0.2);
         }
 
-        .recommended-learning {
-            background: #E3F2FD;
-            padding: 20px;
-            border-radius: 10px;
-            margin-bottom: 25px;
-            text-align: center;
+        .badge i {
+            margin-right: 0.5rem;
         }
 
-        .recommended-learning p {
+        .learning-card h3 {
+            color: #1E88E5;
+            font-size: 1.5rem;
+            font-weight: 500;
+            margin-bottom: 1rem;
+        }
+
+        .learning-card p {
             font-size: 1.1rem;
-            margin-bottom: 15px;
-            color: #0D47A1;
+            color: #718096;
+            margin-bottom: 1.5rem;
         }
 
-        .recommended-learning a {
+        .learning-card a {
             display: inline-block;
-            background-color: #2196F3;
+            background: linear-gradient(135deg, #28A745, #1E88E5);
             color: white;
             text-decoration: none;
-            padding: 10px 20px;
-            border-radius: 5px;
+            padding: 0.8rem 1.5rem;
+            border-radius: 6px;
             font-size: 1rem;
-            transition: background-color 0.3s;
+            font-weight: 500;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
 
-        .recommended-learning a:hover {
-            background-color: #1976D2;
+        .learning-card a:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
         }
 
-        .chart-section {
-            background: #FAFAFA;
-            padding: 20px;
-            border-radius: 10px;
-            margin-bottom: 25px;
+        .chart-card h3 {
+            color: #2D3748;
+            font-size: 1.5rem;
+            font-weight: 500;
+            margin-bottom: 1rem;
         }
 
         .coming-soon {
-            background-color: #FFF3E0;
-            padding: 15px;
-            border-radius: 10px;
+            background: #FFF3E0;
+            padding: 1.5rem;
+            border-radius: 12px;
             text-align: center;
             font-style: italic;
             color: #EF6C00;
             font-size: 1rem;
-            margin-top: 30px;
+            margin-top: 2rem;
+            grid-column: span 2;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @media (min-width: 768px) {
+            .container {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .profile-card, .score-card {
+                grid-column: span 2;
+            }
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 20px;
+            }
+
+            .container {
+                gap: 1.5rem;
+            }
+
+            .profile-card {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .profile-card img {
+                width: 60px;
+                height: 60px;
+            }
+
+            .profile-info h2 {
+                font-size: 1.5rem;
+            }
+
+            .score-card h3 {
+                font-size: 1.6rem;
+            }
+
+            .badges-card h3, .learning-card h3, .chart-card h3 {
+                font-size: 1.3rem;
+            }
+
+            .coming-soon {
+                grid-column: span 1;
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="welcome-message">
-            <p>🎉 Thanks! Check your email for personalized feedback and check your dashboard below!</p>
-            <p class="spam-note">📩 (Check your spam/promotion folder if not received in a few minutes.)</p>
+        <div class="profile-card card">
+            <img src="https://via.placeholder.com/80" alt="Profile Image">
+            <div class="profile-info">
+                <h2>{{ first_name }} {{ last_name }}</h2>
+                <p>Email: {{ email }}</p>
+                <p>Rank: #{{ rank }} of {{ total_users }}</p>
+            </div>
         </div>
 
-        {% if personalized_message %}
-        <div class="personalized-message">
-            <p>{{ personalized_message }}</p>
-        </div>
-        {% endif %}
-
-        <div class="score-section">
-            <h2>🏆 Your Financial Health Score: {{ health_score }}/100</h2>
+        <div class="score-card card">
+            <h3>🏆 Your Financial Health Score: {{ health_score }}/100</h3>
             <p><strong>📌 Advice:</strong> {{ score_description }}</p>
-            <p><strong>📈 Rank:</strong> #{{ rank }} out of {{ total_users }} users</p>
         </div>
 
         {% if badges %}
-        <div class="badges-section">
+        <div class="badges-card card">
             <h3>🎖 Your Badges</h3>
             {% for badge in badges %}
-            <span class="badge">{{ badge }}</span>
+            <span class="badge">
+                <i class="fas fa-medal"></i>{{ badge }}
+            </span>
             {% endfor %}
         </div>
         {% endif %}
 
-        <div class="recommended-learning">
+        <div class="learning-card card">
             <h3>📚 Recommended Learning</h3>
             <p>
                 {% if score_description == "Stable; invest excess now" %}
@@ -187,19 +250,35 @@
             <a href="{{ course_url }}">{{ course_title }}</a>
         </div>
 
-        <div class="chart-section">
+        <div class="chart-card card">
             <h3>📊 Score Breakdown</h3>
             {{ breakdown_plot | safe }}
         </div>
 
-        <div class="chart-section">
+        <div class="chart-card card">
             <h3>📈 Comparison with Others</h3>
             {{ comparison_plot | safe }}
         </div>
 
-        <div class="coming-soon">
+        <div class="coming-soon card">
             <p>🚀 Coming Soon: Downloadable PDF Reports for Your Financial Health Score!</p>
         </div>
     </div>
+
+    <script>
+        // Apply Plotly modern theme
+        document.addEventListener('DOMContentLoaded', () => {
+            const charts = document.querySelectorAll('.plotly-graph-div');
+            charts.forEach(chart => {
+                Plotly.relayout(chart.id, {
+                    plot_bgcolor: '#F5F7FA',
+                    paper_bgcolor: '#FFFFFF',
+                    font: { family: 'Poppins', size: 14, color: '#2D3748' },
+                    xaxis: { gridcolor: '#E2E8F0' },
+                    yaxis: { gridcolor: '#E2E8F0' }
+                });
+            });
+        });
+    </script>
 </body>
 </html>
