@@ -3,35 +3,130 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Submission Successful - Ficore AI</title>
+    <title>Ficore AI - Submission Successful</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
-            max-width: 800px;
-            margin: 0 auto;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(to right, #e0f7fa, #f1f8e9);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
             padding: 20px;
-            background-color: #f4f4f4;
+        }
+
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
             text-align: center;
+            max-width: 500px;
+            width: 100%;
         }
+
         h1 {
-            color: #28a745;
+            color: #2E7D32;
+            margin-bottom: 10px;
         }
+
         p {
-            color: #333;
+            font-size: 1.1rem;
+            margin: 10px 0;
+            color: #555;
         }
-        a {
-            color: #007bff;
+
+        .health-score {
+            margin-top: 20px;
+            font-size: 1.2rem;
+            background-color: #C8E6C9;
+            padding: 15px;
+            border-radius: 10px;
+            color: #1B5E20;
+            font-weight: bold;
+        }
+
+        .advice {
+            margin-top: 15px;
+            font-size: 1rem;
+            color: #1976D2;
+            background: #BBDEFB;
+            padding: 10px;
+            border-radius: 10px;
+        }
+
+        .rank-info {
+            margin-top: 15px;
+            font-size: 1rem;
+            color: #FF8F00;
+        }
+
+        .download-btn {
+            display: inline-block;
+            margin-top: 25px;
+            padding: 15px 25px;
+            background-color: #28a745;
+            color: white;
+            font-size: 1.1rem;
+            border-radius: 8px;
             text-decoration: none;
+            transition: background-color 0.3s;
         }
-        a:hover {
-            text-decoration: underline;
+
+        .download-btn:hover {
+            background-color: #218838;
+        }
+
+        .dashboard-link {
+            display: inline-block;
+            margin-top: 15px;
+            padding: 10px 20px;
+            background-color: #2196F3;
+            color: white;
+            font-size: 1rem;
+            border-radius: 8px;
+            text-decoration: none;
+            transition: background-color 0.3s;
+        }
+
+        .dashboard-link:hover {
+            background-color: #1976D2;
+        }
+
+        .footer {
+            margin-top: 30px;
+            font-size: 0.9rem;
+            color: #777;
         }
     </style>
 </head>
 <body>
-    <h1>Submission Successful!</h1>
-    <p>Thank you, {{ data.first_name }} {{ data.last_name }}! Your financial data has been submitted successfully.</p>
-    <p>You’ll receive an email at <strong>{{ data.email_typed }}</strong> with your Financial Health Score and personalized advice shortly.</p>
-    <p><a href="/">Submit another entry</a></p>
+
+    <div class="container">
+        <h1>🎉 Submission Successful!</h1>
+        <p>Thank you, <strong>{{ first_name }}</strong>!</p>
+
+        <div class="health-score">
+            Your Financial Health Score: {{ health_score }}/100
+        </div>
+
+        <div class="advice">
+            📢 <strong>Advice:</strong> {{ score_description }}
+        </div>
+
+        <div class="rank-info">
+            🏆 Rank: #{{ rank }} out of {{ total_users }} users
+        </div>
+
+        <a href="/download_report/{{ email }}" class="download-btn">📥 Download Your PDF Report</a>
+
+        <a href="{{ url_for('dashboard') }}" class="dashboard-link">📊 View Your Dashboard</a>
+
+        <div class="footer">
+            Powered by Ficore AI - Financial Growth Passport for Africa 🌍
+        </div>
+    </div>
+
 </body>
 </html>
