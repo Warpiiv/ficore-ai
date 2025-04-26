@@ -3,178 +3,273 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ficore AI - Financial Health Assessment</title>
+    <title>Ficore AI - Financial Health Score</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(to right, #e0f7fa, #f1f8e9);
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(to bottom, #F5F7FA, #E3F2FD);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
             margin: 0;
-            padding: 20px;
-            color: #333;
+            padding: 40px;
+            box-sizing: border-box;
+            transition: all 0.3s ease;
         }
+
         .container {
-            background: white;
-            max-width: 600px;
-            margin: auto;
-            padding: 30px;
-            border-radius: 15px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            background: #FFFFFF;
+            padding: 2.5rem;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 700px;
+            box-sizing: border-box;
+            animation: fadeIn 0.5s ease;
         }
-        h1 {
-            color: #2E7D32;
+
+        h2 {
             text-align: center;
+            color: #28A745;
+            font-size: 2rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
         }
-        .tagline {
+
+        .subheading {
             text-align: center;
             font-style: italic;
             color: #1E88E5;
-            margin-bottom: 20px;
             font-size: 1rem;
+            font-weight: 300;
+            margin-bottom: 2rem;
         }
+
+        .section-group {
+            background: #F5F7FA;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+        }
+
+        .section-group h3 {
+            color: #2D3748;
+            font-size: 1.25rem;
+            font-weight: 500;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+        }
+
+        .section-group h3 i {
+            margin-right: 0.5rem;
+            color: #1E88E5;
+        }
+
         .form-group {
-            margin-bottom: 15px;
+            margin-bottom: 1.5rem;
         }
+
         label {
             display: block;
-            margin-bottom: 5px;
-            font-weight: bold;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            font-size: 1rem;
+            color: #2D3748;
         }
+
         input, select {
             width: 100%;
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
+            padding: 0.9rem;
+            border: 1px solid #CBD5E0;
+            border-radius: 6px;
             font-size: 1rem;
+            box-sizing: border-box;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
         }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #1E88E5;
+            box-shadow: 0 0 8px rgba(30, 136, 229, 0.2);
+        }
+
         button {
-            background-color: #2196F3;
-            color: white;
-            padding: 10px 20px;
-            border: none;
-            border-radius: 5px;
-            font-size: 1rem;
-            cursor: pointer;
             width: 100%;
+            padding: 1.2rem;
+            background: linear-gradient(135deg, #28A745, #1E88E5);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 1.2rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
+
         button:hover {
-            background-color: #1976D2;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
         }
-        .auth-links {
-            text-align: center;
-            margin-bottom: 20px;
+
+        .note {
+            font-size: 0.85rem;
+            color: #718096;
+            margin-bottom: 0.5rem;
         }
-        .auth-links a {
-            color: #2196F3;
-            text-decoration: none;
-            margin: 0 10px;
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
         }
-        .auth-links a:hover {
-            text-decoration: underline;
+
+        /* Mobile-specific styles */
+        @media (max-width: 768px) {
+            body {
+                padding: 20px;
+            }
+
+            .container {
+                padding: 2rem;
+                max-width: 100%;
+            }
+
+            h2 {
+                font-size: 1.8rem;
+            }
+
+            .subheading {
+                font-size: 0.9rem;
+            }
+
+            .section-group h3 {
+                font-size: 1.1rem;
+            }
+
+            input, select {
+                font-size: 0.9rem;
+                padding: 0.8rem;
+            }
+
+            button {
+                font-size: 1.1rem;
+                padding: 1rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            h2 {
+                font-size: 1.5rem;
+            }
+
+            .subheading {
+                font-size: 0.85rem;
+            }
+
+            .section-group h3 {
+                font-size: 1rem;
+            }
+
+            input, select {
+                font-size: 0.85rem;
+                padding: 0.7rem;
+            }
+
+            button {
+                font-size: 1rem;
+                padding: 0.9rem;
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Ficore AI Financial Health Assessment</h1>
-        <div class="tagline">
-            Financial growth passport for Africa - democratizing finances for Africa’s SMEs and individuals
-        </div>
-        {% if current_user.is_authenticated %}
-            <div class="auth-links">
-                <p>Welcome, {{ current_user.first_name }}! <a href="{{ url_for('dashboard') }}">Go to Dashboard</a> | <a href="{{ url_for('logout') }}">Logout</a></p>
+        <h2>Ficore AI Financial Health Score</h2>
+        <p class="subheading">Financial growth passport for Africa - democratizing finances for Africa’s SMEs and individuals...</p>
+        <form action="/submit" method="POST">
+            <div class="section-group">
+                <h3><i class="fas fa-user"></i> Personal Information</h3>
+                <div class="form-group">
+                    <label for="first_name">First Name *</label>
+                    <input type="text" id="first_name" name="first_name" required>
+                </div>
+                <div class="form-group">
+                    <label for="last_name">Last Name *</label>
+                    <input type="text" id="last_name" name="last_name" required>
+                </div>
+                <div class="form-group">
+                    <label for="auto_email">Your Email Address (for receiving your Health Score) *</label>
+                    <input type="email" id="auto_email" name="auto_email" required>
+                </div>
+                <div class="form-group">
+                    <label for="email">Confirm Email Address *</label>
+                    <input type="email" id="email" name="email" required>
+                </div>
+                <div class="form-group">
+                    <label for="phone_number">Phone Number *</label>
+                    <div class="note">For your Ficore reports</div>
+                    <input type="text" id="phone_number" name="phone_number" required>
+                </div>
             </div>
-        {% else %}
-            <div class="auth-links">
-                <a href="{{ url_for('login') }}">Login</a> | <a href="{{ url_for('register') }}">Register</a>
+
+            <div class="section-group">
+                <h3><i class="fas fa-briefcase"></i> User Type</h3>
+                <div class="form-group">
+                    <label for="business_name">Business Name *</label>
+                    <div class="note">If you don't have a business, enter your full name.</div>
+                    <input type="text" id="business_name" name="business_name" required>
+                </div>
+                <div class="form-group">
+                    <label for="user_type">Are you an Individual or SME? *</label>
+                    <div class="note">INDIVIDUAL or BUSINESS?</div>
+                    <select id="user_type" name="user_type" required>
+                        <option value="" disabled selected>Select an option</option>
+                        <option value="Individual">Individual</option>
+                        <option value="SME">SME</option>
+                    </select>
+                </div>
             </div>
-        {% endif %}
-        <form method="POST" action="{{ url_for('submit') }}" onsubmit="return validateForm()">
-            <div class="form-group">
-                <label for="business_name">Business Name (optional)</label>
-                <input type="text" id="business_name" name="business_name" placeholder="e.g., My Business">
+
+            <div class="section-group">
+                <h3><i class="fas fa-coins"></i> Financial Information</h3>
+                <div class="form-group">
+                    <label for="income_revenue">Total Income/Revenue (₦) *</label>
+                    <input type="text" id="income_revenue" name="income_revenue" required oninput="formatNumber(this)">
+                </div>
+                <div class="form-group">
+                    <label for="expenses_costs">Total Expenses/Costs (₦) *</label>
+                    <input type="text" id="expenses_costs" name="expenses_costs" required oninput="formatNumber(this)">
+                </div>
+                <div class="form-group">
+                    <label for="debt_loan">Total Debt/Loan (₦) *</label>
+                    <input type="text" id="debt_loan" name="debt_loan" required oninput="formatNumber(this)">
+                </div>
+                <div class="form-group">
+                    <label for="debt_interest_rate">Debt Interest Rate (%) *</label>
+                    <input type="text" id="debt_interest_rate" name="debt_interest_rate" required oninput="formatNumber(this)">
+                </div>
             </div>
-            <div class="form-group">
-                <label for="income_revenue">Income/Revenue (required)</label>
-                <input type="text" id="income_revenue" name="income_revenue" placeholder="e.g., 50,000" required onkeyup="formatNumber(this)">
-                <input type="hidden" id="income_revenue_hidden" name="income_revenue_hidden">
-            </div>
-            <div class="form-group">
-                <label for="expenses_costs">Expenses/Costs (required)</label>
-                <input type="text" id="expenses_costs" name="expenses_costs" placeholder="e.g., 30,000" required onkeyup="formatNumber(this)">
-                <input type="hidden" id="expenses_costs_hidden" name="expenses_costs_hidden">
-            </div>
-            <div class="form-group">
-                <label for="debt_loan">Debt/Loan (required)</label>
-                <input type="text" id="debt_loan" name="debt_loan" placeholder="e.g., 10,000" required onkeyup="formatNumber(this)">
-                <input type="hidden" id="debt_loan_hidden" name="debt_loan_hidden">
-            </div>
-            <div class="form-group">
-                <label for="debt_interest_rate">Debt Interest Rate (%) (required)</label>
-                <input type="text" id="debt_interest_rate" name="debt_interest_rate" placeholder="e.g., 5" step="0.01" required onkeyup="formatNumber(this)">
-                <input type="hidden" id="debt_interest_rate_hidden" name="debt_interest_rate_hidden">
-            </div>
-            <div class="form-group">
-                <label for="phone_number">Phone Number (optional)</label>
-                <input type="text" id="phone_number" name="phone_number" placeholder="e.g., +1234567890">
-            </div>
-            <div class="form-group">
-                <label for="user_type">User Type</label>
-                <select id="user_type" name="user_type">
-                    <option value="individual">Individual</option>
-                    <option value="business">Business</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label for="email">Email (optional, for report delivery)</label>
-                <input type="email" id="email" name="email" placeholder="e.g., user@example.com">
-            </div>
-            <button type="submit">Submit Assessment</button>
+
+            <button type="submit">Submit</button>
         </form>
     </div>
 
     <script>
         function formatNumber(input) {
-            // Remove non-numeric characters except for decimal point
-            let value = input.value.replace(/[^0-9.]/g, '');
-            // Ensure only one decimal point
-            const parts = value.split('.');
-            if (parts.length > 2) {
-                value = parts[0] + '.' + parts.slice(1).join('');
+            let value = input.value.replace(/,/g, '');
+            if (value === '' || isNaN(value)) {
+                input.value = '';
+                return;
             }
-            // Format the integer part with commas
-            const [integerPart, decimalPart] = value.split('.');
-            const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-            // Reconstruct the value
-            input.value = decimalPart !== undefined ? `${formattedInteger}.${decimalPart}` : formattedInteger;
-            // Update hidden input with unformatted value
-            const hiddenInput = document.getElementById(`${input.id}_hidden`);
-            hiddenInput.value = value.replace(/,/g, '');
-        }
-
-        function validateForm() {
-            const requiredFields = ['income_revenue', 'expenses_costs', 'debt_loan', 'debt_interest_rate'];
-            for (let field of requiredFields) {
-                const hiddenInput = document.getElementById(`${field}_hidden`);
-                const valueStr = hiddenInput.value;
-                // Check if the field is empty or not a valid number
-                if (valueStr === '' || isNaN(valueStr)) {
-                    alert(`Please enter a valid number for ${field.replace('_', ' ').replace('income revenue', 'Income/Revenue').replace('expenses costs', 'Expenses/Costs').replace('debt loan', 'Debt/Loan').replace('debt interest rate', 'Debt Interest Rate')}.`);
-                    return false;
-                }
-                const value = parseFloat(valueStr);
-                // Only check for non-negative (allow 0)
-                if (value < 0) {
-                    alert(`Please enter a non-negative value for ${field.replace('_', ' ').replace('income revenue', 'Income/Revenue').replace('expenses costs', 'Expenses/Costs').replace('debt loan', 'Debt/Loan').replace('debt interest rate', 'Debt Interest Rate')}.`);
-                    return false;
-                }
+            let num = parseFloat(value);
+            if (num === 0) {
+                input.value = '0';
+            } else {
+                input.value = num.toLocaleString('en-US', { minimumFractionDigits: 0 });
             }
-            // Update form inputs with unformatted values before submission
-            requiredFields.forEach(field => {
-                const input = document.getElementById(field);
-                const hiddenInput = document.getElementById(`${field}_hidden`);
-                input.value = hiddenInput.value;
-            });
-            return true;
         }
     </script>
 </body>
