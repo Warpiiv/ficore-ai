@@ -28,13 +28,12 @@ load_dotenv()
 # Constants for Google Sheets
 SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
 SPREADSHEET_ID = '13hbiMTMRBHo9MHjWwcugngY_aSiuxII67HCf03MiZ8I'
-DATA_RANGE_NAME = 'Sheet1!A1:M'  # Updated range to include new Badges column
+DATA_RANGE_NAME = 'Sheet1!A1:M'
 RESULTS_SHEET_NAME = 'FicoreAIResults'
 RESULTS_HEADER = ['Email', 'FicoreAIScore', 'FicoreAIRank']
 FEEDBACK_FORM_URL = 'https://forms.gle/NkiLicSykLyMnhJk7'
 WAITLIST_FORM_URL = 'https://forms.gle/3kXnJuDatTm8bT3x7'
 CONSULTANCY_FORM_URL = 'https://forms.gle/rfHhpD71MjLpET2K9'
-# Course URLs updated to YouTube channel videos
 INVESTING_COURSE_URL = 'https://youtube.com/watch?v=investing-2025-video-id'
 SAVINGS_COURSE_URL = 'https://youtube.com/watch?v=savings-2025-video-id'
 DEBT_COURSE_URL = 'https://youtube.com/watch?v=debt-management-2025-video-id'
@@ -89,7 +88,7 @@ def get_row_count():
         logger.error(f"Error getting row count: {e}")
         raise
 
-# Append data to Google Sheet using update to ensure all columns are set
+# Append data to Google Sheet with badges included
 def append_to_sheet(data):
     try:
         service = authenticate_google_sheets()
@@ -103,21 +102,21 @@ def append_to_sheet(data):
 
         # Append the data by updating the next row
         range_to_update = f'Sheet1!A{row_count + 1}:M{row_count + 1}'
-        body = {'values': [data]}  # data already has 13 elements
+        body = {'values': [data]}
         sheet.values().update(
             spreadsheetId=SPREADSHEET_ID,
             range=range_to_update,
             valueInputOption='RAW',
             body=body
         ).execute()
-        logger.info(f"Data appended to sheet at row {row_count + 1}.")
+        logger.info(f"Appending data with badges to sheet at row {row_count + 1}: {data[-1]}")
         time.sleep(1)  # Small delay to allow propagation
     except Exception as e:
         logger.error(f"Error appending to sheet: {e}")
         raise
 
 # Fetch data from Google Sheet with retry mechanism
-def fetch_data_from_sheet(max_retries=3, delay=1):
+def fetch_data_from_sheet(max_retries=5, delay=2):
     for attempt in range(max_retries):
         try:
             service = authenticate_google_sheets()
@@ -130,7 +129,7 @@ def fetch_data_from_sheet(max_retries=3, delay=1):
             if not values:
                 logger.info(f"Attempt {attempt + 1}: No data found in Google Sheet.")
                 if attempt < max_retries - 1:
-                    time.sleep(delay)
+                    time.sleep(delay * (2 ** attempt))
                     continue
                 return None
             
@@ -148,7 +147,7 @@ def fetch_data_from_sheet(max_retries=3, delay=1):
                 set_sheet_headers()
                 if not rows:
                     if attempt < max_retries - 1:
-                        time.sleep(delay)
+                        time.sleep(delay * (2 ** attempt))
                         continue
                     return None
                 # Normalize rows to match expected columns
@@ -191,7 +190,7 @@ def fetch_data_from_sheet(max_retries=3, delay=1):
         except Exception as e:
             logger.error(f"Attempt {attempt + 1}: Error fetching data from Google Sheet: {e}")
             if attempt < max_retries - 1:
-                time.sleep(delay)
+                time.sleep(delay * (2 ** attempt))
                 continue
             raise
     raise Exception("Max retries reached while fetching data from Google Sheet.")
@@ -286,67 +285,6 @@ def assign_badges(user_df, all_users_df):
     logger.debug(f"Assigned badges for email {email}: {badges}")
     return badges
 
-# Update badges in Google Sheet
-def update_badges_in_sheet(email, new_badges):
-    try:
-        logger.debug(f"Starting badge update for email: {email} with new badges: {new_badges}")
-        service = authenticate_google_sheets()
-        sheet = service.spreadsheets()
-        result = sheet.values().get(spreadsheetId=SPREADSHEET_ID, range=DATA_RANGE_NAME).execute()
-        values = result.get('values', [])
-        if not values:
-            logger.info("No data found in Google Sheet for badge update.")
-            return
-
-        headers = values[0]
-        rows = values[1:]
-        logger.debug(f"Fetched headers for badge update: {headers}")
-        logger.debug(f"Fetched rows for badge update: {rows}")
-
-        badge_col_idx = headers.index('Badges')
-        logger.debug(f"Badge column index: {badge_col_idx}")
-
-        # Find all rows for the user
-        email_col_idx = headers.index('Email')
-        user_row_indices = [i + 1 for i, row in enumerate(rows) if len(row) > email_col_idx and row[email_col_idx] == email]
-        if not user_row_indices:
-            logger.warning(f"No rows found for email: {email}")
-            return
-
-        logger.debug(f"Found user rows at indices: {user_row_indices}")
-
-        # Get existing badges from the latest submission
-        latest_row_idx = user_row_indices[-1]
-        latest_row = rows[latest_row_idx - 1]
-        existing_badges = latest_row[badge_col_idx] if badge_col_idx < len(latest_row) else ""
-        existing_badges_list = existing_badges.split(",") if existing_badges else []
-        logger.debug(f"Existing badges for row {latest_row_idx}: {existing_badges_list}")
-
-        # Combine existing and new badges, removing duplicates
-        combined_badges = list(set(existing_badges_list + new_badges))
-        if "" in combined_badges:
-            combined_badges.remove("")
-
-        # Update all rows for the user with the combined badges
-        for row_idx in user_row_indices:
-            range_to_update = f'Sheet1!{chr(65 + badge_col_idx)}{row_idx + 1}'
-            badge_value = ",".join(combined_badges) if combined_badges else ""
-            body = {'values': [[badge_value]]}
-            logger.debug(f"Updating badges at range {range_to_update} with value: {badge_value}")
-            sheet.values().update(
-                spreadsheetId=SPREADSHEET_ID,
-                range=range_to_update,
-                valueInputOption='RAW',
-                body=body
-            ).execute()
-            logger.debug(f"Badge update successful for row {row_idx + 1}")
-        logger.info(f"Updated badges for email {email}: {combined_badges}")
-        time.sleep(1)  # Small delay to allow propagation
-    except Exception as e:
-        logger.error(f"Error updating badges in sheet for email {email}: {e}")
-        # Continue without badges to avoid blocking the user
-        return
-
 # Send Email with course suggestion
 def send_email(recipient_email, user_name, health_score, score_description, course_title, course_url, rank, total_users):
     sender_email = os.environ.get('SENDER_EMAIL')
@@ -440,19 +378,29 @@ def home():
 @app.route('/submit', methods=['POST'])
 def submit():
     try:
-        # Extract form data
+        # Extract and validate form data
         timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         business_name = request.form.get('business_name')
-        income_revenue = float(request.form.get('income_revenue').replace(',', ''))
-        expenses_costs = float(request.form.get('expenses_costs').replace(',', ''))
-        debt_loan = float(request.form.get('debt_loan').replace(',', ''))
-        debt_interest_rate = float(request.form.get('debt_interest_rate').replace(',', ''))
+        income_revenue = request.form.get('income_revenue')
+        expenses_costs = request.form.get('expenses_costs')
+        debt_loan = request.form.get('debt_loan')
+        debt_interest_rate = request.form.get('debt_interest_rate')
         auto_email = request.form.get('auto_email')
         phone_number = request.form.get('phone_number')
         first_name = request.form.get('first_name')
         last_name = request.form.get('last_name')
         user_type = request.form.get('user_type')
         email = request.form.get('email')
+
+        # Validate required fields
+        if not all([business_name, income_revenue, expenses_costs, debt_loan, debt_interest_rate, email]):
+            return render_template('error.html', message="All fields are required."), 400
+
+        # Convert and validate numeric fields
+        income_revenue = float(income_revenue.replace(',', ''))
+        expenses_costs = float(expenses_costs.replace(',', ''))
+        debt_loan = float(debt_loan.replace(',', ''))
+        debt_interest_rate = float(debt_interest_rate.replace(',', ''))
 
         if auto_email != email:
             logger.error("Email addresses do not match.")
@@ -462,11 +410,25 @@ def submit():
         data = [
             timestamp, business_name, income_revenue, expenses_costs, debt_loan,
             debt_interest_rate, auto_email, phone_number, first_name, last_name,
-            user_type, email, ""  # Empty Badges column
+            user_type, email, ""
         ]
-        # Verify the number of columns matches PREDETERMINED_HEADERS
         if len(data) != len(PREDETERMINED_HEADERS):
             raise ValueError(f"Data column count ({len(data)}) does not match expected headers ({len(PREDETERMINED_HEADERS)}).")
+
+        # Fetch all users data to determine badges
+        all_users_df = fetch_data_from_sheet()
+        if all_users_df is None or all_users_df.empty:
+            all_users_df = pd.DataFrame(columns=PREDETERMINED_HEADERS)
+
+        # Calculate health score and badges for the new submission
+        temp_df = pd.DataFrame([data], columns=PREDETERMINED_HEADERS)
+        for col in ['IncomeRevenue', 'ExpensesCosts', 'DebtLoan', 'DebtInterestRate']:
+            temp_df[col] = pd.to_numeric(temp_df[col], errors='coerce').fillna(0)
+        temp_df = calculate_health_score(temp_df)
+        new_badges = assign_badges(temp_df, all_users_df)
+        data[-1] = ",".join(new_badges)  # Update badges in the data
+
+        # Append data with badges
         logger.debug(f"Appending data to sheet: {data}")
         append_to_sheet(data)
 
@@ -495,25 +457,13 @@ def submit():
             return render_template('error.html', message=f"No data found for user with email: {email}. Please contact Ficoreai@outlook.com for support."), 500
 
         # Extract user data
-        user_row = user_df.iloc[0]
+        user_row = user_df.iloc[-1]
         health_score = user_row['HealthScore']
         rank = user_row['Rank']
         total_users = len(all_users_df)
         score_description = user_row['ScoreDescription']
         course_title = user_row['CourseTitle']
         course_url = user_row['CourseURL']
-
-        # Assign badges
-        new_badges = assign_badges(user_df, all_users_df)
-        update_badges_in_sheet(email, new_badges)
-
-        # Fetch updated data again to get badges
-        all_users_df = fetch_data_from_sheet()
-        if all_users_df is None or all_users_df.empty:
-            logger.warning("No data found in Google Sheet after updating badges.")
-            return render_template('error.html', message="No data found in Google Sheet after updating badges. Please try again later or contact Ficoreai@outlook.com for support."), 500
-        user_df = all_users_df[all_users_df['Email'] == email]
-        user_row = user_df.iloc[-1]  # Latest submission
         badges = user_row['Badges'].split(",") if user_row['Badges'] else []
 
         # Generate personalized message
@@ -525,7 +475,9 @@ def submit():
 
         # Send email with course suggestion
         user_name = f"{first_name} {last_name}"
-        send_email(email, user_name, health_score, score_description, course_title, course_url, rank, total_users)
+        email_sent = send_email(email, user_name, health_score, score_description, course_title, course_url, rank, total_users)
+        if not email_sent:
+            personalized_message += " ⚠️ Unable to send email report. Please check your spam folder or contact support."
 
         # Redirect to dashboard
         return redirect(url_for('dashboard', email=email, personalized_message=personalized_message))
@@ -568,6 +520,14 @@ def dashboard():
             logger.warning(f"No data found for user with email: {email} in dashboard.")
             return render_template('error.html', message=f"No data found for user with email: {email}. Please contact Ficoreai@outlook.com for support."), 500
 
+        # Ensure badges are present
+        user_row = user_df.iloc[-1]
+        if not user_row['Badges']:
+            user_df = calculate_health_score(user_df)
+            new_badges = assign_badges(user_df, all_users_df)
+            user_df['Badges'] = ",".join(new_badges)
+            # Update the sheet if necessary (optional, since we now include badges on append)
+
         # Extract user data (latest submission)
         user_row = user_df.iloc[-1]
         health_score = user_row['HealthScore']
@@ -582,7 +542,6 @@ def dashboard():
         debt_interest_score = round(user_row['NormDebtInterest'] * 100, 2)
 
         # Create Plotly charts
-        # Score Breakdown Bar Chart
         breakdown_data = {
             "Component": ["Cash Flow", "Debt-to-Income Ratio", "Debt Interest Burden"],
             "Score": [cash_flow_score, debt_to_income_score, debt_interest_score]
@@ -601,7 +560,6 @@ def dashboard():
         fig_breakdown.update_layout(showlegend=False)
         breakdown_plot = fig_breakdown.to_html(full_html=False, include_plotlyjs=False)
 
-        # Comparison Line Chart
         fig_comparison = go.Figure()
         fig_comparison.add_trace(
             go.Scatter(
@@ -629,7 +587,6 @@ def dashboard():
         )
         comparison_plot = fig_comparison.to_html(full_html=False, include_plotlyjs=False)
 
-        # Render the dashboard template
         return render_template(
             'dashboard.html',
             health_score=health_score,
@@ -647,7 +604,12 @@ def dashboard():
         logger.error(f"Error rendering dashboard: {e}")
         return render_template('error.html', message=f"Error rendering dashboard: {str(e)}. We’re sorry for the inconvenience—please try again later or contact Ficoreai@outlook.com for support."), 500
 
+# Global error handler
+@app.errorhandler(Exception)
+def handle_exception(e):
+    logger.error(f"Unhandled exception: {e}")
+    return render_template('error.html', message="An unexpected error occurred. Please try again later or contact Ficoreai@outlook.com for support."), 500
+
 if __name__ == "__main__":
-    # For Render, bind to 0.0.0.0 and use the PORT environment variable
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=False)
