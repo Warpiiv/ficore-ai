@@ -252,7 +252,7 @@ def calculate_health_score(df):
                         RECOVERY_COURSE_URL)
 
         df[['ScoreDescription', 'CourseTitle', 'CourseURL']] = df.apply(
-            score_description_and_course, Evolucionar, axis=1, result_type='expand')
+            score_description_and_course, axis=1, result_type='expand')
         return df
     except Exception as e:
         logger.error(f"Error calculating health score: {e}")
@@ -319,7 +319,7 @@ def send_email(recipient_email, user_name, health_score, score_description, cour
         <p>Follow the advice above to improve your financial health. We’re here to support you every step of the way—take one small action today to grow stronger financially for your business, your goals, and your future!</p>
         <p style="margin-bottom: 10px;">
             Want to learn more? Check out this course: 
-            <a href="{course_url}" style="display: inline-block; padding: 10px  soggetto: 20px; background-color: #FBC02D; color: #333; text-decoration: none; border-radius: 5px; font-size: 0.9rem; transition: background-color 0.3s;">{course_title}</a>
+            <a href="{course_url}" style="display: inline-block; padding: 10px 20px; background-color: #FBC02D; color: #333; text-decoration: none; border-radius: 5px; font-size: 0.9rem; transition: background-color 0.3s;">{course_title}</a>
         </p>
         <p style="margin-bottom: 10px;">
             Please provide feedback on your experience: 
