@@ -371,6 +371,8 @@ def dashboard():
         rank = user_row['Rank']
         total_users = len(all_users_df)
         score_description = user_row['ScoreDescription']
+        course_title = user_row['CourseTitle']
+        course_url = user_row['CourseURL']
         cash_flow_score = round(user_row['NormCashFlow'] * 100, 2)
         debt_to_income_score = round(user_row['NormDebtToIncome'] * 100, 2)
         debt_interest_score = round(user_row['NormDebtInterest'] * 100, 2)
@@ -430,6 +432,8 @@ def dashboard():
             rank=int(rank),
             total_users=total_users,
             score_description=score_description,
+            course_title=course_title,
+            course_url=course_url,
             breakdown_plot=breakdown_plot,
             comparison_plot=comparison_plot
         )
