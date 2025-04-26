@@ -48,11 +48,17 @@
             border-radius: 12px;
         }
 
-        .profile-card img {
+        .profile-images {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .profile-images img {
             width: 80px;
             height: 80px;
             border-radius: 50%;
-            object-fit: cover;
+            object-fit: contain;
         }
 
         .profile-info h2 {
@@ -182,7 +188,7 @@
                 text-align: center;
             }
 
-            .profile-card img {
+            .profile-images img {
                 width: 60px;
                 height: 60px;
             }
@@ -208,7 +214,10 @@
 <body>
     <div class="container">
         <div class="profile-card card">
-            <img src="https://via.placeholder.com/80" alt="Profile Image">
+            <div class="profile-images">
+                <img src="{{ url_for('static', filename='img/ficore_logo.png') }}" alt="Ficore Logo">
+                <img src="https://ui-avatars.com/api/?name={{ first_name | urlencode }}+{{ last_name | urlencode }}&size=80&background=FFFFFF&color=2D3748" alt="User Avatar">
+            </div>
             <div class="profile-info">
                 <h2>{{ first_name }} {{ last_name }}</h2>
                 <p>Email: {{ email }}</p>
