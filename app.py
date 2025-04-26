@@ -34,10 +34,10 @@ RESULTS_HEADER = ['Email', 'FicoreAIScore', 'FicoreAIRank']
 FEEDBACK_FORM_URL = 'https://forms.gle/NkiLicSykLyMnhJk7'
 WAITLIST_FORM_URL = 'https://forms.gle/3kXnJuDatTm8bT3x7'
 CONSULTANCY_FORM_URL = 'https://forms.gle/rfHhpD71MjLpET2K9'
-INVESTING_COURSE_URL = 'https://youtube.com/watch?v=investing-2025-video-id'
-SAVINGS_COURSE_URL = 'https://youtube.com/watch?v=savings-2025-video-id'
-DEBT_COURSE_URL = 'https://youtube.com/watch?v=debt-management-2025-video-id'
-RECOVERY_COURSE_URL = 'https://youtube.com/watch?v=financial-recovery-2025-video-id'
+INVESTING_COURSE_URL = 'https://youtube.com/@ficore.ai.africa?si=myoEpotNALfGK4eI'
+SAVINGS_COURSE_URL = 'https://youtube.com/@ficore.ai.africa?si=myoEpotNALfGK4eI'
+DEBT_COURSE_URL = 'https://youtube.com/@ficore.ai.africa?si=myoEpotNALfGK4eI'
+RECOVERY_COURSE_URL = 'https://youtube.com/@ficore.ai.africa?si=myoEpotNALfGK4eI'
 PREDETERMINED_HEADERS = [
     'Timestamp', 'BusinessName', 'IncomeRevenue', 'ExpensesCosts', 'DebtLoan',
     'DebtInterestRate', 'AutoEmail', 'PhoneNumber', 'FirstName', 'LastName', 'UserType', 'Email', 'Badges'
