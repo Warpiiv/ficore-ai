@@ -101,7 +101,29 @@ def fetch_data_from_sheet():
         values = result.get('values', [])
         if not values:
             return None
-        return values
+        
+        # Ensure all expected columns are present
+        headers = values[0]
+        rows = values[1:] if len(values) > 1 else []
+        expected_columns = PREDETERMINED_HEADERS
+        
+        # If headers don't match expected columns, reset the headers
+        if headers != expected_columns:
+            set_sheet_headers()
+            # If there were no rows, return None to indicate the sheet was reset
+            if not rows:
+                return None
+            # Otherwise, adjust the rows to match the expected columns
+            for i in range(len(rows)):
+                row = rows[i]
+                if len(row) < len(expected_columns):
+                    rows[i] = row + [""] * (len(expected_columns) - len(row))
+                elif len(row) > len(expected_columns):
+                    rows[i] = row[:len(expected_columns)]
+        
+        # Create DataFrame with expected columns
+        df = pd.DataFrame(rows, columns=expected_columns)
+        return df
     except Exception as e:
         print(f"Error fetching data from Google Sheet: {e}")
         raise
@@ -355,14 +377,9 @@ def submit():
         append_to_sheet(data)
 
         # Fetch updated data
-        sheet_data = fetch_data_from_sheet()
-        if not sheet_data:
-            return render_template('error.html', message="No data found in Google Sheet. Please try again later or contact Ficoreai@outlook.com for support."), 500
-
-        # Convert to DataFrame
-        headers = sheet_data[0]
-        rows = sheet_data[1:]
-        all_users_df = pd.DataFrame(rows, columns=headers)
+        all_users_df = fetch_data_from_sheet()
+        if all_users_df is None:
+            return render_template('error.html', message="No data found in Google Sheet after submission. Please try again later or contact Ficoreai@outlook.com for support."), 500
 
         # Convert numeric columns to float
         numeric_cols = ['IncomeRevenue', 'ExpensesCosts', 'DebtLoan', 'DebtInterestRate']
@@ -395,8 +412,9 @@ def submit():
         update_badges_in_sheet(email, new_badges)
 
         # Fetch updated data again to get badges
-        sheet_data = fetch_data_from_sheet()
-        all_users_df = pd.DataFrame(sheet_data[1:], columns=sheet_data[0])
+        all_users_df = fetch_data_from_sheet()
+        if all_users_df is None:
+            return render_template('error.html', message="No data found in Google Sheet after updating badges. Please try again later or contact Ficoreai@outlook.com for support."), 500
         user_df = all_users_df[all_users_df['Email'] == email]
         user_row = user_df.iloc[-1]  # Latest submission
         badges = user_row['Badges'].split(",") if user_row['Badges'] else []
@@ -429,14 +447,9 @@ def dashboard():
         personalized_message = request.args.get('personalized_message', '')
 
         # Fetch data from Google Sheets
-        sheet_data = fetch_data_from_sheet()
-        if not sheet_data:
+        all_users_df = fetch_data_from_sheet()
+        if all_users_df is None:
             return render_template('error.html', message="No data found in Google Sheet. Please try again later or contact Ficoreai@outlook.com for support."), 500
-
-        # Convert to DataFrame
-        headers = sheet_data[0]
-        rows = sheet_data[1:]
-        all_users_df = pd.DataFrame(rows, columns=headers)
 
         # Convert numeric columns to float
         numeric_cols = ['IncomeRevenue', 'ExpensesCosts', 'DebtLoan', 'DebtInterestRate']
