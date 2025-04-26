@@ -24,6 +24,16 @@
             box-sizing: border-box;
         }
 
+        .welcome-message {
+            background-color: #e8f5e9;
+            padding: 1rem;
+            border-radius: 5px;
+            text-align: center;
+            font-size: 1rem;
+            color: #2E7D32;
+            margin-bottom: 1.5rem;
+        }
+
         h2 {
             text-align: center;
             color: #2c3e50;
@@ -75,6 +85,11 @@
                 padding: 1.5rem;
             }
 
+            .welcome-message {
+                font-size: 0.9rem;
+                padding: 0.8rem;
+            }
+
             h2 {
                 font-size: 1.5rem;
             }
@@ -90,6 +105,11 @@
         }
 
         @media (max-width: 480px) {
+            .welcome-message {
+                font-size: 0.85rem;
+                padding: 0.6rem;
+            }
+
             h2 {
                 font-size: 1.3rem;
             }
@@ -107,6 +127,9 @@
 </head>
 <body>
     <div class="container">
+        <div class="welcome-message">
+            Thanks! Check your email for personalized feedback, and check your dashboard below!
+        </div>
         <h2>Your Financial Health Dashboard</h2>
         <p><strong>Financial Health Score:</strong> {{ health_score }}/100</p>
         <p><strong>Rank:</strong> #{{ rank }} out of {{ total_users }} users</p>
