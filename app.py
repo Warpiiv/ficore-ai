@@ -306,18 +306,26 @@ def logout():
 @app.route('/submit', methods=['POST'])
 def submit():
     try:
+        required_fields = ['income_revenue', 'expenses_costs', 'debt_loan', 'debt_interest_rate']
+        for field in required_fields:
+            if field not in request.form or not request.form[field]:
+                raise ValueError(f"Missing or empty required field: {field}")
+
         timestamp = datetime.utcnow()
-        business_name = request.form.get('business_name')
-        income_revenue = float(request.form.get('income_revenue').replace(',', ''))
-        expenses_costs = float(request.form.get('expenses_costs').replace(',', ''))
-        debt_loan = float(request.form.get('debt_loan').replace(',', ''))
-        debt_interest_rate = float(request.form.get('debt_interest_rate').replace(',', ''))
-        phone_number = request.form.get('phone_number')
-        user_type = request.form.get('user_type')
+        business_name = request.form.get('business_name', '')
+        income_revenue = float(request.form['income_revenue'].replace(',', ''))
+        expenses_costs = float(request.form['expenses_costs'].replace(',', ''))
+        debt_loan = float(request.form['debt_loan'].replace(',', ''))
+        debt_interest_rate = float(request.form['debt_interest_rate'].replace(',', ''))
+        phone_number = request.form.get('phone_number', '')
+        user_type = request.form.get('user_type', 'individual')
         email = request.form.get('email', 'anonymous@ficore.ai')
 
+        if any(x < 0 for x in [income_revenue, expenses_costs, debt_loan, debt_interest_rate]):
+            raise ValueError("Numeric fields must be non-negative.")
+
         data = {
-            'timestamp': timestamp,
+            'timestamp': timestamp.isoformat(),
             'business_name': business_name,
             'income_revenue': income_revenue,
             'expenses_costs': expenses_costs,
@@ -389,6 +397,9 @@ def submit():
             email=email,
             personalized_message=personalized_message
         )
+    except ValueError as ve:
+        logger.error(f"Validation error in form submission: {ve}")
+        return render_template('error.html', error_message=f"Invalid input: {str(ve)}. Please check your data and try again.")
     except Exception as e:
         logger.error(f"Error in form submission: {e}")
         return render_template('error.html', error_message=f"Error processing your submission: {str(e)}. Please try again later.")
@@ -505,7 +516,6 @@ def history():
         user_submissions = calculate_health_score(user_submissions)
         submissions_list = user_submissions.to_dict('records')
 
-        # Create a trend chart for health scores over time
         fig_trend = px.line(
             user_submissions,
             x='timestamp',
