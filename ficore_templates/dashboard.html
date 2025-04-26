@@ -3,150 +3,78 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ficore AI - Dashboard</title>
+    <title>Ficore AI Dashboard</title>
+    <!-- Include Plotly.js for charts -->
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
-            background-color: #f4f4f4;
-            margin: 0;
-            padding: 20px;
-            box-sizing: border-box;
-        }
-
-        .container {
-            background: white;
-            padding: 2rem;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
             max-width: 800px;
             margin: 0 auto;
-            box-sizing: border-box;
-        }
-
-        .welcome-message {
-            background-color: #e8f5e9;
-            padding: 1rem;
-            border-radius: 5px;
-            text-align: center;
-            font-size: 1rem;
-            color: #2E7D32;
-            margin-bottom: 1.5rem;
-        }
-
-        h2 {
-            text-align: center;
-            color: #2c3e50;
-            font-size: 1.8rem;
-            margin-bottom: 1rem;
-        }
-
-        p {
-            font-size: 1rem;
+            padding: 20px;
             color: #333;
-            margin-bottom: 1rem;
         }
-
-        .coming-soon {
-            background-color: #e9ecef;
-            padding: 1rem;
+        .welcome-message {
+            background-color: #E0F7FA;
+            padding: 15px;
             border-radius: 5px;
-            margin-top: 1.5rem;
+            margin-bottom: 20px;
+            text-align: center;
         }
-
-        .coming-soon h3 {
-            margin-top: 0;
-            font-size: 1.2rem;
-            color: #555;
-        }
-
-        .back-button {
-            display: inline-block;
-            margin-top: 1.5rem;
-            padding: 0.75rem 1.5rem;
-            background-color: #007bff;
-            color: white;
-            text-decoration: none;
-            border-radius: 5px;
+        .welcome-message p {
+            margin: 0;
             font-size: 1rem;
-            transition: background-color 0.3s;
+            color: #1976D2;
         }
-
-        .back-button:hover {
-            background-color: #0056b3;
+        .welcome-message .spam-note {
+            font-size: 0.9rem;
+            color: #555;
+            margin-top: 5px;
         }
-
-        @media (max-width: 768px) {
-            body {
-                padding: 10px;
-            }
-
-            .container {
-                padding: 1.5rem;
-            }
-
-            .welcome-message {
-                font-size: 0.9rem;
-                padding: 0.8rem;
-            }
-
-            h2 {
-                font-size: 1.5rem;
-            }
-
-            p {
-                font-size: 0.9rem;
-            }
-
-            .back-button {
-                font-size: 0.9rem;
-                padding: 0.6rem 1.2rem;
-            }
+        .score-section {
+            margin-bottom: 30px;
         }
-
-        @media (max-width: 480px) {
-            .welcome-message {
-                font-size: 0.85rem;
-                padding: 0.6rem;
-            }
-
-            h2 {
-                font-size: 1.3rem;
-            }
-
-            p {
-                font-size: 0.85rem;
-            }
-
-            .back-button {
-                font-size: 0.85rem;
-                padding: 0.5rem 1rem;
-            }
+        .score-section h2 {
+            color: #2E7D32;
+        }
+        .chart-section {
+            margin-bottom: 30px;
+        }
+        .coming-soon {
+            background-color: #FFF3E0;
+            padding: 10px;
+            border-radius: 5px;
+            text-align: center;
+            font-style: italic;
+            color: #EF6C00;
+            margin-top: 20px;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="welcome-message">
-            Thanks! Check your email for personalized feedback, and check your dashboard below!
-        </div>
-        <h2>Your Financial Health Dashboard</h2>
-        <p><strong>Financial Health Score:</strong> {{ health_score }}/100</p>
-        <p><strong>Rank:</strong> #{{ rank }} out of {{ total_users }} users</p>
-        <p><strong>Advice:</strong> {{ score_description }}</p>
+    <div class="welcome-message">
+        <p>Thanks! Check your email for personalized feedback, and check your dashboard below!</p>
+        <p class="spam-note">Check your spam/promotion folder if not received in a few minutes.</p>
+    </div>
 
+    <div class="score-section">
+        <h2>Your Financial Health Score: {{ health_score }}/100</h2>
+        <p><strong>Advice:</strong> {{ score_description }}</p>
+        <p><strong>Rank:</strong> #{{ rank }} out of {{ total_users }} users</p>
+    </div>
+
+    <div class="chart-section">
         <h3>Score Breakdown</h3>
         {{ breakdown_plot | safe }}
+    </div>
 
+    <div class="chart-section">
         <h3>Comparison with Others</h3>
         {{ comparison_plot | safe }}
+    </div>
 
-        <div class="coming-soon">
-            <h3>Coming Soon</h3>
-            <p>Downloadable PDF reports and deeper analytics to help you grow.</p>
-        </div>
-
-        <a href="/" class="back-button">Back to Home</a>
+    <div class="coming-soon">
+        <p>Coming Soon: Downloadable PDF Reports for Your Financial Health Score!</p>
     </div>
 </body>
 </html>
