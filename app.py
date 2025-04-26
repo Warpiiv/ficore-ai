@@ -301,4 +301,353 @@ def update_badges_in_sheet(email, new_badges):
         headers = values[0]
         rows = values[1:]
         logger.debug(f"Fetched headers for badge update: {headers}")
-        logger.debug(f"F
+        logger.debug(f"Fetched rows for badge update: {rows}")
+
+        badge_col_idx = headers.index('Badges')
+        logger.debug(f"Badge column index: {badge_col_idx}")
+
+        # Find all rows for the user
+        email_col_idx = headers.index('Email')
+        user_row_indices = [i + 1 for i, row in enumerate(rows) if len(row) > email_col_idx and row[email_col_idx] == email]
+        if not user_row_indices:
+            logger.warning(f"No rows found for email: {email}")
+            return
+
+        logger.debug(f"Found user rows at indices: {user_row_indices}")
+
+        # Get existing badges from the latest submission
+        latest_row_idx = user_row_indices[-1]
+        latest_row = rows[latest_row_idx - 1]
+        existing_badges = latest_row[badge_col_idx] if badge_col_idx < len(latest_row) else ""
+        existing_badges_list = existing_badges.split(",") if existing_badges else []
+        logger.debug(f"Existing badges for row {latest_row_idx}: {existing_badges_list}")
+
+        # Combine existing and new badges, removing duplicates
+        combined_badges = list(set(existing_badges_list + new_badges))
+        if "" in combined_badges:
+            combined_badges.remove("")
+
+        # Update all rows for the user with the combined badges
+        for row_idx in user_row_indices:
+            range_to_update = f'Sheet1!{chr(65 + badge_col_idx)}{row_idx + 1}'
+            badge_value = ",".join(combined_badges) if combined_badges else ""
+            body = {'values': [[badge_value]]}
+            logger.debug(f"Updating badges at range {range_to_update} with value: {badge_value}")
+            sheet.values().update(
+                spreadsheetId=SPREADSHEET_ID,
+                range=range_to_update,
+                valueInputOption='RAW',
+                body=body
+            ).execute()
+            logger.debug(f"Badge update successful for row {row_idx + 1}")
+        logger.info(f"Updated badges for email {email}: {combined_badges}")
+        time.sleep(1)  # Small delay to allow propagation
+    except Exception as e:
+        logger.error(f"Error updating badges in sheet for email {email}: {e}")
+        # Continue without badges to avoid blocking the user
+        return
+
+# Send Email with course suggestion
+def send_email(recipient_email, user_name, health_score, score_description, course_title, course_url, rank, total_users):
+    sender_email = os.environ.get('SENDER_EMAIL')
+    sender_password = os.environ.get('SENDER_PASSWORD')
+    if not sender_email or not sender_password:
+        raise Exception("SENDER_EMAIL or SENDER_PASSWORD environment variable not set.")
+
+    # Determine gamified subject line
+    top_10_percent = (rank / total_users) <= 0.1
+    if top_10_percent:
+        subject = "🔥 You're Top 10%! Your Ficore Score Report Awaits!"
+    else:
+        subject = f"📊 Your Ficore Score Report is Ready, {user_name}!"
+
+    # HTML email body with styled heading, subheading, buttons, and course suggestion
+    html_body = f"""
+    <html>
+    <body style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <div style="background-color: #1E7F71; padding: 20px; border-radius: 10px; text-align: center; margin-bottom: 20px;">
+            <h2 style="color: #FFFFFF; margin: 0;">Ficore AI Financial Health Score</h2>
+            <p style="font-style: italic; color: #E0F7FA; font-size: 0.9rem; margin: 5px 0 0 0;">
+                Financial growth passport for Africa
+            </p>
+        </div>
+        <p>Dear {user_name},</p>
+        <p>We have calculated your Ficore AI Financial Health Score based on your recent submission.</p>
+        <ul>
+            <li><strong>Score</strong>: {health_score}/100</li>
+            <li><strong>Advice</strong>: {score_description}</li>
+            <li><strong>Rank</strong>: #{int(rank)} out of {total_users} users</li>
+        </ul>
+        <p>Follow the advice above to improve your financial health. We’re here to support you every step of the way—take one small action today to grow stronger financially for your business, your goals, and your future!</p>
+        <p style="margin-bottom: 10px;">
+            Want to learn more? Check out this course: 
+            <a href="{course_url}" style="display: inline-block; padding: 10px 20px; background-color: #FBC02D; color: #333; text-decoration: none; border-radius: 5px; font-size: 0.9rem; transition: background-color 0.3s;">{course_title}</a>
+        </p>
+        <p style="margin-bottom: 10px;">
+            Please provide feedback on your experience: 
+            <a href="{FEEDBACK_FORM_URL}" style="display: inline-block; padding: 10px 20px; background-color: #2E7D32; color: white; text-decoration: none; border-radius: 5px; font-size: 0.9rem; transition: background-color 0.3s;">Feedback Form</a>
+        </p>
+        <p style="margin-bottom: 10px;">
+            Want Smart Insights? Join the waitlist for Ficore Premium: 
+            <a href="{WAITLIST_FORM_URL}" style="display: inline-block; padding: 10px 20px; background-color: #1976D2; color: white; text-decoration: none; border-radius: 5px; font-size: 0.9rem; transition: background-color 0.3s;">Join Waitlist</a>
+        </p>
+        <p style="margin-bottom: 10px;">
+            Need personalized advice? 
+            <a href="{CONSULTANCY_FORM_URL}" style="display: inline-block; padding: 10px 20px; background-color: #388E3C; color: white; text-decoration: none; border-radius: 5px; font-size: 0.9rem; transition: background-color 0.3s;">Book Consultancy</a>
+        </p>
+        <style>
+            a:hover {{
+                background-color: #1B5E20 !important; /* Darker green for Feedback and Consultancy buttons */
+            }}
+            a[href="{WAITLIST_FORM_URL}"]:hover {{
+                background-color: #0D47A1 !important; /* Darker blue for Waitlist button */
+            }}
+            a[href="{course_url}"]:hover {{
+                background-color: #F9A825 !important; /* Darker yellow for Course button */
+            }}
+        </style>
+        <p>Best regards,<br>The Ficore AI Team</p>
+    </body>
+    </html>
+    """
+
+    msg = MIMEMultipart()
+    msg['From'] = f"Ficore AI <{sender_email}>"
+    msg['To'] = recipient_email
+    msg['Subject'] = subject
+    msg.attach(MIMEText(html_body, 'html'))
+
+    for attempt in range(3):
+        try:
+            with smtplib.SMTP('smtp.gmail.com', 587) as server:
+                server.starttls()
+                server.login(sender_email, sender_password)
+                server.sendmail(sender_email, recipient_email, msg.as_string())
+                logger.info(f"Email successfully sent to {recipient_email} (primary email)")
+                return True
+        except Exception as e:
+            logger.error(f"Attempt {attempt + 1} failed: {e}")
+            time.sleep(2)
+    logger.error(f"Failed to send email to {recipient_email} (primary email) after 3 attempts")
+    return False
+
+# Homepage route
+@app.route('/')
+def home():
+    return render_template('index.html')
+
+# Form submission route
+@app.route('/submit', methods=['POST'])
+def submit():
+    try:
+        # Extract form data
+        timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        business_name = request.form.get('business_name')
+        income_revenue = float(request.form.get('income_revenue').replace(',', ''))
+        expenses_costs = float(request.form.get('expenses_costs').replace(',', ''))
+        debt_loan = float(request.form.get('debt_loan').replace(',', ''))
+        debt_interest_rate = float(request.form.get('debt_interest_rate').replace(',', ''))
+        auto_email = request.form.get('auto_email')
+        phone_number = request.form.get('phone_number')
+        first_name = request.form.get('first_name')
+        last_name = request.form.get('last_name')
+        user_type = request.form.get('user_type')
+        email = request.form.get('email')
+
+        if auto_email != email:
+            logger.error("Email addresses do not match.")
+            return "Error: Email addresses do not match.", 400
+
+        # Prepare data for Google Sheet (with empty Badges column initially)
+        data = [
+            timestamp, business_name, income_revenue, expenses_costs, debt_loan,
+            debt_interest_rate, auto_email, phone_number, first_name, last_name,
+            user_type, email, ""  # Empty Badges column
+        ]
+        # Verify the number of columns matches PREDETERMINED_HEADERS
+        if len(data) != len(PREDETERMINED_HEADERS):
+            raise ValueError(f"Data column count ({len(data)}) does not match expected headers ({len(PREDETERMINED_HEADERS)}).")
+        logger.debug(f"Appending data to sheet: {data}")
+        append_to_sheet(data)
+
+        # Fetch updated data
+        all_users_df = fetch_data_from_sheet()
+        if all_users_df is None or all_users_df.empty:
+            logger.warning("No data found in Google Sheet after submission.")
+            return render_template('error.html', message="No data found in Google Sheet after submission. Please try again later or contact Ficoreai@outlook.com for support."), 500
+
+        # Convert numeric columns to float
+        numeric_cols = ['IncomeRevenue', 'ExpensesCosts', 'DebtLoan', 'DebtInterestRate']
+        for col in numeric_cols:
+            all_users_df[col] = pd.to_numeric(all_users_df[col], errors='coerce').fillna(0)
+
+        # Calculate health scores
+        all_users_df = calculate_health_score(all_users_df)
+
+        # Sort by HealthScore and assign ranks
+        all_users_df = all_users_df.sort_values(by='HealthScore', ascending=False)
+        all_users_df['Rank'] = range(1, len(all_users_df) + 1)
+
+        # Filter for the current user
+        user_df = all_users_df[all_users_df['Email'] == email]
+        if user_df.empty:
+            logger.warning(f"No data found for user with email: {email}")
+            return render_template('error.html', message=f"No data found for user with email: {email}. Please contact Ficoreai@outlook.com for support."), 500
+
+        # Extract user data
+        user_row = user_df.iloc[0]
+        health_score = user_row['HealthScore']
+        rank = user_row['Rank']
+        total_users = len(all_users_df)
+        score_description = user_row['ScoreDescription']
+        course_title = user_row['CourseTitle']
+        course_url = user_row['CourseURL']
+
+        # Assign badges
+        new_badges = assign_badges(user_df, all_users_df)
+        update_badges_in_sheet(email, new_badges)
+
+        # Fetch updated data again to get badges
+        all_users_df = fetch_data_from_sheet()
+        if all_users_df is None or all_users_df.empty:
+            logger.warning("No data found in Google Sheet after updating badges.")
+            return render_template('error.html', message="No data found in Google Sheet after updating badges. Please try again later or contact Ficoreai@outlook.com for support."), 500
+        user_df = all_users_df[all_users_df['Email'] == email]
+        user_row = user_df.iloc[-1]  # Latest submission
+        badges = user_row['Badges'].split(",") if user_row['Badges'] else []
+
+        # Generate personalized message
+        personalized_message = ""
+        if "First Health Score Completed!" in new_badges:
+            personalized_message = "🎉 Congratulations, you earned your first badge: Financial Explorer!"
+        elif new_badges:
+            personalized_message = f"🎉 Great job! You earned a new badge: {new_badges[-1]}"
+
+        # Send email with course suggestion
+        user_name = f"{first_name} {last_name}"
+        send_email(email, user_name, health_score, score_description, course_title, course_url, rank, total_users)
+
+        # Redirect to dashboard
+        return redirect(url_for('dashboard', email=email, personalized_message=personalized_message))
+    except ValueError as e:
+        logger.error(f"ValueError in form submission: {str(e)}")
+        return render_template('error.html', message=f"Invalid input format: {str(e)}. Please ensure all numeric fields contain valid numbers. Contact Ficoreai@outlook.com for support."), 400
+    except Exception as e:
+        logger.error(f"Error in form submission: {e}")
+        return render_template('error.html', message=f"Error processing your submission: {str(e)}. We’re sorry for the inconvenience—please try again later or contact Ficoreai@outlook.com for support."), 500
+
+# Dashboard route
+@app.route('/dashboard')
+def dashboard():
+    try:
+        # Get the user's email and personalized message from query parameters
+        email = request.args.get('email', 'test@example.com')
+        personalized_message = request.args.get('personalized_message', '')
+
+        # Fetch data from Google Sheets
+        all_users_df = fetch_data_from_sheet()
+        if all_users_df is None or all_users_df.empty:
+            logger.warning("No data found in Google Sheet for dashboard.")
+            return render_template('error.html', message="No data found in Google Sheet. Please try again later or contact Ficoreai@outlook.com for support."), 500
+
+        # Convert numeric columns to float
+        numeric_cols = ['IncomeRevenue', 'ExpensesCosts', 'DebtLoan', 'DebtInterestRate']
+        for col in numeric_cols:
+            all_users_df[col] = pd.to_numeric(all_users_df[col], errors='coerce').fillna(0)
+
+        # Calculate health scores for all users
+        all_users_df = calculate_health_score(all_users_df)
+
+        # Sort by HealthScore and assign ranks
+        all_users_df = all_users_df.sort_values(by='HealthScore', ascending=False)
+        all_users_df['Rank'] = range(1, len(all_users_df) + 1)
+
+        # Filter for the current user
+        user_df = all_users_df[all_users_df['Email'] == email]
+        if user_df.empty:
+            logger.warning(f"No data found for user with email: {email} in dashboard.")
+            return render_template('error.html', message=f"No data found for user with email: {email}. Please contact Ficoreai@outlook.com for support."), 500
+
+        # Extract user data (latest submission)
+        user_row = user_df.iloc[-1]
+        health_score = user_row['HealthScore']
+        rank = user_row['Rank']
+        total_users = len(all_users_df)
+        score_description = user_row['ScoreDescription']
+        course_title = user_row['CourseTitle']
+        course_url = user_row['CourseURL']
+        badges = user_row['Badges'].split(",") if user_row['Badges'] else []
+        cash_flow_score = round(user_row['NormCashFlow'] * 100, 2)
+        debt_to_income_score = round(user_row['NormDebtToIncome'] * 100, 2)
+        debt_interest_score = round(user_row['NormDebtInterest'] * 100, 2)
+
+        # Create Plotly charts
+        # Score Breakdown Bar Chart
+        breakdown_data = {
+            "Component": ["Cash Flow", "Debt-to-Income Ratio", "Debt Interest Burden"],
+            "Score": [cash_flow_score, debt_to_income_score, debt_interest_score]
+        }
+        breakdown_df = pd.DataFrame(breakdown_data)
+        fig_breakdown = px.bar(
+            breakdown_df,
+            x="Score",
+            y="Component",
+            orientation='h',
+            title="Score Breakdown",
+            labels={"Score": "Score (out of 100)"},
+            color="Component",
+            color_discrete_sequence=px.colors.qualitative.Plotly
+        )
+        fig_breakdown.update_layout(showlegend=False)
+        breakdown_plot = fig_breakdown.to_html(full_html=False, include_plotlyjs=False)
+
+        # Comparison Line Chart
+        fig_comparison = go.Figure()
+        fig_comparison.add_trace(
+            go.Scatter(
+                x=list(range(1, len(all_users_df) + 1)),
+                y=all_users_df['HealthScore'],
+                mode='lines+markers',
+                name='All Users',
+                line=dict(color='blue')
+            )
+        )
+        fig_comparison.add_trace(
+            go.Scatter(
+                x=[int(rank)],
+                y=[health_score],
+                mode='markers',
+                name='Your Score',
+                marker=dict(color='red', size=12, symbol='star')
+            )
+        )
+        fig_comparison.update_layout(
+            title="How You Compare to Others",
+            xaxis_title="User Rank",
+            yaxis_title="Health Score",
+            showlegend=True
+        )
+        comparison_plot = fig_comparison.to_html(full_html=False, include_plotlyjs=False)
+
+        # Render the dashboard template
+        return render_template(
+            'dashboard.html',
+            health_score=health_score,
+            rank=int(rank),
+            total_users=total_users,
+            score_description=score_description,
+            course_title=course_title,
+            course_url=course_url,
+            badges=badges,
+            personalized_message=personalized_message,
+            breakdown_plot=breakdown_plot,
+            comparison_plot=comparison_plot
+        )
+    except Exception as e:
+        logger.error(f"Error rendering dashboard: {e}")
+        return render_template('error.html', message=f"Error rendering dashboard: {str(e)}. We’re sorry for the inconvenience—please try again later or contact Ficoreai@outlook.com for support."), 500
+
+if __name__ == "__main__":
+    # For Render, bind to 0.0.0.0 and use the PORT environment variable
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port, debug=False)
