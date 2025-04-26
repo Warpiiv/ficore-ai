@@ -367,7 +367,12 @@ def submit():
         email_sent = send_email(email, user_name, health_score, user_row['score_description'],
                                user_row['course_title'], user_row['course_url'], rank, total_users)
         
-        # Render success.html instead of redirecting to dashboard
+        # Construct personalized message for badge notifications and email status
+        personalized_message = "🎉 Congratulations, you earned your first badge: Financial Explorer!" if "First Health Score Completed!" in new_badges else f"🎉 Great job! You earned a new badge: {new_badges[-1]}" if new_badges else ""
+        if not email_sent:
+            personalized_message += " ⚠️ Unable to send email report. Please check your spam folder or contact support."
+
+        # Render success.html with personalized_message
         return render_template(
             'success.html',
             first_name=current_user.first_name,
@@ -375,12 +380,12 @@ def submit():
             score_description=user_row['score_description'],
             rank=rank,
             total_users=total_users,
-            email=email
+            email=email,
+            personalized_message=personalized_message
         )
     except Exception as e:
         logger.error(f"Error in form submission: {e}")
-        flash(f"Error processing your submission: {str(e)}. Please try again later.", 'error')
-        return redirect(url_for('home'))
+        return render_template('error.html', error_message=f"Error processing your submission: {str(e)}. Please try again later.")
 
 @app.route('/dashboard')
 @login_required
@@ -391,8 +396,7 @@ def dashboard():
         session.close()
 
         if all_submissions.empty:
-            flash('No submissions found. Please submit your financial data.', 'info')
-            return redirect(url_for('home'))
+            return render_template('error.html', error_message='No submissions found. Please submit your financial data.')
 
         all_submissions = calculate_health_score(all_submissions)
         all_submissions = all_submissions.sort_values(by='HealthScore', ascending=False)
@@ -400,8 +404,7 @@ def dashboard():
 
         user_df = all_submissions[all_submissions['user_id'] == current_user.id]
         if user_df.empty:
-            flash('No submissions found for your account.', 'info')
-            return redirect(url_for('home'))
+            return render_template('error.html', error_message='No submissions found for your account.')
 
         user_row = user_df.iloc[-1]
         health_score = user_row['HealthScore']
@@ -477,8 +480,7 @@ def dashboard():
         )
     except Exception as e:
         logger.error(f"Error rendering dashboard: {e}")
-        flash(f"Error rendering dashboard: {str(e)}. Please try again later.", 'error')
-        return redirect(url_for('home'))
+        return render_template('error.html', error_message=f"Error rendering dashboard: {str(e)}. Please try again later.")
 
 @app.route('/history')
 @login_required
@@ -492,8 +494,7 @@ def history():
         session.close()
 
         if user_submissions.empty:
-            flash('No submission history found.', 'info')
-            return render_template('history.html', submissions=[])
+            return render_template('error.html', error_message='No submission history found.')
 
         user_submissions = calculate_health_score(user_submissions)
         submissions_list = user_submissions.to_dict('records')
@@ -516,16 +517,14 @@ def history():
         )
     except Exception as e:
         logger.error(f"Error rendering history: {e}")
-        flash(f"Error rendering history: {str(e)}. Please try again later.", 'error')
-        return redirect(url_for('dashboard'))
+        return render_template('error.html', error_message=f"Error rendering history: {str(e)}. Please try again later.")
 
 @app.route('/download_report/<email>')
 @login_required
 def download_report(email):
     try:
         if email != current_user.email:
-            flash('Unauthorized access.', 'error')
-            return redirect(url_for('dashboard'))
+            return render_template('error.html', error_message='Unauthorized access.')
 
         session = Session()
         all_submissions = pd.read_sql(session.query(Submission).statement, session.bind)
@@ -533,8 +532,7 @@ def download_report(email):
 
         user_df = all_submissions[all_submissions['email'] == email]
         if user_df.empty:
-            flash('No submissions found for this user.', 'error')
-            return redirect(url_for('dashboard'))
+            return render_template('error.html', error_message='No submissions found for this user.')
 
         user_row = user_df.iloc[-1]
         health_score = user_row['HealthScore']
@@ -596,8 +594,7 @@ def download_report(email):
         )
     except Exception as e:
         logger.error(f"Error generating PDF report: {e}")
-        flash(f"Error generating PDF report: {str(e)}. Please try again later.", 'error')
-        return redirect(url_for('dashboard'))
+        return render_template('error.html', error_message=f"Error generating PDF report: {str(e)}. Please try again later.")
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
