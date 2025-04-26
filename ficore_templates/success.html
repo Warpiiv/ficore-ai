@@ -62,6 +62,15 @@
             color: #FF8F00;
         }
 
+        .personalized-message {
+            margin-top: 15px;
+            font-size: 1rem;
+            color: #388E3C;
+            background: #C8E6C9;
+            padding: 10px;
+            border-radius: 10px;
+        }
+
         .download-btn {
             display: inline-block;
             margin-top: 25px;
@@ -118,6 +127,12 @@
         <div class="rank-info">
             🏆 Rank: #{{ rank }} out of {{ total_users }} users
         </div>
+
+        {% if personalized_message %}
+        <div class="personalized-message">
+            {{ personalized_message }}
+        </div>
+        {% endif %}
 
         <a href="/download_report/{{ email }}" class="download-btn">📥 Download Your PDF Report</a>
 
