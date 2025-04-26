@@ -153,7 +153,8 @@ def calculate_health_score(df):
                     'Ficore Financial Recovery: First Steps to Stability in 2025',
                     RECOVERY_COURSE_URL)
 
-    df[['ScoreDescription', 'CourseTitle', 'CourseURL']] = df.apply(
+    # Use lowercase column names to match database schema
+    df[['score_description', 'course_title', 'course_url']] = df.apply(
         score_description_and_course, axis=1, result_type='expand')
     return df
 
@@ -314,7 +315,7 @@ def submit():
         # Validate required fields
         required_fields = ['income_revenue', 'expenses_costs', 'debt_loan', 'debt_interest_rate']
         for field in required_fields:
-            if field not in request.form or not request.form[field]:
+            if field not in request.form or request.form[field] == '':
                 raise ValueError(f"Missing or empty required field: {field}")
 
         timestamp = datetime.utcnow()
@@ -357,7 +358,6 @@ def submit():
         for col in required_columns:
             if col not in all_submissions.columns:
                 all_submissions[col] = 0 if col != 'email' else 'anonymous@ficore.ai'
-        # Convert numeric columns to float, replacing invalid values with 0
         numeric_cols = ['income_revenue', 'expenses_costs', 'debt_loan', 'debt_interest_rate']
         for col in numeric_cols:
             all_submissions[col] = pd.to_numeric(all_submissions[col], errors='coerce').fillna(0)
@@ -369,9 +369,9 @@ def submit():
         if current_user.is_authenticated:
             new_badges = assign_badges(temp_df, all_submissions)
             data['health_score'] = temp_df.iloc[0]['HealthScore']
-            data['score_description'] = temp_df.iloc[0]['ScoreDescription']
-            data['course_title'] = temp_df.iloc[0]['CourseTitle']
-            data['course_url'] = temp_df.iloc[0]['CourseURL']
+            data['score_description'] = temp_df.iloc[0]['score_description']
+            data['course_title'] = temp_df.iloc[0]['course_title']
+            data['course_url'] = temp_df.iloc[0]['course_url']
             data['badges'] = ",".join(new_badges)
 
             session = Session()
@@ -402,7 +402,7 @@ def submit():
         user_df = all_submissions[all_submissions['email'] == email] if current_user.is_authenticated else temp_df
         user_row = user_df.iloc[-1]
         health_score = user_row['HealthScore']
-        score_description = user_row['ScoreDescription']
+        score_description = user_row['score_description']
         rank = user_row.get('Rank', len(all_submissions) + 1)
         total_users = len(all_submissions)
 
