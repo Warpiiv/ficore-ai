@@ -304,7 +304,6 @@ def logout():
     return redirect(url_for('login'))
 
 @app.route('/submit', methods=['POST'])
-@login_required
 def submit():
     try:
         timestamp = datetime.utcnow()
@@ -315,10 +314,9 @@ def submit():
         debt_interest_rate = float(request.form.get('debt_interest_rate').replace(',', ''))
         phone_number = request.form.get('phone_number')
         user_type = request.form.get('user_type')
-        email = current_user.email
+        email = request.form.get('email', 'anonymous@ficore.ai')
 
         data = {
-            'user_id': current_user.id,
             'timestamp': timestamp,
             'business_name': business_name,
             'income_revenue': income_revenue,
@@ -330,6 +328,9 @@ def submit():
             'email': email
         }
 
+        if current_user.is_authenticated:
+            data['user_id'] = current_user.id
+
         session = Session()
         all_submissions = pd.read_sql(session.query(Submission).statement, session.bind)
         session.close()
@@ -339,45 +340,50 @@ def submit():
 
         temp_df = pd.DataFrame([data])
         temp_df = calculate_health_score(temp_df)
-        new_badges = assign_badges(temp_df, all_submissions)
-        data['health_score'] = temp_df.iloc[0]['HealthScore']
-        data['score_description'] = temp_df.iloc[0]['ScoreDescription']
-        data['course_title'] = temp_df.iloc[0]['CourseTitle']
-        data['course_url'] = temp_df.iloc[0]['CourseURL']
-        data['badges'] = ",".join(new_badges)
 
-        session = Session()
-        new_submission = Submission(**data)
-        session.add(new_submission)
-        session.commit()
-        session.close()
+        new_badges = []
+        if current_user.is_authenticated:
+            new_badges = assign_badges(temp_df, all_submissions)
+            data['health_score'] = temp_df.iloc[0]['HealthScore']
+            data['score_description'] = temp_df.iloc[0]['ScoreDescription']
+            data['course_title'] = temp_df.iloc[0]['CourseTitle']
+            data['course_url'] = temp_df.iloc[0]['CourseURL']
+            data['badges'] = ",".join(new_badges)
+
+            session = Session()
+            new_submission = Submission(**data)
+            session.add(new_submission)
+            session.commit()
+            session.close()
 
         all_submissions = pd.read_sql(session.query(Submission).statement, session.bind)
         all_submissions = calculate_health_score(all_submissions)
         all_submissions = all_submissions.sort_values(by='HealthScore', ascending=False)
         all_submissions['Rank'] = range(1, len(all_submissions) + 1)
 
-        user_df = all_submissions[all_submissions['email'] == email]
+        user_df = all_submissions[all_submissions['email'] == email] if current_user.is_authenticated else temp_df
         user_row = user_df.iloc[-1]
         health_score = user_row['HealthScore']
-        rank = user_row['Rank']
+        score_description = user_row['ScoreDescription']
+        rank = user_row.get('Rank', len(all_submissions) + 1)
         total_users = len(all_submissions)
 
-        user_name = f"{current_user.first_name} {current_user.last_name}"
-        email_sent = send_email(email, user_name, health_score, user_row['score_description'],
-                               user_row['course_title'], user_row['course_url'], rank, total_users)
-        
-        # Construct personalized message for badge notifications and email status
-        personalized_message = "🎉 Congratulations, you earned your first badge: Financial Explorer!" if "First Health Score Completed!" in new_badges else f"🎉 Great job! You earned a new badge: {new_badges[-1]}" if new_badges else ""
-        if not email_sent:
+        user_name = f"{current_user.first_name} {current_user.last_name}" if current_user.is_authenticated else "User"
+        email_sent = False
+        if email != 'anonymous@ficore.ai':
+            email_sent = send_email(email, user_name, health_score, user_row['score_description'],
+                                   user_row['course_title'], user_row['course_url'], rank, total_users)
+
+        personalized_message = "🎉 Congratulations, you earned your first badge: Financial Explorer!" if current_user.is_authenticated and "First Health Score Completed!" in new_badges else f"🎉 Great job! You earned a new badge: {new_badges[-1]}" if current_user.is_authenticated and new_badges else ""
+        if not email_sent and email != 'anonymous@ficore.ai':
             personalized_message += " ⚠️ Unable to send email report. Please check your spam folder or contact support."
 
-        # Render success.html with personalized_message
+        first_name = current_user.first_name if current_user.is_authenticated else "User"
         return render_template(
             'success.html',
-            first_name=current_user.first_name,
+            first_name=first_name,
             health_score=health_score,
-            score_description=user_row['score_description'],
+            score_description=score_description,
             rank=rank,
             total_users=total_users,
             email=email,
@@ -396,7 +402,7 @@ def dashboard():
         session.close()
 
         if all_submissions.empty:
-            return render_template('error.html', error_message='No submissions found. Please submit your financial data.')
+            return render_template('error.html', error_message='No submissions found in the database. Please submit your financial data to view your dashboard.')
 
         all_submissions = calculate_health_score(all_submissions)
         all_submissions = all_submissions.sort_values(by='HealthScore', ascending=False)
@@ -404,7 +410,7 @@ def dashboard():
 
         user_df = all_submissions[all_submissions['user_id'] == current_user.id]
         if user_df.empty:
-            return render_template('error.html', error_message='No submissions found for your account.')
+            return render_template('error.html', error_message='You haven’t submitted any financial data yet. Please submit your data to view your dashboard.')
 
         user_row = user_df.iloc[-1]
         health_score = user_row['HealthScore']
@@ -520,19 +526,15 @@ def history():
         return render_template('error.html', error_message=f"Error rendering history: {str(e)}. Please try again later.")
 
 @app.route('/download_report/<email>')
-@login_required
 def download_report(email):
     try:
-        if email != current_user.email:
-            return render_template('error.html', error_message='Unauthorized access.')
-
         session = Session()
         all_submissions = pd.read_sql(session.query(Submission).statement, session.bind)
         session.close()
 
         user_df = all_submissions[all_submissions['email'] == email]
         if user_df.empty:
-            return render_template('error.html', error_message='No submissions found for this user.')
+            return render_template('error.html', error_message='No submissions found for this email. Please submit your financial data.')
 
         user_row = user_df.iloc[-1]
         health_score = user_row['HealthScore']
@@ -543,41 +545,35 @@ def download_report(email):
         rank = all_submissions[all_submissions['email'] == email]['Rank'].iloc[-1]
         total_users = len(all_submissions)
 
-        # Generate PDF
         buffer = BytesIO()
         c = canvas.Canvas(buffer, pagesize=letter)
         width, height = letter
 
-        # Header
         c.setFillColor(colors.darkgreen)
         c.setFont("Helvetica-Bold", 20)
         c.drawCentredString(width / 2, height - 50, "Ficore AI Financial Health Report")
 
-        # Subtitle
         c.setFillColor(colors.black)
         c.setFont("Helvetica-Oblique", 12)
         c.drawCentredString(width / 2, height - 70, "Financial Growth Passport for Africa")
 
-        # User Info
         c.setFont("Helvetica", 12)
-        c.drawString(50, height - 120, f"Name: {current_user.first_name} {current_user.last_name}")
+        first_name = current_user.first_name if current_user.is_authenticated else "User"
+        last_name = current_user.last_name if current_user.is_authenticated else ""
+        c.drawString(50, height - 120, f"Name: {first_name} {last_name}")
         c.drawString(50, height - 140, f"Email: {email}")
         c.drawString(50, height - 160, f"Date: {datetime.utcnow().strftime('%Y-%m-%d')}")
 
-        # Financial Health Score
         c.setFillColor(colors.darkgreen)
         c.setFont("Helvetica-Bold", 16)
         c.drawString(50, height - 200, f"Financial Health Score: {health_score}/100")
 
-        # Advice
         c.setFillColor(colors.black)
         c.setFont("Helvetica", 12)
         c.drawString(50, height - 230, f"Advice: {score_description}")
 
-        # Rank
         c.drawString(50, height - 260, f"Rank: #{int(rank)} out of {total_users} users")
 
-        # Footer
         c.setFont("Helvetica-Oblique", 10)
         c.setFillColor(colors.grey)
         c.drawCentredString(width / 2, 30, "Powered by Ficore AI")
