@@ -77,74 +77,121 @@ def set_sheet_headers():
         logger.error(f"Error setting headers: {e}")
         raise
 
-# Append data to Google Sheet
-def append_to_sheet(data):
+# Get the number of rows in the sheet to determine where to append
+def get_row_count():
     try:
-        set_sheet_headers()
         service = authenticate_google_sheets()
         sheet = service.spreadsheets()
-        body = {'values': [data]}
-        sheet.values().append(
+        result = sheet.values().get(spreadsheetId=SPREADSHEET_ID, range=DATA_RANGE_NAME).execute()
+        values = result.get('values', [])
+        return len(values) if values else 0
+    except Exception as e:
+        logger.error(f"Error getting row count: {e}")
+        raise
+
+# Append data to Google Sheet using update to ensure all columns are set
+def append_to_sheet(data):
+    try:
+        service = authenticate_google_sheets()
+        sheet = service.spreadsheets()
+
+        # Set headers if the sheet is empty
+        row_count = get_row_count()
+        if row_count == 0:
+            set_sheet_headers()
+            row_count = 1  # After setting headers
+
+        # Append the data by updating the next row
+        range_to_update = f'Sheet1!A{row_count + 1}:M{row_count + 1}'
+        body = {'values': [data]}  # data already has 13 elements
+        sheet.values().update(
             spreadsheetId=SPREADSHEET_ID,
-            range='Sheet1!A1',
+            range=range_to_update,
             valueInputOption='RAW',
-            insertDataOption='INSERT_ROWS',
             body=body
         ).execute()
-        logger.info("Data appended to sheet successfully.")
+        logger.info(f"Data appended to sheet at row {row_count + 1}.")
+        time.sleep(1)  # Small delay to allow propagation
     except Exception as e:
         logger.error(f"Error appending to sheet: {e}")
         raise
 
-# Fetch data from Google Sheet
-def fetch_data_from_sheet():
-    try:
-        service = authenticate_google_sheets()
-        if not service:
-            raise Exception("Google Sheets authentication failed.")
-        sheet = service.spreadsheets()
-        result = sheet.values().get(spreadsheetId=SPREADSHEET_ID, range=DATA_RANGE_NAME).execute()
-        values = result.get('values', [])
-        if not values:
-            logger.info("No data found in Google Sheet.")
-            return None
-        
-        headers = values[0]
-        rows = values[1:] if len(values) > 1 else []
-        expected_columns = PREDETERMINED_HEADERS
-        
-        # Log the fetched data
-        logger.debug(f"Fetched headers: {headers}")
-        logger.debug(f"Fetched rows: {rows}")
-
-        # If headers don't match expected columns, reset the headers
-        if headers != expected_columns:
-            logger.warning("Headers do not match expected columns. Resetting headers.")
-            set_sheet_headers()
-            # If there were no rows, return None to indicate the sheet was reset
-            if not rows:
+# Fetch data from Google Sheet with retry mechanism
+def fetch_data_from_sheet(max_retries=3, delay=1):
+    for attempt in range(max_retries):
+        try:
+            service = authenticate_google_sheets()
+            if not service:
+                raise Exception("Google Sheets authentication failed.")
+            sheet = service.spreadsheets()
+            result = sheet.values().get(spreadsheetId=SPREADSHEET_ID, range=DATA_RANGE_NAME).execute()
+            values = result.get('values', [])
+            
+            if not values:
+                logger.info(f"Attempt {attempt + 1}: No data found in Google Sheet.")
+                if attempt < max_retries - 1:
+                    time.sleep(delay)
+                    continue
                 return None
-            # Otherwise, adjust the rows to match the expected columns
-            normalized_rows = []
-            for row in rows:
-                if len(row) < len(expected_columns):
-                    row = row + [""] * (len(expected_columns) - len(row))
-                elif len(row) > len(expected_columns):
-                    row = row[:len(expected_columns)]
-                normalized_rows.append(row)
-            rows = normalized_rows
+            
+            headers = values[0]
+            rows = values[1:] if len(values) > 1 else []
+            expected_columns = PREDETERMINED_HEADERS
+            
+            # Log the fetched data
+            logger.debug(f"Attempt {attempt + 1}: Fetched headers: {headers}")
+            logger.debug(f"Attempt {attempt + 1}: Fetched rows: {rows}")
+
+            # If headers don't match expected columns, reset the headers
+            if headers != expected_columns:
+                logger.warning(f"Attempt {attempt + 1}: Headers do not match expected columns. Resetting headers.")
+                set_sheet_headers()
+                if not rows:
+                    if attempt < max_retries - 1:
+                        time.sleep(delay)
+                        continue
+                    return None
+                # Normalize rows to match expected columns
+                normalized_rows = []
+                for row in rows:
+                    if len(row) < len(expected_columns):
+                        row = row + [""] * (len(expected_columns) - len(row))
+                    elif len(row) > len(expected_columns):
+                        row = row[:len(expected_columns)]
+                    normalized_rows.append(row)
+                rows = normalized_rows
+            
+            # Create DataFrame without specifying columns initially
+            if not rows:
+                logger.info(f"Attempt {attempt + 1}: No data rows found, creating empty DataFrame.")
+                df = pd.DataFrame(columns=expected_columns)
+            else:
+                df = pd.DataFrame(rows)
+                # Ensure all expected columns are present
+                for col in expected_columns:
+                    if col not in df.columns:
+                        df[col] = ""
+                # Reorder columns to match expected_columns
+                df = df[expected_columns]
+            
+            logger.debug(f"Attempt {attempt + 1}: Created DataFrame with shape {df.shape}")
+            return df
         
-        # Create DataFrame with expected columns
-        logger.debug(f"Creating DataFrame with {len(rows)} rows and columns: {expected_columns}")
-        df = pd.DataFrame(rows, columns=expected_columns)
-        return df
-    except Exception as e:
-        logger.error(f"Error fetching data from Google Sheet: {e}")
-        raise
+        except Exception as e:
+            logger.error(f"Attempt {attempt + 1}: Error fetching data from Google Sheet: {e}")
+            if attempt < max_retries - 1:
+                time.sleep(delay)
+                continue
+            raise
+    raise Exception("Max retries reached while fetching data from Google Sheet.")
 
 # Calculate Financial Health Score, determine course suggestion, and assign badges
 def calculate_health_score(df):
     try:
+        if df.empty:
+            logger.warning("Empty DataFrame passed to calculate_health_score.")
+            return df
+        
         df['HealthScore'] = 0.0
         df['IncomeRevenueSafe'] = df['IncomeRevenue'].replace(0, 1e-10)
         df['CashFlowRatio'] = (df['IncomeRevenue'] - df['ExpensesCosts']) / df['IncomeRevenueSafe']
@@ -397,7 +444,7 @@ def submit():
 
         # Fetch updated data
         all_users_df = fetch_data_from_sheet()
-        if all_users_df is None:
+        if all_users_df is None or all_users_df.empty:
             logger.warning("No data found in Google Sheet after submission.")
             return render_template('error.html', message="No data found in Google Sheet after submission. Please try again later or contact Ficoreai@outlook.com for support."), 500
 
@@ -434,7 +481,7 @@ def submit():
 
         # Fetch updated data again to get badges
         all_users_df = fetch_data_from_sheet()
-        if all_users_df is None:
+        if all_users_df is None or all_users_df.empty:
             logger.warning("No data found in Google Sheet after updating badges.")
             return render_template('error.html', message="No data found in Google Sheet after updating badges. Please try again later or contact Ficoreai@outlook.com for support."), 500
         user_df = all_users_df[all_users_df['Email'] == email]
@@ -471,7 +518,7 @@ def dashboard():
 
         # Fetch data from Google Sheets
         all_users_df = fetch_data_from_sheet()
-        if all_users_df is None:
+        if all_users_df is None or all_users_df.empty:
             logger.warning("No data found in Google Sheet for dashboard.")
             return render_template('error.html', message="No data found in Google Sheet. Please try again later or contact Ficoreai@outlook.com for support."), 500
 
