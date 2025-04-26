@@ -28,7 +28,12 @@ RESULTS_SHEET_NAME = 'FicoreAIResults'
 RESULTS_HEADER = ['Email', 'FicoreAIScore', 'FicoreAIRank']
 FEEDBACK_FORM_URL = 'https://forms.gle/NkiLicSykLyMnhJk7'
 WAITLIST_FORM_URL = 'https://forms.gle/3kXnJuDatTm8bT3x7'
-CONSULTANCY_FORM_URL = 'https://forms.gle/rfHhpD71MjLpET2K9'  # Replace with your actual Google Form link
+CONSULTANCY_FORM_URL = 'https://forms.gle/rfHhpD71MjLpET2K9'
+# Course URLs (replace with actual links to courses)
+INVESTING_COURSE_URL = 'https://ficoreai.com/courses/investing-2025'
+SAVINGS_COURSE_URL = 'https://ficoreai.com/courses/savings-2025'
+DEBT_COURSE_URL = 'https://ficoreai.com/courses/debt-management-2025'
+RECOVERY_COURSE_URL = 'https://ficoreai.com/courses/financial-recovery-2025'
 PREDETERMINED_HEADERS = [
     'Timestamp', 'BusinessName', 'IncomeRevenue', 'ExpensesCosts', 'DebtLoan',
     'DebtInterestRate', 'AutoEmail', 'PhoneNumber', 'FirstName', 'LastName', 'UserType', 'Email'
@@ -101,7 +106,7 @@ def fetch_data_from_sheet():
         print(f"Error fetching data from Google Sheet: {e}")
         raise
 
-# Calculate Financial Health Score
+# Calculate Financial Health Score and determine course suggestion
 def calculate_health_score(df):
     try:
         df['HealthScore'] = 0.0
@@ -118,34 +123,50 @@ def calculate_health_score(df):
                             df['NormDebtInterest'] * 0.333) * 100
         df['HealthScore'] = df['HealthScore'].round(2)
 
-        def score_description(row):
+        def score_description_and_course(row):
             score = row['HealthScore']
             cash_flow = row['CashFlowRatio']
             debt_to_income = row['DebtToIncomeRatio']
             debt_interest = row['DebtInterestBurden']
+            
             if score >= 75:
-                return 'Stable; invest excess now'
+                return ('Stable; invest excess now',
+                        'Ficore Simplified Investing Course: How to Invest in 2025 for Better Gains',
+                        INVESTING_COURSE_URL)
             elif score >= 50:
                 if cash_flow < 0.3 or debt_interest > 0.5:
-                    return 'At Risk; manage expense'
-                return 'Moderate; save monthly'
+                    return ('At Risk; manage expense',
+                            'Ficore Debt and Expense Management: Regain Control in 2025',
+                            DEBT_COURSE_URL)
+                return ('Moderate; save monthly',
+                        'Ficore Savings Mastery: Building a Financial Safety Net in 2025',
+                        SAVINGS_COURSE_URL)
             elif score >= 25:
                 if debt_to_income > 0.5 or debt_interest > 0.5:
-                    return 'At Risk; pay off debt, manage expense'
-                return 'At Risk; manage expense'
+                    return ('At Risk; pay off debt, manage expense',
+                            'Ficore Debt and Expense Management: Regain Control in 2025',
+                            DEBT_COURSE_URL)
+                return ('At Risk; manage expense',
+                        'Ficore Debt and Expense Management: Regain Control in 2025',
+                        DEBT_COURSE_URL)
             else:
                 if debt_to_income > 0.5 or cash_flow < 0.3:
-                    return 'Critical; add source of income, pay off debt, manage expense'
-                return 'Critical; seek financial help'
+                    return ('Critical; add source of income, pay off debt, manage expense',
+                            'Ficore Financial Recovery: First Steps to Stability in 2025',
+                            RECOVERY_COURSE_URL)
+                return ('Critical; seek financial help',
+                        'Ficore Financial Recovery: First Steps to Stability in 2025',
+                        RECOVERY_COURSE_URL)
 
-        df['ScoreDescription'] = df.apply(score_description, axis=1)
+        df[['ScoreDescription', 'CourseTitle', 'CourseURL']] = df.apply(
+            score_description_and_course, axis=1, result_type='expand')
         return df
     except Exception as e:
         print(f"Error calculating health score: {e}")
         raise
 
-# Send Email
-def send_email(recipient_email, user_name, health_score, score_description, rank, total_users):
+# Send Email with course suggestion
+def send_email(recipient_email, user_name, health_score, score_description, course_title, course_url, rank, total_users):
     sender_email = os.environ.get('SENDER_EMAIL')
     sender_password = os.environ.get('SENDER_PASSWORD')
     if not sender_email or not sender_password:
@@ -158,7 +179,7 @@ def send_email(recipient_email, user_name, health_score, score_description, rank
     else:
         subject = f"📊 Your Ficore Score Report is Ready, {user_name}!"
 
-    # HTML email body with styled heading, subheading, and buttons
+    # HTML email body with styled heading, subheading, buttons, and course suggestion
     html_body = f"""
     <html>
     <body style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
@@ -177,6 +198,10 @@ def send_email(recipient_email, user_name, health_score, score_description, rank
         </ul>
         <p>Follow the advice above to improve your financial health. We’re here to support you every step of the way—take one small action today to grow stronger financially for your business, your goals, and your future!</p>
         <p style="margin-bottom: 10px;">
+            Want to learn more? Check out this course: 
+            <a href="{course_url}" style="display: inline-block; padding: 10px 20px; background-color: #FBC02D; color: #333; text-decoration: none; border-radius: 5px; font-size: 0.9rem; transition: background-color 0.3s;">{course_title}</a>
+        </p>
+        <p style="margin-bottom: 10px;">
             Please provide feedback on your experience: 
             <a href="{FEEDBACK_FORM_URL}" style="display: inline-block; padding: 10px 20px; background-color: #2E7D32; color: white; text-decoration: none; border-radius: 5px; font-size: 0.9rem; transition: background-color 0.3s;">Feedback Form</a>
         </p>
@@ -194,6 +219,9 @@ def send_email(recipient_email, user_name, health_score, score_description, rank
             }}
             a[href="{WAITLIST_FORM_URL}"]:hover {{
                 background-color: #0D47A1 !important; /* Darker blue for Waitlist button */
+            }}
+            a[href="{course_url}"]:hover {{
+                background-color: #F9A825 !important; /* Darker yellow for Course button */
             }}
         </style>
         <p>Best regards,<br>The Ficore AI Team</p>
@@ -288,10 +316,12 @@ def submit():
         rank = user_row['Rank']
         total_users = len(all_users_df)
         score_description = user_row['ScoreDescription']
+        course_title = user_row['CourseTitle']
+        course_url = user_row['CourseURL']
 
-        # Send email
+        # Send email with course suggestion
         user_name = f"{first_name} {last_name}"
-        send_email(email, user_name, health_score, score_description, rank, total_users)
+        send_email(email, user_name, health_score, score_description, course_title, course_url, rank, total_users)
 
         # Redirect to dashboard
         return redirect(url_for('dashboard', email=email))
