@@ -28,6 +28,7 @@ RESULTS_SHEET_NAME = 'FicoreAIResults'
 RESULTS_HEADER = ['Email', 'FicoreAIScore', 'FicoreAIRank']
 FEEDBACK_FORM_URL = 'https://forms.gle/NkiLicSykLyMnhJk7'
 WAITLIST_FORM_URL = 'https://forms.gle/3kXnJuDatTm8bT3x7'
+CONSULTANCY_FORM_URL = 'https://forms.gle/rfHhpD71MjLpET2K9'  # Replace with your actual Google Form link
 PREDETERMINED_HEADERS = [
     'Timestamp', 'BusinessName', 'IncomeRevenue', 'ExpensesCosts', 'DebtLoan',
     'DebtInterestRate', 'AutoEmail', 'PhoneNumber', 'FirstName', 'LastName', 'UserType', 'Email'
@@ -175,13 +176,14 @@ def send_email(recipient_email, user_name, health_score, score_description, rank
         <p>Follow the advice above to improve your financial health. We’re here to support you every step of the way—take one small action today to grow stronger financially for your business, your goals, and your future!</p>
         <p>Please provide feedback on your experience: <a href="{FEEDBACK_FORM_URL}">Feedback Form</a></p>
         <p>Want Smart Insights? Join the waitlist for Ficore Premium: <a href="{WAITLIST_FORM_URL}">Join Waitlist</a></p>
+        <p>Need personalized advice? <a href="{CONSULTANCY_FORM_URL}">Book Consultancy</a></p>
         <p>Best regards,<br>The Ficore AI Team</p>
     </body>
     </html>
     """
 
     msg = MIMEMultipart()
-    msg['From'] = sender_email
+    msg['From'] = f"Ficore AI <{sender_email}>"
     msg['To'] = recipient_email
     msg['Subject'] = subject
     msg.attach(MIMEText(html_body, 'html'))
