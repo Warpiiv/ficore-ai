@@ -32,6 +32,12 @@
             animation: fadeIn 0.5s ease;
         }
 
+        .logo {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 1rem;
+        }
+
         .error-icon {
             font-size: 3rem;
             color: #d32f2f;
@@ -100,6 +106,11 @@
                 max-width: 90%;
             }
 
+            .logo {
+                width: 60px;
+                height: 60px;
+            }
+
             .error-icon {
                 font-size: 2.5rem;
             }
@@ -125,6 +136,7 @@
 </head>
 <body>
     <div class="container">
+        <img src="{{ url_for('static', filename='img/ficore_logo.png') }}" alt="Ficore Logo" class="logo">
         <i class="fas fa-exclamation-circle error-icon"></i>
         <h2>Oops, Something Went Wrong</h2>
         <p>{{ message }}</p>
