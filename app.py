@@ -162,10 +162,12 @@ def send_email(recipient_email, user_name, health_score, score_description, rank
     html_body = f"""
     <html>
     <body style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
-        <h2 style="color: #2E7D32; text-align: center;">Ficore AI Financial Health Score</h2>
-        <p style="font-style: italic; color: #1976D2; font-size: 0.9rem; text-align: center; margin-top: -10px; margin-bottom: 20px;">
-            Financial growth passport for Africa
-        </p>
+        <div style="background-color: #1E7F71; padding: 20px; border-radius: 10px; text-align: center; margin-bottom: 20px;">
+            <h2 style="color: #FFFFFF; margin: 0;">Ficore AI Financial Health Score</h2>
+            <p style="font-style: italic; color: #E0F7FA; font-size: 0.9rem; margin: 5px 0 0 0;">
+                Financial growth passport for Africa
+            </p>
+        </div>
         <p>Dear {user_name},</p>
         <p>We have calculated your Ficore AI Financial Health Score based on your recent submission.</p>
         <ul>
