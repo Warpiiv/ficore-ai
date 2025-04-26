@@ -7,145 +7,199 @@
     <!-- Include Plotly.js for charts -->
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <style>
+        /* General Styles */
         body {
-            font-family: Arial, sans-serif;
-            max-width: 800px;
-            margin: 0 auto;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(to right, #e0f7fa, #f1f8e9);
+            margin: 0;
             padding: 20px;
             color: #333;
         }
-        .welcome-message {
-            background-color: #E0F7FA;
-            padding: 15px;
-            border-radius: 5px;
-            margin-bottom: 20px;
+
+        .container {
+            background: white;
+            max-width: 900px;
+            margin: auto;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        h2, h3 {
+            color: #2E7D32;
             text-align: center;
         }
-        .welcome-message p {
-            margin: 0;
+
+        .welcome-message {
+            background-color: #C8E6C9;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            text-align: center;
             font-size: 1rem;
-            color: #1976D2;
         }
-        .welcome-message .spam-note {
+
+        .welcome-message p {
+            margin: 5px 0;
+            color: #1B5E20;
+        }
+
+        .spam-note {
             font-size: 0.9rem;
             color: #555;
             margin-top: 5px;
         }
+
         .personalized-message {
-            background-color: #F1F8E9;
-            padding: 10px;
-            border-radius: 5px;
+            background: #FFECB3;
+            padding: 15px;
+            border-radius: 10px;
             text-align: center;
-            color: #2E7D32;
-            margin-bottom: 20px;
+            color: #6D4C41;
+            margin-bottom: 25px;
+            font-size: 1.1rem;
         }
+
         .score-section {
-            margin-bottom: 30px;
+            background-color: #F1F8E9;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 25px;
         }
-        .score-section h2 {
-            color: #2E7D32;
-        }
-        .badges-section {
-            margin-bottom: 30px;
+
+        .score-section p {
+            font-size: 1.1rem;
+            margin: 5px 0;
             text-align: center;
         }
-        .badges-section .badge {
+
+        .badges-section {
+            background: #FFF8E1;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 25px;
+            text-align: center;
+        }
+
+        .badge {
             display: inline-block;
             background-color: #FFCA28;
             color: #333;
-            padding: 5px 15px;
+            padding: 8px 15px;
             margin: 5px;
-            border-radius: 15px;
-            font-size: 0.9rem;
+            border-radius: 20px;
+            font-size: 0.95rem;
+            font-weight: bold;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
         }
+
         .recommended-learning {
-            margin-bottom: 30px;
+            background: #E3F2FD;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 25px;
             text-align: center;
         }
+
+        .recommended-learning p {
+            font-size: 1.1rem;
+            margin-bottom: 15px;
+            color: #0D47A1;
+        }
+
         .recommended-learning a {
             display: inline-block;
-            padding: 10px 20px;
-            background-color: #FBC02D;
-            color: #333;
+            background-color: #2196F3;
+            color: white;
             text-decoration: none;
+            padding: 10px 20px;
             border-radius: 5px;
-            font-size: 0.9rem;
+            font-size: 1rem;
             transition: background-color 0.3s;
         }
+
         .recommended-learning a:hover {
-            background-color: #F9A825;
+            background-color: #1976D2;
         }
+
         .chart-section {
-            margin-bottom: 30px;
+            background: #FAFAFA;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 25px;
         }
+
         .coming-soon {
             background-color: #FFF3E0;
-            padding: 10px;
-            border-radius: 5px;
+            padding: 15px;
+            border-radius: 10px;
             text-align: center;
             font-style: italic;
             color: #EF6C00;
-            margin-top: 20px;
+            font-size: 1rem;
+            margin-top: 30px;
         }
     </style>
 </head>
 <body>
-    <div class="welcome-message">
-        <p>Thanks! Check your email for personalized feedback, and check your dashboard below!</p>
-        <p class="spam-note">Check your spam/promotion folder if not received in a few minutes.</p>
-    </div>
+    <div class="container">
+        <div class="welcome-message">
+            <p>🎉 Thanks! Check your email for personalized feedback and check your dashboard below!</p>
+            <p class="spam-note">📩 (Check your spam/promotion folder if not received in a few minutes.)</p>
+        </div>
 
-    {% if personalized_message %}
-    <div class="personalized-message">
-        <p>{{ personalized_message }}</p>
-    </div>
-    {% endif %}
+        {% if personalized_message %}
+        <div class="personalized-message">
+            <p>{{ personalized_message }}</p>
+        </div>
+        {% endif %}
 
-    <div class="score-section">
-        <h2>Your Financial Health Score: {{ health_score }}/100</h2>
-        <p><strong>Advice:</strong> {{ score_description }}</p>
-        <p><strong>Rank:</strong> #{{ rank }} out of {{ total_users }} users</p>
-    </div>
+        <div class="score-section">
+            <h2>🏆 Your Financial Health Score: {{ health_score }}/100</h2>
+            <p><strong>📌 Advice:</strong> {{ score_description }}</p>
+            <p><strong>📈 Rank:</strong> #{{ rank }} out of {{ total_users }} users</p>
+        </div>
 
-    {% if badges %}
-    <div class="badges-section">
-        <h3>Your Badges</h3>
-        {% for badge in badges %}
-        <span class="badge">{{ badge }}</span>
-        {% endfor %}
-    </div>
-    {% endif %}
+        {% if badges %}
+        <div class="badges-section">
+            <h3>🎖 Your Badges</h3>
+            {% for badge in badges %}
+            <span class="badge">{{ badge }}</span>
+            {% endfor %}
+        </div>
+        {% endif %}
 
-    <div class="recommended-learning">
-        <h3>Recommended Learning</h3>
-        <p>
-            {% if score_description == "Stable; invest excess now" %}
-                Want to know how to invest to improve your financial health? Check out this course!
-            {% elif score_description == "Moderate; save monthly" %}
-                Want to know how to save more to improve your financial health? Check out this course!
-            {% elif score_description in ["At Risk; manage expense", "At Risk; pay off debt, manage expense"] %}
-                Want to know how to manage debt and expenses to improve your financial health? Check out this course!
-            {% elif score_description in ["Critical; seek financial help", "Critical; add source of income, pay off debt, manage expense"] %}
-                Want to know how to recover and make more money to improve your financial health? Check out this course!
-            {% else %}
-                Want to improve your financial health? Check out this course!
-            {% endif %}
-        </p>
-        <a href="{{ course_url }}">{{ course_title }}</a>
-    </div>
+        <div class="recommended-learning">
+            <h3>📚 Recommended Learning</h3>
+            <p>
+                {% if score_description == "Stable; invest excess now" %}
+                    Want to know how to invest to grow your wealth? Check out this course!
+                {% elif score_description == "Moderate; save monthly" %}
+                    Want to improve your savings habit? Check out this course!
+                {% elif score_description in ["At Risk; manage expense", "At Risk; pay off debt, manage expense"] %}
+                    Learn how to manage debt and expenses smartly. Check out this course!
+                {% elif score_description in ["Critical; seek financial help", "Critical; add source of income, pay off debt, manage expense"] %}
+                    Find new income sources and stabilize your finances. Check out this course!
+                {% else %}
+                    Learn strategies to grow your financial health. Check out this course!
+                {% endif %}
+            </p>
+            <a href="{{ course_url }}">{{ course_title }}</a>
+        </div>
 
-    <div class="chart-section">
-        <h3>Score Breakdown</h3>
-        {{ breakdown_plot | safe }}
-    </div>
+        <div class="chart-section">
+            <h3>📊 Score Breakdown</h3>
+            {{ breakdown_plot | safe }}
+        </div>
 
-    <div class="chart-section">
-        <h3>Comparison with Others</h3>
-        {{ comparison_plot | safe }}
-    </div>
+        <div class="chart-section">
+            <h3>📈 Comparison with Others</h3>
+            {{ comparison_plot | safe }}
+        </div>
 
-    <div class="coming-soon">
-        <p>Coming Soon: Downloadable PDF Reports for Your Financial Health Score!</p>
+        <div class="coming-soon">
+            <p>🚀 Coming Soon: Downloadable PDF Reports for Your Financial Health Score!</p>
+        </div>
     </div>
 </body>
 </html>
