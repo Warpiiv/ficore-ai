@@ -158,12 +158,12 @@ def send_email(recipient_email, user_name, health_score, score_description, rank
     else:
         subject = f"📊 Your Ficore Score Report is Ready, {user_name}!"
 
-    # HTML email body with styled heading and subheading
+    # HTML email body with styled heading, subheading, and buttons
     html_body = f"""
     <html>
-    <body style="font-family: Arial, sans-serif; color: #333;">
-        <h2 style="color: #2E7D32;">Ficore AI Financial Health Score</h2>
-        <p style="font-style: italic; color: #1976D2; font-size: 0.9rem; margin-top: -10px; margin-bottom: 20px;">
+    <body style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <h2 style="color: #2E7D32; text-align: center;">Ficore AI Financial Health Score</h2>
+        <p style="font-style: italic; color: #1976D2; font-size: 0.9rem; text-align: center; margin-top: -10px; margin-bottom: 20px;">
             Financial growth passport for Africa
         </p>
         <p>Dear {user_name},</p>
@@ -174,9 +174,26 @@ def send_email(recipient_email, user_name, health_score, score_description, rank
             <li><strong>Rank</strong>: #{int(rank)} out of {total_users} users</li>
         </ul>
         <p>Follow the advice above to improve your financial health. We’re here to support you every step of the way—take one small action today to grow stronger financially for your business, your goals, and your future!</p>
-        <p>Please provide feedback on your experience: <a href="{FEEDBACK_FORM_URL}">Feedback Form</a></p>
-        <p>Want Smart Insights? Join the waitlist for Ficore Premium: <a href="{WAITLIST_FORM_URL}">Join Waitlist</a></p>
-        <p>Need personalized advice? <a href="{CONSULTANCY_FORM_URL}">Book Consultancy</a></p>
+        <p style="margin-bottom: 10px;">
+            Please provide feedback on your experience: 
+            <a href="{FEEDBACK_FORM_URL}" style="display: inline-block; padding: 10px 20px; background-color: #2E7D32; color: white; text-decoration: none; border-radius: 5px; font-size: 0.9rem; transition: background-color 0.3s;">Feedback Form</a>
+        </p>
+        <p style="margin-bottom: 10px;">
+            Want Smart Insights? Join the waitlist for Ficore Premium: 
+            <a href="{WAITLIST_FORM_URL}" style="display: inline-block; padding: 10px 20px; background-color: #1976D2; color: white; text-decoration: none; border-radius: 5px; font-size: 0.9rem; transition: background-color 0.3s;">Join Waitlist</a>
+        </p>
+        <p style="margin-bottom: 10px;">
+            Need personalized advice? 
+            <a href="{CONSULTANCY_FORM_URL}" style="display: inline-block; padding: 10px 20px; background-color: #388E3C; color: white; text-decoration: none; border-radius: 5px; font-size: 0.9rem; transition: background-color 0.3s;">Book Consultancy</a>
+        </p>
+        <style>
+            a:hover {{
+                background-color: #1B5E20 !important; /* Darker green for Feedback and Consultancy buttons */
+            }}
+            a[href="{WAITLIST_FORM_URL}"]:hover {{
+                background-color: #0D47A1 !important; /* Darker blue for Waitlist button */
+            }}
+        </style>
         <p>Best regards,<br>The Ficore AI Team</p>
     </body>
     </html>
