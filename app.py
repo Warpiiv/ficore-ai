@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, flash
+from flask import Flask, render_template, request, redirect, url_for, flash, send_file
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 import os
 import pandas as pd
@@ -14,6 +14,10 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship
 import bcrypt
 import logging
+from io import BytesIO
+from reportlab.lib.pagesizes import letter
+from reportlab.pdfgen import canvas
+from reportlab.lib import colors
 
 # Set up logging
 logging.basicConfig(level=logging.DEBUG)
@@ -83,10 +87,10 @@ def load_user(user_id):
 FEEDBACK_FORM_URL = 'https://forms.gle/NkiLicSykLyMnhJk7'
 WAITLIST_FORM_URL = 'https://forms.gle/3kXnJuDatTm8bT3x7'
 CONSULTANCY_FORM_URL = 'https://forms.gle/rfHhpD71MjLpET2K9'
-INVESTING_COURSE_URL = 'https://youtube.com/watch?v=investing-2025-video-id'
-SAVINGS_COURSE_URL = 'https://youtube.com/watch?v=savings-2025-video-id'
-DEBT_COURSE_URL = 'https://youtube.com/watch?v=debt-management-2025-video-id'
-RECOVERY_COURSE_URL = 'https://youtube.com/watch?v=financial-recovery-2025-video-id'
+INVESTING_COURSE_URL = 'https://youtube.com/@ficore.ai.africa?si=myoEpotNALfGK4eI'
+SAVINGS_COURSE_URL = 'https://youtube.com/@ficore.ai.africa?si=myoEpotNALfGK4eI'
+DEBT_COURSE_URL = 'https://youtube.com/@ficore.ai.africa?si=myoEpotNALfGK4eI'
+RECOVERY_COURSE_URL = 'https://youtube.com/@ficore.ai.africa?si=myoEpotNALfGK4eI'
 PREDETERMINED_HEADERS = [
     'timestamp', 'business_name', 'income_revenue', 'expenses_costs', 'debt_loan',
     'debt_interest_rate', 'phone_number', 'user_type', 'health_score', 'score_description',
@@ -363,11 +367,16 @@ def submit():
         email_sent = send_email(email, user_name, health_score, user_row['score_description'],
                                user_row['course_title'], user_row['course_url'], rank, total_users)
         
-        personalized_message = "🎉 Congratulations, you earned your first badge: Financial Explorer!" if "First Health Score Completed!" in new_badges else f"🎉 Great job! You earned a new badge: {new_badges[-1]}" if new_badges else ""
-        if not email_sent:
-            personalized_message += " ⚠️ Unable to send email report. Please check your spam folder or contact support."
-
-        return redirect(url_for('dashboard', personalized_message=personalized_message))
+        # Render success.html instead of redirecting to dashboard
+        return render_template(
+            'success.html',
+            first_name=current_user.first_name,
+            health_score=health_score,
+            score_description=user_row['score_description'],
+            rank=rank,
+            total_users=total_users,
+            email=email
+        )
     except Exception as e:
         logger.error(f"Error in form submission: {e}")
         flash(f"Error processing your submission: {str(e)}. Please try again later.", 'error')
@@ -508,6 +517,86 @@ def history():
     except Exception as e:
         logger.error(f"Error rendering history: {e}")
         flash(f"Error rendering history: {str(e)}. Please try again later.", 'error')
+        return redirect(url_for('dashboard'))
+
+@app.route('/download_report/<email>')
+@login_required
+def download_report(email):
+    try:
+        if email != current_user.email:
+            flash('Unauthorized access.', 'error')
+            return redirect(url_for('dashboard'))
+
+        session = Session()
+        all_submissions = pd.read_sql(session.query(Submission).statement, session.bind)
+        session.close()
+
+        user_df = all_submissions[all_submissions['email'] == email]
+        if user_df.empty:
+            flash('No submissions found for this user.', 'error')
+            return redirect(url_for('dashboard'))
+
+        user_row = user_df.iloc[-1]
+        health_score = user_row['HealthScore']
+        score_description = user_row['score_description']
+        all_submissions = calculate_health_score(all_submissions)
+        all_submissions = all_submissions.sort_values(by='HealthScore', ascending=False)
+        all_submissions['Rank'] = range(1, len(all_submissions) + 1)
+        rank = all_submissions[all_submissions['email'] == email]['Rank'].iloc[-1]
+        total_users = len(all_submissions)
+
+        # Generate PDF
+        buffer = BytesIO()
+        c = canvas.Canvas(buffer, pagesize=letter)
+        width, height = letter
+
+        # Header
+        c.setFillColor(colors.darkgreen)
+        c.setFont("Helvetica-Bold", 20)
+        c.drawCentredString(width / 2, height - 50, "Ficore AI Financial Health Report")
+
+        # Subtitle
+        c.setFillColor(colors.black)
+        c.setFont("Helvetica-Oblique", 12)
+        c.drawCentredString(width / 2, height - 70, "Financial Growth Passport for Africa")
+
+        # User Info
+        c.setFont("Helvetica", 12)
+        c.drawString(50, height - 120, f"Name: {current_user.first_name} {current_user.last_name}")
+        c.drawString(50, height - 140, f"Email: {email}")
+        c.drawString(50, height - 160, f"Date: {datetime.utcnow().strftime('%Y-%m-%d')}")
+
+        # Financial Health Score
+        c.setFillColor(colors.darkgreen)
+        c.setFont("Helvetica-Bold", 16)
+        c.drawString(50, height - 200, f"Financial Health Score: {health_score}/100")
+
+        # Advice
+        c.setFillColor(colors.black)
+        c.setFont("Helvetica", 12)
+        c.drawString(50, height - 230, f"Advice: {score_description}")
+
+        # Rank
+        c.drawString(50, height - 260, f"Rank: #{int(rank)} out of {total_users} users")
+
+        # Footer
+        c.setFont("Helvetica-Oblique", 10)
+        c.setFillColor(colors.grey)
+        c.drawCentredString(width / 2, 30, "Powered by Ficore AI")
+
+        c.showPage()
+        c.save()
+
+        buffer.seek(0)
+        return send_file(
+            buffer,
+            as_attachment=True,
+            download_name=f"ficore_financial_report_{email}.pdf",
+            mimetype='application/pdf'
+        )
+    except Exception as e:
+        logger.error(f"Error generating PDF report: {e}")
+        flash(f"Error generating PDF report: {str(e)}. Please try again later.", 'error')
         return redirect(url_for('dashboard'))
 
 if __name__ == "__main__":
