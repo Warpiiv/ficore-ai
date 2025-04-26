@@ -13,6 +13,11 @@ import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import time
+import logging
+
+# Set up logging
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 
 # Initialize Flask app with custom templates directory
 app = Flask(__name__, template_folder='ficore_templates')
@@ -67,9 +72,9 @@ def set_sheet_headers():
             valueInputOption='RAW',
             body=body
         ).execute()
-        print("Sheet1 headers set to predetermined values.")
+        logger.info("Sheet1 headers set to predetermined values.")
     except Exception as e:
-        print(f"Error setting headers: {e}")
+        logger.error(f"Error setting headers: {e}")
         raise
 
 # Append data to Google Sheet
@@ -86,8 +91,9 @@ def append_to_sheet(data):
             insertDataOption='INSERT_ROWS',
             body=body
         ).execute()
+        logger.info("Data appended to sheet successfully.")
     except Exception as e:
-        print(f"Error appending to sheet: {e}")
+        logger.error(f"Error appending to sheet: {e}")
         raise
 
 # Fetch data from Google Sheet
@@ -100,32 +106,40 @@ def fetch_data_from_sheet():
         result = sheet.values().get(spreadsheetId=SPREADSHEET_ID, range=DATA_RANGE_NAME).execute()
         values = result.get('values', [])
         if not values:
+            logger.info("No data found in Google Sheet.")
             return None
         
-        # Ensure all expected columns are present
         headers = values[0]
         rows = values[1:] if len(values) > 1 else []
         expected_columns = PREDETERMINED_HEADERS
         
+        # Log the fetched data
+        logger.debug(f"Fetched headers: {headers}")
+        logger.debug(f"Fetched rows: {rows}")
+
         # If headers don't match expected columns, reset the headers
         if headers != expected_columns:
+            logger.warning("Headers do not match expected columns. Resetting headers.")
             set_sheet_headers()
             # If there were no rows, return None to indicate the sheet was reset
             if not rows:
                 return None
             # Otherwise, adjust the rows to match the expected columns
-            for i in range(len(rows)):
-                row = rows[i]
+            normalized_rows = []
+            for row in rows:
                 if len(row) < len(expected_columns):
-                    rows[i] = row + [""] * (len(expected_columns) - len(row))
+                    row = row + [""] * (len(expected_columns) - len(row))
                 elif len(row) > len(expected_columns):
-                    rows[i] = row[:len(expected_columns)]
+                    row = row[:len(expected_columns)]
+                normalized_rows.append(row)
+            rows = normalized_rows
         
         # Create DataFrame with expected columns
+        logger.debug(f"Creating DataFrame with {len(rows)} rows and columns: {expected_columns}")
         df = pd.DataFrame(rows, columns=expected_columns)
         return df
     except Exception as e:
-        print(f"Error fetching data from Google Sheet: {e}")
+        logger.error(f"Error fetching data from Google Sheet: {e}")
         raise
 
 # Calculate Financial Health Score, determine course suggestion, and assign badges
@@ -184,7 +198,7 @@ def calculate_health_score(df):
             score_description_and_course, axis=1, result_type='expand')
         return df
     except Exception as e:
-        print(f"Error calculating health score: {e}")
+        logger.error(f"Error calculating health score: {e}")
         raise
 
 # Assign badges based on user submission
@@ -221,6 +235,7 @@ def update_badges_in_sheet(email, new_badges):
         result = sheet.values().get(spreadsheetId=SPREADSHEET_ID, range=DATA_RANGE_NAME).execute()
         values = result.get('values', [])
         if not values:
+            logger.info("No data found in Google Sheet for badge update.")
             return
 
         headers = values[0]
@@ -230,6 +245,7 @@ def update_badges_in_sheet(email, new_badges):
         # Find all rows for the user
         user_row_indices = [i + 1 for i, row in enumerate(rows) if row[headers.index('Email')] == email]
         if not user_row_indices:
+            logger.warning(f"No rows found for email: {email}")
             return
 
         # Get existing badges from the latest submission
@@ -252,8 +268,9 @@ def update_badges_in_sheet(email, new_badges):
                 valueInputOption='RAW',
                 body=body
             ).execute()
+        logger.info(f"Updated badges for email {email}: {combined_badges}")
     except Exception as e:
-        print(f"Error updating badges in sheet: {e}")
+        logger.error(f"Error updating badges in sheet: {e}")
 
 # Send Email with course suggestion
 def send_email(recipient_email, user_name, health_score, score_description, course_title, course_url, rank, total_users):
@@ -331,12 +348,12 @@ def send_email(recipient_email, user_name, health_score, score_description, cour
                 server.starttls()
                 server.login(sender_email, sender_password)
                 server.sendmail(sender_email, recipient_email, msg.as_string())
-                print(f"Email successfully sent to {recipient_email} (primary email)")
+                logger.info(f"Email successfully sent to {recipient_email} (primary email)")
                 return True
         except Exception as e:
-            print(f"Attempt {attempt + 1} failed: {e}")
+            logger.error(f"Attempt {attempt + 1} failed: {e}")
             time.sleep(2)
-    print(f"Failed to send email to {recipient_email} (primary email) after 3 attempts")
+    logger.error(f"Failed to send email to {recipient_email} (primary email) after 3 attempts")
     return False
 
 # Homepage route
@@ -363,6 +380,7 @@ def submit():
         email = request.form.get('email')
 
         if auto_email != email:
+            logger.error("Email addresses do not match.")
             return "Error: Email addresses do not match.", 400
 
         # Prepare data for Google Sheet (with empty Badges column initially)
@@ -374,11 +392,13 @@ def submit():
         # Verify the number of columns matches PREDETERMINED_HEADERS
         if len(data) != len(PREDETERMINED_HEADERS):
             raise ValueError(f"Data column count ({len(data)}) does not match expected headers ({len(PREDETERMINED_HEADERS)}).")
+        logger.debug(f"Appending data to sheet: {data}")
         append_to_sheet(data)
 
         # Fetch updated data
         all_users_df = fetch_data_from_sheet()
         if all_users_df is None:
+            logger.warning("No data found in Google Sheet after submission.")
             return render_template('error.html', message="No data found in Google Sheet after submission. Please try again later or contact Ficoreai@outlook.com for support."), 500
 
         # Convert numeric columns to float
@@ -396,6 +416,7 @@ def submit():
         # Filter for the current user
         user_df = all_users_df[all_users_df['Email'] == email]
         if user_df.empty:
+            logger.warning(f"No data found for user with email: {email}")
             return render_template('error.html', message=f"No data found for user with email: {email}. Please contact Ficoreai@outlook.com for support."), 500
 
         # Extract user data
@@ -414,6 +435,7 @@ def submit():
         # Fetch updated data again to get badges
         all_users_df = fetch_data_from_sheet()
         if all_users_df is None:
+            logger.warning("No data found in Google Sheet after updating badges.")
             return render_template('error.html', message="No data found in Google Sheet after updating badges. Please try again later or contact Ficoreai@outlook.com for support."), 500
         user_df = all_users_df[all_users_df['Email'] == email]
         user_row = user_df.iloc[-1]  # Latest submission
@@ -433,9 +455,10 @@ def submit():
         # Redirect to dashboard
         return redirect(url_for('dashboard', email=email, personalized_message=personalized_message))
     except ValueError as e:
+        logger.error(f"ValueError in form submission: {str(e)}")
         return render_template('error.html', message=f"Invalid input format: {str(e)}. Please ensure all numeric fields contain valid numbers. Contact Ficoreai@outlook.com for support."), 400
     except Exception as e:
-        print(f"Error in form submission: {e}")
+        logger.error(f"Error in form submission: {e}")
         return render_template('error.html', message=f"Error processing your submission: {str(e)}. We’re sorry for the inconvenience—please try again later or contact Ficoreai@outlook.com for support."), 500
 
 # Dashboard route
@@ -449,6 +472,7 @@ def dashboard():
         # Fetch data from Google Sheets
         all_users_df = fetch_data_from_sheet()
         if all_users_df is None:
+            logger.warning("No data found in Google Sheet for dashboard.")
             return render_template('error.html', message="No data found in Google Sheet. Please try again later or contact Ficoreai@outlook.com for support."), 500
 
         # Convert numeric columns to float
@@ -466,6 +490,7 @@ def dashboard():
         # Filter for the current user
         user_df = all_users_df[all_users_df['Email'] == email]
         if user_df.empty:
+            logger.warning(f"No data found for user with email: {email} in dashboard.")
             return render_template('error.html', message=f"No data found for user with email: {email}. Please contact Ficoreai@outlook.com for support."), 500
 
         # Extract user data (latest submission)
@@ -544,7 +569,7 @@ def dashboard():
             comparison_plot=comparison_plot
         )
     except Exception as e:
-        print(f"Error rendering dashboard: {e}")
+        logger.error(f"Error rendering dashboard: {e}")
         return render_template('error.html', message=f"Error rendering dashboard: {str(e)}. We’re sorry for the inconvenience—please try again later or contact Ficoreai@outlook.com for support."), 500
 
 if __name__ == "__main__":
