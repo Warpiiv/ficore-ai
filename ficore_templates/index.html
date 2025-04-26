@@ -27,7 +27,7 @@
         .tagline {
             text-align: center;
             font-style: italic;
-            color: #1E88E5; /* Different color (blue) from the heading */
+            color: #1E88E5;
             margin-bottom: 20px;
             font-size: 1rem;
         }
@@ -155,9 +155,16 @@
             const requiredFields = ['income_revenue', 'expenses_costs', 'debt_loan', 'debt_interest_rate'];
             for (let field of requiredFields) {
                 const hiddenInput = document.getElementById(`${field}_hidden`);
-                const value = hiddenInput.value ? parseFloat(hiddenInput.value) : null;
-                if (!value || value < 0 || isNaN(value)) {
-                    alert(`Please enter a valid non-negative value for ${field.replace('_', ' ').replace('income revenue', 'Income/Revenue').replace('expenses costs', 'Expenses/Costs').replace('debt loan', 'Debt/Loan').replace('debt interest rate', 'Debt Interest Rate')}.`);
+                const valueStr = hiddenInput.value;
+                // Check if the field is empty or not a valid number
+                if (valueStr === '' || isNaN(valueStr)) {
+                    alert(`Please enter a valid number for ${field.replace('_', ' ').replace('income revenue', 'Income/Revenue').replace('expenses costs', 'Expenses/Costs').replace('debt loan', 'Debt/Loan').replace('debt interest rate', 'Debt Interest Rate')}.`);
+                    return false;
+                }
+                const value = parseFloat(valueStr);
+                // Only check for non-negative (allow 0)
+                if (value < 0) {
+                    alert(`Please enter a non-negative value for ${field.replace('_', ' ').replace('income revenue', 'Income/Revenue').replace('expenses costs', 'Expenses/Costs').replace('debt loan', 'Debt/Loan').replace('debt interest rate', 'Debt Interest Rate')}.`);
                     return false;
                 }
             }
