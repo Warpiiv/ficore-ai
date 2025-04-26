@@ -16,3 +16,4 @@ Flask-Login==0.6.3  # For user authentication and session management
 bcrypt==4.2.0  # For password hashing
 psycopg2-binary==2.9.10  # PostgreSQL adapter
 SQLAlchemy==2.0.35  # ORM for database interactions
+reportlab==4.2.2  # For PDF generation
