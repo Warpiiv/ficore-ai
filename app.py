@@ -1,305 +1,182 @@
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, render_template, request, redirect, url_for, flash
+from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 import os
 import pandas as pd
 import smtplib
-import json
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-from google.oauth2 import service_account
-from googleapiclient.discovery import build
 from datetime import datetime
 from dotenv import load_dotenv
 import plotly.express as px
 import plotly.graph_objects as go
-from plotly.subplots import make_subplots
-import time
+from sqlalchemy import create_engine, Column, Integer, String, Float, DateTime, ForeignKey, text
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker, relationship
+import bcrypt
 import logging
 
 # Set up logging
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
-# Initialize Flask app with custom templates directory
+# Initialize Flask app
 app = Flask(__name__, template_folder='ficore_templates')
+app.secret_key = os.urandom(24)  # Required for Flask-Login and sessions
 
 # Load environment variables
 load_dotenv()
+DATABASE_URL = os.environ.get('DATABASE_URL')
+engine = create_engine(DATABASE_URL)
+Base = declarative_base()
 
-# Constants for Google Sheets
-SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
-SPREADSHEET_ID = '13hbiMTMRBHo9MHjWwcugngY_aSiuxII67HCf03MiZ8I'
-DATA_RANGE_NAME = 'Sheet1!A1:M'
-RESULTS_SHEET_NAME = 'FicoreAIResults'
-RESULTS_HEADER = ['Email', 'FicoreAIScore', 'FicoreAIRank']
+# Define models
+class User(Base, UserMixin):
+    __tablename__ = 'users'
+    id = Column(Integer, primary_key=True)
+    email = Column(String(255), unique=True, nullable=False)
+    password_hash = Column(String(255), nullable=False)
+    first_name = Column(String(100))
+    last_name = Column(String(100))
+    created_at = Column(DateTime, default=datetime.utcnow)
+    submissions = relationship('Submission', back_populates='user')
+
+    def get_id(self):
+        return str(self.id)
+
+class Submission(Base):
+    __tablename__ = 'submissions'
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
+    timestamp = Column(DateTime, default=datetime.utcnow)
+    business_name = Column(String(255))
+    income_revenue = Column(Float, nullable=False)
+    expenses_costs = Column(Float, nullable=False)
+    debt_loan = Column(Float, nullable=False)
+    debt_interest_rate = Column(Float, nullable=False)
+    phone_number = Column(String(20))
+    user_type = Column(String(50))
+    health_score = Column(Float)
+    score_description = Column(String)
+    course_title = Column(String)
+    course_url = Column(String)
+    badges = Column(String)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    user = relationship('User', back_populates='submissions')
+
+# Create tables
+Base.metadata.create_all(engine)
+Session = sessionmaker(bind=engine)
+
+# Set up Flask-Login
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = 'login'
+
+@login_manager.user_loader
+def load_user(user_id):
+    session = Session()
+    user = session.query(User).get(int(user_id))
+    session.close()
+    return user
+
+# Constants
 FEEDBACK_FORM_URL = 'https://forms.gle/NkiLicSykLyMnhJk7'
 WAITLIST_FORM_URL = 'https://forms.gle/3kXnJuDatTm8bT3x7'
 CONSULTANCY_FORM_URL = 'https://forms.gle/rfHhpD71MjLpET2K9'
-INVESTING_COURSE_URL = 'https://youtube.com/@ficore.ai.africa?si=myoEpotNALfGK4eI'
-SAVINGS_COURSE_URL = 'https://youtube.com/@ficore.ai.africa?si=myoEpotNALfGK4eI'
-DEBT_COURSE_URL = 'https://youtube.com/@ficore.ai.africa?si=myoEpotNALfGK4eI'
-RECOVERY_COURSE_URL = 'https://youtube.com/@ficore.ai.africa?si=myoEpotNALfGK4eI'
+INVESTING_COURSE_URL = 'https://youtube.com/watch?v=investing-2025-video-id'
+SAVINGS_COURSE_URL = 'https://youtube.com/watch?v=savings-2025-video-id'
+DEBT_COURSE_URL = 'https://youtube.com/watch?v=debt-management-2025-video-id'
+RECOVERY_COURSE_URL = 'https://youtube.com/watch?v=financial-recovery-2025-video-id'
 PREDETERMINED_HEADERS = [
-    'Timestamp', 'BusinessName', 'IncomeRevenue', 'ExpensesCosts', 'DebtLoan',
-    'DebtInterestRate', 'AutoEmail', 'PhoneNumber', 'FirstName', 'LastName', 'UserType', 'Email', 'Badges'
+    'timestamp', 'business_name', 'income_revenue', 'expenses_costs', 'debt_loan',
+    'debt_interest_rate', 'phone_number', 'user_type', 'health_score', 'score_description',
+    'course_title', 'course_url', 'badges'
 ]
 
-# Authenticate with Google Sheets
-def authenticate_google_sheets():
-    creds_json = os.environ.get('GOOGLE_CREDENTIALS_JSON')
-    if not creds_json:
-        raise Exception("GOOGLE_CREDENTIALS_JSON environment variable not set.")
-    try:
-        creds_info = json.loads(creds_json)
-        creds = service_account.Credentials.from_service_account_info(creds_info, scopes=SCOPES)
-        return build('sheets', 'v4', credentials=creds)
-    except json.JSONDecodeError as e:
-        raise Exception(f"Error decoding GOOGLE_CREDENTIALS_JSON: {e}")
-    except Exception as e:
-        raise Exception(f"Error authenticating with Google Sheets: {e}")
-
-# Set Google Sheet headers
-def set_sheet_headers():
-    try:
-        service = authenticate_google_sheets()
-        if not service:
-            raise Exception("Google Sheets authentication failed.")
-        sheet = service.spreadsheets()
-        body = {'values': [PREDETERMINED_HEADERS]}
-        sheet.values().update(
-            spreadsheetId=SPREADSHEET_ID,
-            range='Sheet1!A1',
-            valueInputOption='RAW',
-            body=body
-        ).execute()
-        logger.info("Sheet1 headers set to predetermined values.")
-    except Exception as e:
-        logger.error(f"Error setting headers: {e}")
-        raise
-
-# Get the number of rows in the sheet to determine where to append
-def get_row_count():
-    try:
-        service = authenticate_google_sheets()
-        sheet = service.spreadsheets()
-        result = sheet.values().get(spreadsheetId=SPREADSHEET_ID, range=DATA_RANGE_NAME).execute()
-        values = result.get('values', [])
-        return len(values) if values else 0
-    except Exception as e:
-        logger.error(f"Error getting row count: {e}")
-        raise
-
-# Append data to Google Sheet with badges included
-def append_to_sheet(data):
-    try:
-        service = authenticate_google_sheets()
-        sheet = service.spreadsheets()
-
-        # Set headers if the sheet is empty
-        row_count = get_row_count()
-        if row_count == 0:
-            set_sheet_headers()
-            row_count = 1  # After setting headers
-
-        # Append the data by updating the next row
-        range_to_update = f'Sheet1!A{row_count + 1}:M{row_count + 1}'
-        body = {'values': [data]}
-        sheet.values().update(
-            spreadsheetId=SPREADSHEET_ID,
-            range=range_to_update,
-            valueInputOption='RAW',
-            body=body
-        ).execute()
-        logger.info(f"Appending data with badges to sheet at row {row_count + 1}: {data[-1]}")
-        time.sleep(1)  # Small delay to allow propagation
-    except Exception as e:
-        logger.error(f"Error appending to sheet: {e}")
-        raise
-
-# Fetch data from Google Sheet with retry mechanism
-def fetch_data_from_sheet(max_retries=5, delay=2):
-    for attempt in range(max_retries):
-        try:
-            service = authenticate_google_sheets()
-            if not service:
-                raise Exception("Google Sheets authentication failed.")
-            sheet = service.spreadsheets()
-            result = sheet.values().get(spreadsheetId=SPREADSHEET_ID, range=DATA_RANGE_NAME).execute()
-            values = result.get('values', [])
-            
-            if not values:
-                logger.info(f"Attempt {attempt + 1}: No data found in Google Sheet.")
-                if attempt < max_retries - 1:
-                    time.sleep(delay * (2 ** attempt))
-                    continue
-                return None
-            
-            headers = values[0]
-            rows = values[1:] if len(values) > 1 else []
-            expected_columns = PREDETERMINED_HEADERS
-            
-            # Log the fetched data
-            logger.debug(f"Attempt {attempt + 1}: Fetched headers: {headers}")
-            logger.debug(f"Attempt {attempt + 1}: Fetched rows: {rows}")
-
-            # If headers don't match expected columns, reset the headers
-            if headers != expected_columns:
-                logger.warning(f"Attempt {attempt + 1}: Headers do not match expected columns. Resetting headers.")
-                set_sheet_headers()
-                if not rows:
-                    if attempt < max_retries - 1:
-                        time.sleep(delay * (2 ** attempt))
-                        continue
-                    return None
-                # Normalize rows to match expected columns
-                normalized_rows = []
-                for row in rows:
-                    if len(row) < len(expected_columns):
-                        row = row + [""] * (len(expected_columns) - len(row))
-                    elif len(row) > len(expected_columns):
-                        row = row[:len(expected_columns)]
-                    normalized_rows.append(row)
-                rows = normalized_rows
-            else:
-                # Ensure rows match the number of headers
-                normalized_rows = []
-                for row in rows:
-                    if len(row) < len(headers):
-                        row = row + [""] * (len(headers) - len(row))
-                    elif len(row) > len(headers):
-                        row = row[:len(headers)]
-                    normalized_rows.append(row)
-                rows = normalized_rows
-            
-            # Create DataFrame with correct column names
-            if not rows:
-                logger.info(f"Attempt {attempt + 1}: No data rows found, creating empty DataFrame.")
-                df = pd.DataFrame(columns=expected_columns)
-            else:
-                df = pd.DataFrame(rows, columns=headers)
-                # Ensure all expected columns are present
-                for col in expected_columns:
-                    if col not in df.columns:
-                        df[col] = ""
-                # Reorder columns to match expected_columns
-                df = df[expected_columns]
-            
-            logger.debug(f"Attempt {attempt + 1}: Created DataFrame with shape {df.shape}")
-            logger.debug(f"Attempt {attempt + 1}: DataFrame head:\n{df.head()}")
-            return df
-        
-        except Exception as e:
-            logger.error(f"Attempt {attempt + 1}: Error fetching data from Google Sheet: {e}")
-            if attempt < max_retries - 1:
-                time.sleep(delay * (2 ** attempt))
-                continue
-            raise
-    raise Exception("Max retries reached while fetching data from Google Sheet.")
-
-# Calculate Financial Health Score, determine course suggestion, and assign badges
+# Calculate Financial Health Score
 def calculate_health_score(df):
-    try:
-        if df.empty:
-            logger.warning("Empty DataFrame passed to calculate_health_score.")
-            return df
-        
-        df['HealthScore'] = 0.0
-        df['IncomeRevenueSafe'] = df['IncomeRevenue'].replace(0, 1e-10)
-        df['CashFlowRatio'] = (df['IncomeRevenue'] - df['ExpensesCosts']) / df['IncomeRevenueSafe']
-        df['DebtToIncomeRatio'] = df['DebtLoan'] / df['IncomeRevenueSafe']
-        df['DebtInterestBurden'] = df['DebtInterestRate'].clip(lower=0) / 20
-        df['DebtInterestBurden'] = df['DebtInterestBurden'].clip(upper=1)
-        df['NormCashFlow'] = df['CashFlowRatio'].clip(0, 1)
-        df['NormDebtToIncome'] = 1 - df['DebtToIncomeRatio'].clip(0, 1)
-        df['NormDebtInterest'] = 1 - df['DebtInterestBurden']
-        df['HealthScore'] = (df['NormCashFlow'] * 0.333 +
-                            df['NormDebtToIncome'] * 0.333 +
-                            df['NormDebtInterest'] * 0.333) * 100
-        df['HealthScore'] = df['HealthScore'].round(2)
+    df['HealthScore'] = 0.0
+    df['IncomeRevenueSafe'] = df['income_revenue'].replace(0, 1e-10)
+    df['CashFlowRatio'] = (df['income_revenue'] - df['expenses_costs']) / df['IncomeRevenueSafe']
+    df['DebtToIncomeRatio'] = df['debt_loan'] / df['IncomeRevenueSafe']
+    df['DebtInterestBurden'] = df['debt_interest_rate'].clip(lower=0) / 20
+    df['DebtInterestBurden'] = df['DebtInterestBurden'].clip(upper=1)
+    df['NormCashFlow'] = df['CashFlowRatio'].clip(0, 1)
+    df['NormDebtToIncome'] = 1 - df['DebtToIncomeRatio'].clip(0, 1)
+    df['NormDebtInterest'] = 1 - df['DebtInterestBurden']
+    df['HealthScore'] = (df['NormCashFlow'] * 0.333 +
+                        df['NormDebtToIncome'] * 0.333 +
+                        df['NormDebtInterest'] * 0.333) * 100
+    df['HealthScore'] = df['HealthScore'].round(2)
 
-        def score_description_and_course(row):
-            score = row['HealthScore']
-            cash_flow = row['CashFlowRatio']
-            debt_to_income = row['DebtToIncomeRatio']
-            debt_interest = row['DebtInterestBurden']
-            
-            if score >= 75:
-                return ('Stable; invest excess now',
-                        'Ficore Simplified Investing Course: How to Invest in 2025 for Better Gains',
-                        INVESTING_COURSE_URL)
-            elif score >= 50:
-                if cash_flow < 0.3 or debt_interest > 0.5:
-                    return ('At Risk; manage expense',
-                            'Ficore Debt and Expense Management: Regain Control in 2025',
-                            DEBT_COURSE_URL)
-                return ('Moderate; save monthly',
-                        'Ficore Savings Mastery: Building a Financial Safety Net in 2025',
-                        SAVINGS_COURSE_URL)
-            elif score >= 25:
-                if debt_to_income > 0.5 or debt_interest > 0.5:
-                    return ('At Risk; pay off debt, manage expense',
-                            'Ficore Debt and Expense Management: Regain Control in 2025',
-                            DEBT_COURSE_URL)
+    def score_description_and_course(row):
+        score = row['HealthScore']
+        cash_flow = row['CashFlowRatio']
+        debt_to_income = row['DebtToIncomeRatio']
+        debt_interest = row['DebtInterestBurden']
+        
+        if score >= 75:
+            return ('Stable; invest excess now',
+                    'Ficore Simplified Investing Course: How to Invest in 2025 for Better Gains',
+                    INVESTING_COURSE_URL)
+        elif score >= 50:
+            if cash_flow < 0.3 or debt_interest > 0.5:
                 return ('At Risk; manage expense',
                         'Ficore Debt and Expense Management: Regain Control in 2025',
                         DEBT_COURSE_URL)
-            else:
-                if debt_to_income > 0.5 or cash_flow < 0.3:
-                    return ('Critical; add source of income, pay off debt, manage expense',
-                            'Ficore Financial Recovery: First Steps to Stability in 2025',
-                            RECOVERY_COURSE_URL)
-                return ('Critical; seek financial help',
+            return ('Moderate; save monthly',
+                    'Ficore Savings Mastery: Building a Financial Safety Net in 2025',
+                    SAVINGS_COURSE_URL)
+        elif score >= 25:
+            if debt_to_income > 0.5 or debt_interest > 0.5:
+                return ('At Risk; pay off debt, manage expense',
+                        'Ficore Debt and Expense Management: Regain Control in 2025',
+                        DEBT_COURSE_URL)
+            return ('At Risk; manage expense',
+                    'Ficore Debt and Expense Management: Regain Control in 2025',
+                    DEBT_COURSE_URL)
+        else:
+            if debt_to_income > 0.5 or cash_flow < 0.3:
+                return ('Critical; add source of income, pay off debt, manage expense',
                         'Ficore Financial Recovery: First Steps to Stability in 2025',
                         RECOVERY_COURSE_URL)
+            return ('Critical; seek financial help',
+                    'Ficore Financial Recovery: First Steps to Stability in 2025',
+                    RECOVERY_COURSE_URL)
 
-        df[['ScoreDescription', 'CourseTitle', 'CourseURL']] = df.apply(
-            score_description_and_course, axis=1, result_type='expand')
-        return df
-    except Exception as e:
-        logger.error(f"Error calculating health score: {e}")
-        raise
+    df[['ScoreDescription', 'CourseTitle', 'CourseURL']] = df.apply(
+        score_description_and_course, axis=1, result_type='expand')
+    return df
 
-# Assign badges based on user submission
-def assign_badges(user_df, all_users_df):
+# Assign badges
+def assign_badges(user_df, all_user_submissions):
     badges = []
     user_row = user_df.iloc[0]
-    email = user_row['Email']
+    email = user_row['email']
     health_score = user_row['HealthScore']
-    current_debt = user_row['DebtLoan']
+    current_debt = user_row['debt_loan']
 
-    # Check for "First Health Score Completed!" badge
-    user_submissions = all_users_df[all_users_df['Email'] == email]
-    if len(user_submissions) == 1:  # This is the user's first submission
+    user_submissions = all_user_submissions[all_user_submissions['email'] == email]
+    if len(user_submissions) == 1:
         badges.append("First Health Score Completed!")
-
-    # Check for "Financial Stability Achieved!" badge
     if health_score > 80:
         badges.append("Financial Stability Achieved!")
-
-    # Check for "Debt Slayer!" badge
-    if len(user_submissions) > 1:  # User has previous submissions
-        previous_submission = user_submissions.iloc[-2]  # Second-to-last submission
-        previous_debt = float(previous_submission['DebtLoan'])
+    if len(user_submissions) > 1:
+        previous_submission = user_submissions.iloc[-2]
+        previous_debt = float(previous_submission['debt_loan'])
         if current_debt < previous_debt:
             badges.append("Debt Slayer!")
 
     logger.debug(f"Assigned badges for email {email}: {badges}")
     return badges
 
-# Send Email with course suggestion
+# Send Email
 def send_email(recipient_email, user_name, health_score, score_description, course_title, course_url, rank, total_users):
     sender_email = os.environ.get('SENDER_EMAIL')
     sender_password = os.environ.get('SENDER_PASSWORD')
-    if not sender_email or not sender_password:
-        raise Exception("SENDER_EMAIL or SENDER_PASSWORD environment variable not set.")
-
-    # Determine gamified subject line
     top_10_percent = (rank / total_users) <= 0.1
-    if top_10_percent:
-        subject = "🔥 You're Top 10%! Your Ficore Score Report Awaits!"
-    else:
-        subject = f"📊 Your Ficore Score Report is Ready, {user_name}!"
+    subject = "🔥 You're Top 10%! Your Ficore Score Report Awaits!" if top_10_percent else f"📊 Your Ficore Score Report is Ready, {user_name}!"
 
-    # HTML email body with styled heading, subheading, buttons, and course suggestion
     html_body = f"""
     <html>
     <body style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
@@ -333,17 +210,6 @@ def send_email(recipient_email, user_name, health_score, score_description, cour
             Need personalized advice? 
             <a href="{CONSULTANCY_FORM_URL}" style="display: inline-block; padding: 10px 20px; background-color: #388E3C; color: white; text-decoration: none; border-radius: 5px; font-size: 0.9rem; transition: background-color 0.3s;">Book Consultancy</a>
         </p>
-        <style>
-            a:hover {{
-                background-color: #1B5E20 !important; /* Darker green for Feedback and Consultancy buttons */
-            }}
-            a[href="{WAITLIST_FORM_URL}"]:hover {{
-                background-color: #0D47A1 !important; /* Darker blue for Waitlist button */
-            }}
-            a[href="{course_url}"]:hover {{
-                background-color: #F9A825 !important; /* Darker yellow for Course button */
-            }}
-        </style>
         <p>Best regards,<br>The Ficore AI Team</p>
     </body>
     </html>
@@ -361,187 +227,187 @@ def send_email(recipient_email, user_name, health_score, score_description, cour
                 server.starttls()
                 server.login(sender_email, sender_password)
                 server.sendmail(sender_email, recipient_email, msg.as_string())
-                logger.info(f"Email successfully sent to {recipient_email} (primary email)")
+                logger.info(f"Email successfully sent to {recipient_email}")
                 return True
         except Exception as e:
             logger.error(f"Attempt {attempt + 1} failed: {e}")
-            time.sleep(2)
-    logger.error(f"Failed to send email to {recipient_email} (primary email) after 3 attempts")
+    logger.error(f"Failed to send email to {recipient_email} after 3 attempts")
     return False
 
-# Homepage route
+# Routes
 @app.route('/')
 def home():
+    if current_user.is_authenticated:
+        return redirect(url_for('dashboard'))
     return render_template('index.html')
 
-# Form submission route
-@app.route('/submit', methods=['POST'])
-def submit():
-    try:
-        # Extract and validate form data
-        timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        business_name = request.form.get('business_name')
-        income_revenue = request.form.get('income_revenue')
-        expenses_costs = request.form.get('expenses_costs')
-        debt_loan = request.form.get('debt_loan')
-        debt_interest_rate = request.form.get('debt_interest_rate')
-        auto_email = request.form.get('auto_email')
-        phone_number = request.form.get('phone_number')
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    if current_user.is_authenticated:
+        return redirect(url_for('dashboard'))
+    if request.method == 'POST':
+        email = request.form.get('email')
+        password = request.form.get('password')
         first_name = request.form.get('first_name')
         last_name = request.form.get('last_name')
-        user_type = request.form.get('user_type')
+
+        if not email or not password:
+            flash('Email and password are required.', 'error')
+            return render_template('register.html')
+
+        session = Session()
+        existing_user = session.query(User).filter_by(email=email).first()
+        if existing_user:
+            session.close()
+            flash('Email already registered. Please log in.', 'error')
+            return render_template('register.html')
+
+        password_hash = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+        new_user = User(email=email, password_hash=password_hash, first_name=first_name, last_name=last_name)
+        session.add(new_user)
+        session.commit()
+        session.close()
+
+        flash('Registration successful! Please log in.', 'success')
+        return redirect(url_for('login'))
+    return render_template('register.html')
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if current_user.is_authenticated:
+        return redirect(url_for('dashboard'))
+    if request.method == 'POST':
         email = request.form.get('email')
+        password = request.form.get('password')
 
-        # Validate required fields
-        if not all([business_name, income_revenue, expenses_costs, debt_loan, debt_interest_rate, email]):
-            return render_template('error.html', message="All fields are required."), 400
+        session = Session()
+        user = session.query(User).filter_by(email=email).first()
+        if user and bcrypt.checkpw(password.encode('utf-8'), user.password_hash.encode('utf-8')):
+            login_user(user)
+            session.close()
+            flash('Logged in successfully!', 'success')
+            return redirect(url_for('dashboard'))
+        session.close()
+        flash('Invalid email or password.', 'error')
+        return render_template('login.html')
+    return render_template('login.html')
 
-        # Convert and validate numeric fields
-        income_revenue = float(income_revenue.replace(',', ''))
-        expenses_costs = float(expenses_costs.replace(',', ''))
-        debt_loan = float(debt_loan.replace(',', ''))
-        debt_interest_rate = float(debt_interest_rate.replace(',', ''))
+@app.route('/logout')
+@login_required
+def logout():
+    logout_user()
+    flash('Logged out successfully!', 'success')
+    return redirect(url_for('login'))
 
-        if auto_email != email:
-            logger.error("Email addresses do not match.")
-            return "Error: Email addresses do not match.", 400
+@app.route('/submit', methods=['POST'])
+@login_required
+def submit():
+    try:
+        timestamp = datetime.utcnow()
+        business_name = request.form.get('business_name')
+        income_revenue = float(request.form.get('income_revenue').replace(',', ''))
+        expenses_costs = float(request.form.get('expenses_costs').replace(',', ''))
+        debt_loan = float(request.form.get('debt_loan').replace(',', ''))
+        debt_interest_rate = float(request.form.get('debt_interest_rate').replace(',', ''))
+        phone_number = request.form.get('phone_number')
+        user_type = request.form.get('user_type')
+        email = current_user.email
 
-        # Prepare data for Google Sheet (with empty Badges column initially)
-        data = [
-            timestamp, business_name, income_revenue, expenses_costs, debt_loan,
-            debt_interest_rate, auto_email, phone_number, first_name, last_name,
-            user_type, email, ""
-        ]
-        if len(data) != len(PREDETERMINED_HEADERS):
-            raise ValueError(f"Data column count ({len(data)}) does not match expected headers ({len(PREDETERMINED_HEADERS)}).")
+        data = {
+            'user_id': current_user.id,
+            'timestamp': timestamp,
+            'business_name': business_name,
+            'income_revenue': income_revenue,
+            'expenses_costs': expenses_costs,
+            'debt_loan': debt_loan,
+            'debt_interest_rate': debt_interest_rate,
+            'phone_number': phone_number,
+            'user_type': user_type,
+            'email': email
+        }
 
-        # Fetch all users data to determine badges
-        all_users_df = fetch_data_from_sheet()
-        if all_users_df is None or all_users_df.empty:
-            all_users_df = pd.DataFrame(columns=PREDETERMINED_HEADERS)
+        session = Session()
+        all_submissions = pd.read_sql(session.query(Submission).statement, session.bind)
+        session.close()
 
-        # Calculate health score and badges for the new submission
-        temp_df = pd.DataFrame([data], columns=PREDETERMINED_HEADERS)
-        for col in ['IncomeRevenue', 'ExpensesCosts', 'DebtLoan', 'DebtInterestRate']:
-            temp_df[col] = pd.to_numeric(temp_df[col], errors='coerce').fillna(0)
+        if all_submissions.empty:
+            all_submissions = pd.DataFrame(columns=PREDETERMINED_HEADERS + ['email'])
+
+        temp_df = pd.DataFrame([data])
         temp_df = calculate_health_score(temp_df)
-        new_badges = assign_badges(temp_df, all_users_df)
-        data[-1] = ",".join(new_badges)  # Update badges in the data
+        new_badges = assign_badges(temp_df, all_submissions)
+        data['health_score'] = temp_df.iloc[0]['HealthScore']
+        data['score_description'] = temp_df.iloc[0]['ScoreDescription']
+        data['course_title'] = temp_df.iloc[0]['CourseTitle']
+        data['course_url'] = temp_df.iloc[0]['CourseURL']
+        data['badges'] = ",".join(new_badges)
 
-        # Append data with badges
-        logger.debug(f"Appending data to sheet: {data}")
-        append_to_sheet(data)
+        session = Session()
+        new_submission = Submission(**data)
+        session.add(new_submission)
+        session.commit()
+        session.close()
 
-        # Fetch updated data
-        all_users_df = fetch_data_from_sheet()
-        if all_users_df is None or all_users_df.empty:
-            logger.warning("No data found in Google Sheet after submission.")
-            return render_template('error.html', message="No data found in Google Sheet after submission. Please try again later or contact Ficoreai@outlook.com for support."), 500
+        all_submissions = pd.read_sql(session.query(Submission).statement, session.bind)
+        all_submissions = calculate_health_score(all_submissions)
+        all_submissions = all_submissions.sort_values(by='HealthScore', ascending=False)
+        all_submissions['Rank'] = range(1, len(all_submissions) + 1)
 
-        # Convert numeric columns to float
-        numeric_cols = ['IncomeRevenue', 'ExpensesCosts', 'DebtLoan', 'DebtInterestRate']
-        for col in numeric_cols:
-            all_users_df[col] = pd.to_numeric(all_users_df[col], errors='coerce').fillna(0)
-
-        # Calculate health scores
-        all_users_df = calculate_health_score(all_users_df)
-
-        # Sort by HealthScore and assign ranks
-        all_users_df = all_users_df.sort_values(by='HealthScore', ascending=False)
-        all_users_df['Rank'] = range(1, len(all_users_df) + 1)
-
-        # Filter for the current user
-        user_df = all_users_df[all_users_df['Email'] == email]
-        if user_df.empty:
-            logger.warning(f"No data found for user with email: {email}")
-            return render_template('error.html', message=f"No data found for user with email: {email}. Please contact Ficoreai@outlook.com for support."), 500
-
-        # Extract user data
+        user_df = all_submissions[all_submissions['email'] == email]
         user_row = user_df.iloc[-1]
         health_score = user_row['HealthScore']
         rank = user_row['Rank']
-        total_users = len(all_users_df)
-        score_description = user_row['ScoreDescription']
-        course_title = user_row['CourseTitle']
-        course_url = user_row['CourseURL']
-        badges = user_row['Badges'].split(",") if user_row['Badges'] else []
+        total_users = len(all_submissions)
 
-        # Generate personalized message
-        personalized_message = ""
-        if "First Health Score Completed!" in new_badges:
-            personalized_message = "🎉 Congratulations, you earned your first badge: Financial Explorer!"
-        elif new_badges:
-            personalized_message = f"🎉 Great job! You earned a new badge: {new_badges[-1]}"
-
-        # Send email with course suggestion
-        user_name = f"{first_name} {last_name}"
-        email_sent = send_email(email, user_name, health_score, score_description, course_title, course_url, rank, total_users)
+        user_name = f"{current_user.first_name} {current_user.last_name}"
+        email_sent = send_email(email, user_name, health_score, user_row['score_description'],
+                               user_row['course_title'], user_row['course_url'], rank, total_users)
+        
+        personalized_message = "🎉 Congratulations, you earned your first badge: Financial Explorer!" if "First Health Score Completed!" in new_badges else f"🎉 Great job! You earned a new badge: {new_badges[-1]}" if new_badges else ""
         if not email_sent:
             personalized_message += " ⚠️ Unable to send email report. Please check your spam folder or contact support."
 
-        # Redirect to dashboard
-        return redirect(url_for('dashboard', email=email, personalized_message=personalized_message))
-    except ValueError as e:
-        logger.error(f"ValueError in form submission: {str(e)}")
-        return render_template('error.html', message=f"Invalid input format: {str(e)}. Please ensure all numeric fields contain valid numbers. Contact Ficoreai@outlook.com for support."), 400
+        return redirect(url_for('dashboard', personalized_message=personalized_message))
     except Exception as e:
         logger.error(f"Error in form submission: {e}")
-        return render_template('error.html', message=f"Error processing your submission: {str(e)}. We’re sorry for the inconvenience—please try again later or contact Ficoreai@outlook.com for support."), 500
+        flash(f"Error processing your submission: {str(e)}. Please try again later.", 'error')
+        return redirect(url_for('home'))
 
-# Dashboard route
 @app.route('/dashboard')
+@login_required
 def dashboard():
     try:
-        # Get the user's email and personalized message from query parameters
-        email = request.args.get('email', 'test@example.com')
-        personalized_message = request.args.get('personalized_message', '')
+        session = Session()
+        all_submissions = pd.read_sql(session.query(Submission).statement, session.bind)
+        session.close()
 
-        # Fetch data from Google Sheets
-        all_users_df = fetch_data_from_sheet()
-        if all_users_df is None or all_users_df.empty:
-            logger.warning("No data found in Google Sheet for dashboard.")
-            return render_template('error.html', message="No data found in Google Sheet. Please try again later or contact Ficoreai@outlook.com for support."), 500
+        if all_submissions.empty:
+            flash('No submissions found. Please submit your financial data.', 'info')
+            return redirect(url_for('home'))
 
-        # Convert numeric columns to float
-        numeric_cols = ['IncomeRevenue', 'ExpensesCosts', 'DebtLoan', 'DebtInterestRate']
-        for col in numeric_cols:
-            all_users_df[col] = pd.to_numeric(all_users_df[col], errors='coerce').fillna(0)
+        all_submissions = calculate_health_score(all_submissions)
+        all_submissions = all_submissions.sort_values(by='HealthScore', ascending=False)
+        all_submissions['Rank'] = range(1, len(all_submissions) + 1)
 
-        # Calculate health scores for all users
-        all_users_df = calculate_health_score(all_users_df)
-
-        # Sort by HealthScore and assign ranks
-        all_users_df = all_users_df.sort_values(by='HealthScore', ascending=False)
-        all_users_df['Rank'] = range(1, len(all_users_df) + 1)
-
-        # Filter for the current user
-        user_df = all_users_df[all_users_df['Email'] == email]
+        user_df = all_submissions[all_submissions['user_id'] == current_user.id]
         if user_df.empty:
-            logger.warning(f"No data found for user with email: {email} in dashboard.")
-            return render_template('error.html', message=f"No data found for user with email: {email}. Please contact Ficoreai@outlook.com for support."), 500
+            flash('No submissions found for your account.', 'info')
+            return redirect(url_for('home'))
 
-        # Ensure badges are present
-        user_row = user_df.iloc[-1]
-        if not user_row['Badges']:
-            user_df = calculate_health_score(user_df)
-            new_badges = assign_badges(user_df, all_users_df)
-            user_df['Badges'] = ",".join(new_badges)
-            # Update the sheet if necessary (optional, since we now include badges on append)
-
-        # Extract user data (latest submission)
         user_row = user_df.iloc[-1]
         health_score = user_row['HealthScore']
         rank = user_row['Rank']
-        total_users = len(all_users_df)
-        score_description = user_row['ScoreDescription']
-        course_title = user_row['CourseTitle']
-        course_url = user_row['CourseURL']
-        badges = user_row['Badges'].split(",") if user_row['Badges'] else []
+        total_users = len(all_submissions)
+        score_description = user_row['score_description']
+        course_title = user_row['course_title']
+        course_url = user_row['course_url']
+        badges = user_row['badges'].split(",") if user_row['badges'] else []
         cash_flow_score = round(user_row['NormCashFlow'] * 100, 2)
         debt_to_income_score = round(user_row['NormDebtToIncome'] * 100, 2)
         debt_interest_score = round(user_row['NormDebtInterest'] * 100, 2)
 
-        # Create Plotly charts
+        personalized_message = request.args.get('personalized_message', '')
+
         breakdown_data = {
             "Component": ["Cash Flow", "Debt-to-Income Ratio", "Debt Interest Burden"],
             "Score": [cash_flow_score, debt_to_income_score, debt_interest_score]
@@ -563,8 +429,8 @@ def dashboard():
         fig_comparison = go.Figure()
         fig_comparison.add_trace(
             go.Scatter(
-                x=list(range(1, len(all_users_df) + 1)),
-                y=all_users_df['HealthScore'],
+                x=list(range(1, len(all_submissions) + 1)),
+                y=all_submissions['HealthScore'],
                 mode='lines+markers',
                 name='All Users',
                 line=dict(color='blue')
@@ -602,13 +468,47 @@ def dashboard():
         )
     except Exception as e:
         logger.error(f"Error rendering dashboard: {e}")
-        return render_template('error.html', message=f"Error rendering dashboard: {str(e)}. We’re sorry for the inconvenience—please try again later or contact Ficoreai@outlook.com for support."), 500
+        flash(f"Error rendering dashboard: {str(e)}. Please try again later.", 'error')
+        return redirect(url_for('home'))
 
-# Global error handler
-@app.errorhandler(Exception)
-def handle_exception(e):
-    logger.error(f"Unhandled exception: {e}")
-    return render_template('error.html', message="An unexpected error occurred. Please try again later or contact Ficoreai@outlook.com for support."), 500
+@app.route('/history')
+@login_required
+def history():
+    try:
+        session = Session()
+        user_submissions = pd.read_sql(
+            session.query(Submission).filter_by(user_id=current_user.id).statement,
+            session.bind
+        )
+        session.close()
+
+        if user_submissions.empty:
+            flash('No submission history found.', 'info')
+            return render_template('history.html', submissions=[])
+
+        user_submissions = calculate_health_score(user_submissions)
+        submissions_list = user_submissions.to_dict('records')
+
+        # Create a trend chart for health scores over time
+        fig_trend = px.line(
+            user_submissions,
+            x='timestamp',
+            y='HealthScore',
+            title="Financial Health Score Trend Over Time",
+            labels={"timestamp": "Date", "HealthScore": "Health Score"},
+            markers=True
+        )
+        trend_plot = fig_trend.to_html(full_html=False, include_plotlyjs=False)
+
+        return render_template(
+            'history.html',
+            submissions=submissions_list,
+            trend_plot=trend_plot
+        )
+    except Exception as e:
+        logger.error(f"Error rendering history: {e}")
+        flash(f"Error rendering history: {str(e)}. Please try again later.", 'error')
+        return redirect(url_for('dashboard'))
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
