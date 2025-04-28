@@ -62,7 +62,7 @@ class SubmissionForm(FlaskForm):
     expenses_costs = FloatField('Expenses Costs', validators=[DataRequired()])
     debt_loan = FloatField('Debt Loan', validators=[DataRequired()])
     debt_interest_rate = FloatField('Debt Interest Rate', validators=[DataRequired()])
-    auto_email = StringField('Auto Email', validators=[DataRequired(), Email()])
+    auto_email = StringField('Confirm Your Email', validators=[DataRequired(), Email()])
     phone_number = StringField('Phone Number')
     first_name = StringField('First Name', validators=[DataRequired()])
     last_name = StringField('Last Name')
@@ -425,13 +425,23 @@ def submit():
         # Log raw POST data for debugging
         raw_data = request.form.to_dict()
         logger.debug(f"Raw POST data: {raw_data}")
-        # Log specific financial fields
-        logger.debug(f"Received financial fields: income_revenue={raw_data.get('income_revenue')}, "
-                    f"expenses_costs={raw_data.get('expenses_costs')}, "
-                    f"debt_loan={raw_data.get('debt_loan')}, "
-                    f"debt_interest_rate={raw_data.get('debt_interest_rate')}")
 
-        if form.validate_on_submit():
+        # Preprocess financial fields to strip commas
+        cleaned_data = raw_data.copy()
+        for field in ['income_revenue', 'expenses_costs', 'debt_loan', 'debt_interest_rate']:
+            if field in cleaned_data:
+                cleaned_data[field] = cleaned_data[field].replace(',', '') if cleaned_data[field] else ''
+        logger.debug(f"Cleaned POST data: {cleaned_data}")
+        # Log specific financial fields
+        logger.debug(f"Received financial fields: income_revenue={cleaned_data.get('income_revenue')}, "
+                    f"expenses_costs={cleaned_data.get('expenses_costs')}, "
+                    f"debt_loan={cleaned_data.get('debt_loan')}, "
+                    f"debt_interest_rate={cleaned_data.get('debt_interest_rate')}")
+
+        # Create a new form instance with cleaned data
+        form = SubmissionForm(formdata=None, data=cleaned_data)
+
+        if form.validate():
             try:
                 # Extract and validate form data
                 data = [
