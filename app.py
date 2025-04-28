@@ -1,6 +1,6 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, get_flashed_messages
 from flask_wtf import FlaskForm
-from wtforms import StringField, FloatField, SubmitField
+from wtforms import StringField, FloatField, SubmitField, SelectField
 from wtforms.validators import DataRequired, Email, ValidationError
 from flask_caching import Cache
 import os
@@ -66,7 +66,7 @@ class SubmissionForm(FlaskForm):
     phone_number = StringField('Phone Number')
     first_name = StringField('First Name', validators=[DataRequired()])
     last_name = StringField('Last Name')
-    user_type = StringField('User Type', validators=[DataRequired()])
+    user_type = SelectField('User Type', choices=[('Business', 'Business'), ('Individual', 'Individual')], validators=[DataRequired()])
     email = StringField('Email', validators=[DataRequired(), Email()])
     submit = SubmitField('Submit')
 
@@ -538,7 +538,7 @@ def submit():
                 for error in errors:
                     logger.warning(f"Form validation error in {field}: {error}")
                     flash(f"Error in {field}: {error}", "error")
-            return redirects(url_for('home'))
+            return redirect(url_for('home'))
     except ImportError as e:
         logger.error(f"Email validation error: {e}")
         flash("Email validation setup error. Please contact Ficoreai@outlook.com for support.", "error")
