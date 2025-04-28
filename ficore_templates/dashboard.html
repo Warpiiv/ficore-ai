@@ -3,291 +3,191 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ficore AI Dashboard</title>
+    <title>Ficore AI - Your Financial Dashboard</title>
+    <meta name="description" content="Track your financial health with Ficore AI. See your score, earn badges, and get smart insights.">
+    <meta name="keywords" content="ficore ai, financial health, dashboard, Africa SME finance, smart insights">
+    <meta name="author" content="Ficore AI">
+
+    <!-- Poppins font with font-display swap -->
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+
+    <!-- Plotly local (optional) or CDN -->
+    <script defer src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+
     <style>
         body {
             font-family: 'Poppins', sans-serif;
             background: linear-gradient(to bottom, #F5F7FA, #E3F2FD);
             margin: 0;
-            padding: 40px;
-            color: #2D3748;
-            transition: all 0.3s ease;
+            padding: 20px;
+            box-sizing: border-box;
         }
 
         .container {
-            max-width: 1200px;
-            margin: auto;
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 2rem;
-            animation: fadeIn 0.5s ease;
-        }
-
-        .card {
             background: #FFFFFF;
             padding: 2rem;
             border-radius: 12px;
             box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
-            transition: transform 0.2s ease;
+            max-width: 800px;
+            margin: auto;
+            text-align: center;
         }
 
-        .card:hover {
-            transform: translateY(-4px);
-        }
-
-        .profile-card {
-            display: flex;
-            align-items: center;
-            gap: 1.5rem;
-            background: linear-gradient(135deg, #28A745, #1E88E5);
-            color: white;
-            padding: 2rem;
-            border-radius: 12px;
-        }
-
-        .profile-images {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        }
-
-        .profile-images img {
-            width: 80px;
-            height: 80px;
-            border-radius: 50%;
-            object-fit: contain;
-        }
-
-        .profile-info h2 {
-            font-size: 1.8rem;
-            font-weight: 600;
-            margin: 0;
-        }
-
-        .profile-info p {
-            font-size: 1rem;
-            font-weight: 300;
-            margin: 0.5rem 0;
-        }
-
-        .score-card h3 {
+        h2 {
             color: #28A745;
-            font-size: 1.8rem;
-            font-weight: 600;
-            margin-bottom: 1rem;
+            margin-bottom: 10px;
+            font-size: 2rem;
         }
 
-        .score-card p {
-            font-size: 1.1rem;
-            color: #718096;
-            margin: 0.5rem 0;
-        }
-
-        .badges-card h3 {
+        .subheading {
             color: #1E88E5;
-            font-size: 1.5rem;
-            font-weight: 500;
-            margin-bottom: 1rem;
+            font-style: italic;
+            margin-bottom: 20px;
+            font-size: 1.1rem;
         }
 
         .badge {
-            display: inline-flex;
-            align-items: center;
-            background: #FFCA28;
-            color: #2D3748;
-            padding: 0.6rem 1.2rem;
-            margin: 0.5rem;
-            border-radius: 20px;
-            font-size: 0.95rem;
-            font-weight: 500;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-        }
-
-        .badge i {
-            margin-right: 0.5rem;
-        }
-
-        .learning-card h3 {
-            color: #1E88E5;
-            font-size: 1.5rem;
-            font-weight: 500;
-            margin-bottom: 1rem;
-        }
-
-        .learning-card p {
-            font-size: 1.1rem;
-            color: #718096;
-            margin-bottom: 1.5rem;
-        }
-
-        .learning-card a {
             display: inline-block;
+            background-color: #1E88E5;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 20px;
+            margin: 5px;
+            font-size: 0.9rem;
+        }
+
+        .community-buttons {
+            margin-top: 30px;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .community-buttons a {
+            display: inline-block;
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 500;
+            text-decoration: none;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            width: 100%;
+            max-width: 300px;
+            text-align: center;
+        }
+
+        .social-btn {
+            background: linear-gradient(135deg, #1DA1F2, #0d47a1);
+            color: white;
+        }
+
+        .newsletter-btn {
             background: linear-gradient(135deg, #28A745, #1E88E5);
             color: white;
-            text-decoration: none;
-            padding: 0.8rem 1.5rem;
-            border-radius: 6px;
-            font-size: 1rem;
-            font-weight: 500;
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
 
-        .learning-card a:hover {
+        .community-buttons a:hover {
             transform: translateY(-2px);
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
         }
 
-        .chart-card h3 {
-            color: #2D3748;
-            font-size: 1.5rem;
+        .alert {
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            border-radius: 8px;
             font-weight: 500;
-            margin-bottom: 1rem;
         }
 
-        .coming-soon {
-            background: #FFF3E0;
-            padding: 1.5rem;
-            border-radius: 12px;
-            text-align: center;
-            font-style: italic;
-            color: #EF6C00;
-            font-size: 1rem;
-            margin-top: 2rem;
-            grid-column: span 2;
+        .alert-success {
+            background-color: #D4EDDA;
+            color: #155724;
         }
 
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
+        .alert-danger {
+            background-color: #F8D7DA;
+            color: #721C24;
         }
 
-        @media (min-width: 768px) {
-            .container {
-                grid-template-columns: 1fr 1fr;
-            }
-
-            .profile-card, .score-card {
-                grid-column: span 2;
-            }
-        }
-
-        @media (max-width: 768px) {
-            body {
-                padding: 20px;
-            }
-
-            .container {
-                gap: 1.5rem;
-            }
-
-            .profile-card {
+        @media (max-width: 600px) {
+            .community-buttons {
                 flex-direction: column;
-                text-align: center;
             }
-
-            .profile-images img {
-                width: 60px;
-                height: 60px;
-            }
-
-            .profile-info h2 {
+            h2 {
                 font-size: 1.5rem;
             }
-
-            .score-card h3 {
-                font-size: 1.6rem;
-            }
-
-            .badges-card h3, .learning-card h3, .chart-card h3 {
-                font-size: 1.3rem;
-            }
-
-            .coming-soon {
-                grid-column: span 1;
+            .subheading {
+                font-size: 1rem;
             }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="profile-card card">
-            <div class="profile-images">
-                <img src="{{ url_for('static', filename='img/ficore_logo.png') }}" alt="Ficore Logo">
-                <img src="https://ui-avatars.com/api/?name={{ first_name | urlencode }}+{{ last_name | urlencode }}&size=80&background=FFFFFF&color=2D3748" alt="User Avatar">
-            </div>
-            <div class="profile-info">
-                <h2>{{ first_name }} {{ last_name }}</h2>
-                <p>Email: {{ email }}</p>
-                <p>Rank: #{{ rank }} of {{ total_users }}</p>
-            </div>
-        </div>
 
-        <div class="score-card card">
-            <h3>🏆 Your Financial Health Score: {{ health_score }}/100</h3>
-            <p><strong>📌 Advice:</strong> {{ score_description }}</p>
-        </div>
+<div class="container">
 
-        {% if badges %}
-        <div class="badges-card card">
-            <h3>🎖 Your Badges</h3>
-            {% for badge in badges %}
-            <span class="badge">
-                <i class="fas fa-medal"></i>{{ badge }}
-            </span>
+    <!-- Flash Messages (Success/Error after submit) -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">
+                    {{ message }}
+                </div>
             {% endfor %}
-        </div>
         {% endif %}
+    {% endwith %}
 
-        <div class="learning-card card">
-            <h3>📚 Recommended Learning</h3>
-            <p>
-                {% if score_description == "Stable; invest excess now" %}
-                    Want to know how to invest to grow your wealth? Check out this course!
-                {% elif score_description == "Moderate; save monthly" %}
-                    Want to improve your savings habit? Check out this course!
-                {% elif score_description in ["At Risk; manage expense", "At Risk; pay off debt, manage expense"] %}
-                    Learn how to manage debt and expenses smartly. Check out this course!
-                {% elif score_description in ["Critical; seek financial help", "Critical; add source of income, pay off debt, manage expense"] %}
-                    Find new income sources and stabilize your finances. Check out this course!
-                {% else %}
-                    Learn strategies to grow your financial health. Check out this course!
-                {% endif %}
-            </p>
-            <a href="{{ course_url }}">{{ course_title }}</a>
-        </div>
+    <h2>Welcome, {{ first_name }}!</h2>
+    <p class="subheading">Your Financial Health Summary</p>
 
-        <div class="chart-card card">
-            <h3>📊 Score Breakdown</h3>
-            {{ breakdown_plot | safe }}
-        </div>
+    {% if personalized_message %}
+    <p><strong>{{ personalized_message }}</strong></p>
+    {% endif %}
 
-        <div class="chart-card card">
-            <h3>📈 Comparison with Others</h3>
-            {{ comparison_plot | safe }}
-        </div>
+    <h3>Your Score: {{ health_score }}/100</h3>
+    <p>Ranked #{{ rank }} out of {{ total_users }} users</p>
 
-        <div class="coming-soon card">
-            <p>🚀 Coming Soon: Downloadable PDF Reports for Your Financial Health Score!</p>
-        </div>
+    {% if badges %}
+    <div>
+        <h4>Your Badges:</h4>
+        {% for badge in badges %}
+            <span class="badge">{{ badge }}</span>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <div style="margin-top: 30px;">
+        <h3>Recommended Learning:</h3>
+        <a href="{{ course_url }}" target="_blank" aria-label="Recommended Course: {{ course_title }}" style="display: inline-block; background: #FFC107; padding: 10px 20px; border-radius: 8px; text-decoration: none; color: black; font-weight: 500;">
+            📚 {{ course_title }}
+        </a>
     </div>
 
-    <script>
-        // Apply Plotly modern theme
-        document.addEventListener('DOMContentLoaded', () => {
-            const charts = document.querySelectorAll('.plotly-graph-div');
-            charts.forEach(chart => {
-                Plotly.relayout(chart.id, {
-                    plot_bgcolor: '#F5F7FA',
-                    paper_bgcolor: '#FFFFFF',
-                    font: { family: 'Poppins', size: 14, color: '#2D3748' },
-                    xaxis: { gridcolor: '#E2E8F0' },
-                    yaxis: { gridcolor: '#E2E8F0' }
-                });
-            });
-        });
-    </script>
+    <div style="margin-top: 40px;">
+        <h3>Score Breakdown</h3>
+        {% if breakdown_plot %}
+            {{ breakdown_plot|safe }}
+        {% else %}
+            <p>Score breakdown chart is currently unavailable.</p>
+        {% endif %}
+    </div>
+
+    <div style="margin-top: 40px;">
+        <h3>How You Compare to Others</h3>
+        {% if comparison_plot %}
+            {{ comparison_plot|safe }}
+        {% else %}
+            <p>Comparison chart is currently unavailable.</p>
+        {% endif %}
+    </div>
+
+    <!-- Community Buttons -->
+    <div class="community-buttons">
+        <a href="https://www.linkedin.com/in/ficore-ai-africa-58913a363/" target="_blank" aria-label="Follow Ficore AI on LinkedIn" class="social-btn">📱 Follow Us for Financial Tips</a>
+        <a href="{{ newsletter_link }}" target="_blank" aria-label="Join Ficore AI Newsletter" class="newsletter-btn">📩 Get Smart Insights Weekly</a>
+    </div>
+
+</div>
+
 </body>
 </html>
