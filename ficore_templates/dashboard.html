@@ -19,16 +19,16 @@
             box-sizing: border-box;
         }
         .container {
-            max-width: 900px;
+            max-width: 1000px;
             margin: auto;
         }
         .card {
             background: #fff;
             border-radius: 12px;
             box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
-            padding: 1.5rem;
-            margin-bottom: 2rem;
+            margin-bottom: 1.5rem;
             transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border: 1px solid #E0E0E0;
         }
         .card:hover {
             transform: translateY(-5px);
@@ -37,20 +37,26 @@
         .card-header {
             background: linear-gradient(135deg, #28A745, #1E88E5);
             color: white;
-            padding: 1rem;
+            padding: 0.75rem;
             border-radius: 10px 10px 0 0;
             text-align: center;
             font-weight: 600;
+            font-size: 1.5rem;
         }
         .card-body {
-            padding: 1.5rem;
+            padding: 1.25rem;
+        }
+        .section-divider {
+            border-top: 1px solid #E0E0E0;
+            margin: 1rem 0;
+            padding-top: 1rem;
         }
         h2, h3 {
             color: #28A745;
             font-weight: 600;
         }
         .subheading {
-            color: #1E88E5;
+            color: #1565C0;
             font-style: italic;
             font-size: 1.1rem;
         }
@@ -63,6 +69,7 @@
             margin: 5px;
             font-size: 0.9rem;
             transition: transform 0.2s ease;
+            border: 1px solid #1565C0;
         }
         .badge:hover {
             transform: scale(1.1);
@@ -93,7 +100,7 @@
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
         }
         .btn-secondary {
-            background: linear-gradient(135deg, #1DA1F2, #0d47a1);
+            background: linear-gradient(135deg, #F57C00, #FF9800);
             border: none;
             padding: 10px 20px;
             font-weight: 500;
@@ -113,8 +120,23 @@
             text-decoration: none;
             font-weight: 500;
             transition: transform 0.2s ease;
+            margin-right: 10px;
         }
         .course-link:hover {
+            transform: translateY(-2px);
+        }
+        .enroll-button {
+            display: inline-block;
+            background: #FFC107;
+            color: black;
+            padding: 10px 20px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: transform 0.2s ease;
+            margin-top: 10px;
+        }
+        .enroll-button:hover {
             transform: translateY(-2px);
         }
         .insight-text {
@@ -123,9 +145,42 @@
             line-height: 1.6;
             margin-top: 1rem;
         }
+        .tips-list {
+            list-style-type: disc;
+            padding-left: 20px;
+            margin: 0;
+        }
+        .tips-list li {
+            margin-bottom: 0.75rem;
+        }
+        .grid-card {
+            min-height: 300px;
+        }
+        .badges-card {
+            min-height: 350px;
+        }
+        .tips-card {
+            min-height: 350px;
+            overflow-y: auto;
+        }
+        .full-width-card {
+            border-radius: 12px;
+            width: 100%;
+        }
+        .row.align-headers {
+            display: flex;
+            align-items: flex-start;
+        }
+        .row.main-grid {
+            margin-bottom: 0;
+        }
         @media (max-width: 600px) {
             .card {
                 padding: 1rem;
+                margin-bottom: 1rem;
+            }
+            .card-header {
+                font-size: 1.25rem;
             }
             h2 {
                 font-size: 1.5rem;
@@ -136,25 +191,17 @@
             .subheading {
                 font-size: 1rem;
             }
+            .grid-card, .badges-card, .tips-card {
+                min-height: auto;
+            }
+            .row.align-headers {
+                display: block;
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <!-- Welcome Card -->
-        <div class="card">
-            <div class="card-header">
-                Welcome, {{ first_name }}!
-            </div>
-            <div class="card-body">
-                <p>Email: {{ email }}</p>
-                <p class="subheading">Your Financial Health Summary</p>
-                {% if personalized_message %}
-                    <p><strong>{{ personalized_message }}</strong></p>
-                {% endif %}
-            </div>
-        </div>
-
         <!-- Flash Messages -->
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
@@ -168,125 +215,166 @@
             {% endif %}
         {% endwith %}
 
-        <!-- Score and Rank Card -->
-        <div class="card">
-            <div class="card-header">
-                Your Financial Health Score
+        <!-- Main Grid -->
+        <div class="row main-grid">
+            <!-- Left Column (Wider) -->
+            <div class="col-md-8">
+                <!-- Welcome + Financial Health Score Card -->
+                <div class="card grid-card badges-card">
+                    <div class="card-header">
+                        🎉 Welcome, {{ first_name }}!
+                    </div>
+                    <div class="card-body">
+                        <p>Email: {{ email }}</p>
+                        <p class="subheading">Your Financial Health Summary</p>
+                        {% if personalized_message %}
+                            <p><strong>{{ personalized_message }}</strong></p>
+                        {% endif %}
+                        <div class="section-divider"></div>
+                        <h3>⭐ Your Financial Health Score</h3>
+                        <p class="font-weight-bold">{{ health_score }}/100</p>
+                        <p>Ranked #{{ rank }} out of {{ total_users }} users</p>
+                        <p class="insight-text">
+                            {% if health_score >= 75 %}
+                                Your score indicates strong financial health. Focus on investing surplus funds to grow your wealth.
+                            {% elif health_score >= 50 %}
+                                Your finances are stable but could improve. Consider saving more or reducing expenses.
+                            {% elif health_score >= 25 %}
+                                Your score suggests financial strain. Prioritize paying off debt and managing expenses.
+                            {% else %}
+                                Your finances need urgent attention. Seek professional advice and explore recovery strategies.
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Score Breakdown Card -->
+                <div class="card grid-card">
+                    <div class="card-header">
+                        📊 Score Breakdown
+                    </div>
+                    <div class="card-body">
+                        {% if breakdown_plot %}
+                            {{ breakdown_plot|safe }}
+                        {% else %}
+                            <p>Score breakdown chart is currently unavailable.</p>
+                        {% endif %}
+                        <p class="insight-text">
+                            Your score is composed of three components:
+                            <ul>
+                                <li><strong>Cash Flow</strong>: Reflects how much income remains after expenses. Higher values indicate better financial flexibility.</li>
+                                <li><strong>Debt-to-Income Ratio</strong>: Measures debt relative to income. Lower ratios suggest manageable debt levels.</li>
+                                <li><strong>Debt Interest Burden</strong>: Indicates the impact of interest rates on your finances. Lower burdens mean less strain from debt.</li>
+                            </ul>
+                            {% if health_score >= 75 %}
+                                Your components show balanced financial health. Maintain strong cash flow and low debt.
+                            {% elif health_score >= 50 %}
+                                One or more components may need attention. Focus on improving cash flow or reducing debt.
+                            {% else %}
+                                Your components indicate challenges. Work on increasing income, cutting expenses, or lowering debt interest.
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
             </div>
-            <div class="card-body">
-                <h3>{{ health_score }}/100</h3>
-                <p>Ranked #{{ rank }} out of {{ total_users }} users</p>
-                <p class="insight-text">
-                    {% if health_score >= 75 %}
-                        Your score indicates strong financial health. Focus on investing surplus funds to grow your wealth.
-                    {% elif health_score >= 50 %}
-                        Your finances are stable but could improve. Consider saving more or reducing expenses.
-                    {% elif health_score >= 25 %}
-                        Your score suggests financial strain. Prioritize paying off debt and managing expenses.
-                    {% else %}
-                        Your finances need urgent attention. Seek professional advice and explore recovery strategies.
-                    {% endif %}
-                </p>
+
+            <!-- Right Column (Narrower) -->
+            <div class="col-md-4">
+                <!-- Badges + Recommended Learning Card -->
+                <div class="card grid-card badges-card">
+                    <div class="card-header">
+                        🏅 Your Badges
+                    </div>
+                    <div class="card-body">
+                        {% if badges %}
+                            {% for badge in badges %}
+                                <span class="badge">{{ badge }}</span>
+                            {% endfor %}
+                        {% else %}
+                            <p>No badges earned yet. Keep submitting to earn more!</p>
+                        {% endif %}
+                        <div class="section-divider"></div>
+                        <h3>📚 Recommended Learning</h3>
+                        <a href="{{ course_url }}" target="_blank" class="course-link" aria-label="Recommended Course: {{ course_title }}">
+                            {{ course_title }}
+                        </a>
+                        <a href="{{ course_url }}" target="_blank" class="enroll-button" aria-label="Enroll in {{ course_title }}">
+                            Enroll Now
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Quick Financial Tips Card -->
+                <div class="card grid-card tips-card">
+                    <div class="card-header">
+                        💡 Quick Financial Tips
+                    </div>
+                    <div class="card-body">
+                        <ul class="tips-list">
+                            {% if health_score >= 75 %}
+                                <li><strong>Invest Wisely</strong>: Allocate surplus cash to low-risk investments like treasury bonds to grow wealth.</li>
+                                <li><strong>Scale Smart</strong>: Reinvest profits into your business to expand operations sustainably.</li>
+                            {% elif health_score >= 50 %}
+                                <li><strong>Build Savings</strong>: Save 10% of your income monthly to create an emergency fund.</li>
+                                <li><strong>Cut Costs</strong>: Review expenses and reduce non-essential spending to boost cash flow.</li>
+                            {% else %}
+                                <li><strong>Reduce Debt</strong>: Prioritize paying off high-interest loans to ease financial strain.</li>
+                                <li><strong>Boost Income</strong>: Explore side hustles or new revenue streams to improve cash flow.</li>
+                            {% endif %}
+                        </ul>
+                    </div>
+                </div>
             </div>
         </div>
 
-        <!-- Badges Card -->
-        <div class="card">
-            <div class="card-header">
-                Your Badges
-            </div>
-            <div class="card-body">
-                {% if badges %}
-                    {% for badge in badges %}
-                        <span class="badge">{{ badge }}</span>
-                    {% endfor %}
-                {% else %}
-                    <p>No badges earned yet. Keep submitting to earn more!</p>
-                {% endif %}
-            </div>
-        </div>
-
-        <!-- Recommended Learning Card -->
-        <div class="card">
-            <div class="card-header">
-                Recommended Learning
-            </div>
-            <div class="card-body">
-                <a href="{{ course_url }}" target="_blank" class="course-link" aria-label="Recommended Course: {{ course_title }}">
-                    📚 {{ course_title }}
-                </a>
-            </div>
-        </div>
-
-        <!-- Score Breakdown Card -->
-        <div class="card">
-            <div class="card-header">
-                Score Breakdown
-            </div>
-            <div class="card-body">
-                {% if breakdown_plot %}
-                    {{ breakdown_plot|safe }}
-                {% else %}
-                    <p>Score breakdown chart is currently unavailable.</p>
-                {% endif %}
-                <p class="insight-text">
-                    Your score is composed of three components:
-                    <ul>
-                        <li><strong>Cash Flow</strong>: Reflects how much income remains after expenses. Higher values indicate better financial flexibility.</li>
-                        <li><strong>Debt-to-Income Ratio</strong>: Measures debt relative to income. Lower ratios suggest manageable debt levels.</li>
-                        <li><strong>Debt Interest Burden</strong>: Indicates the impact of interest rates on your finances. Lower burdens mean less strain from debt.</li>
-                    </ul>
-                    {% if health_score >= 75 %}
-                        Your components show balanced financial health. Maintain strong cash flow and low debt.
-                    {% elif health_score >= 50 %}
-                        One or more components may need attention. Focus on improving cash flow or reducing debt.
-                    {% else %}
-                        Your components indicate challenges. Work on increasing income, cutting expenses, or lowering debt interest.
-                    {% endif %}
-                </p>
+        <!-- Full-Width How You Compare to Others Section -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card full-width-card">
+                    <div class="card-header">
+                        ⚖️ How You Compare to Others
+                    </div>
+                    <div class="card-body">
+                        {% if comparison_plot %}
+                            {{ comparison_plot|safe }}
+                        {% else %}
+                            <p>Comparison chart is currently unavailable.</p>
+                        {% endif %}
+                        <p class="insight-text">
+                            Your rank of #{{ rank }} out of {{ total_users }} users places you:
+                            {% if rank <= total_users * 0.1 %}
+                                in the <strong>top 10%</strong> of users, indicating exceptional financial health compared to peers.
+                            {% elif rank <= total_users * 0.3 %}
+                                in the <strong>top 30%</strong>, showing above-average financial stability.
+                            {% elif rank <= total_users * 0.7 %}
+                                in the <strong>middle range</strong>, suggesting room for improvement to climb the ranks.
+                            {% else %}
+                                in the <strong>lower range</strong>, highlighting the need for strategic financial planning.
+                            {% endif %}
+                            Regular submissions can help track your progress and improve your standing.
+                        </p>
+                    </div>
+                </div>
             </div>
         </div>
 
-        <!-- Comparison Card -->
-        <div class="card">
-            <div class="card-header">
-                How You Compare to Others
-            </div>
-            <div class="card-body">
-                {% if comparison_plot %}
-                    {{ comparison_plot|safe }}
-                {% else %}
-                    <p>Comparison chart is currently unavailable.</p>
-                {% endif %}
-                <p class="insight-text">
-                    Your rank of #{{ rank }} out of {{ total_users }} users places you:
-                    {% if rank <= total_users * 0.1 %}
-                        in the <strong>top 10%</strong> of users, indicating exceptional financial health compared to peers.
-                    {% elif rank <= total_users * 0.3 %}
-                        in the <strong>top 30%</strong>, showing above-average financial stability.
-                    {% elif rank <= total_users * 0.7 %}
-                        in the <strong>middle range</strong>, suggesting room for improvement to climb the ranks.
-                    {% else %}
-                        in the <strong>lower range</strong>, highlighting the need for strategic financial planning.
-                    {% endif %}
-                    Regular submissions can help track your progress and improve your standing.
-                </p>
-            </div>
-        </div>
-
-        <!-- Links Card -->
-        <div class="card">
-            <div class="card-header">
-                Explore More
-            </div>
-            <div class="card-body">
-                <p>
-                    <a href="{{ url_for('home') }}" class="btn btn-primary">Back to Home</a>
-                    <a href="{{ FEEDBACK_FORM_URL }}" class="btn btn-secondary">Provide Feedback</a>
-                    <a href="{{ WAITLIST_FORM_URL }}" class="btn btn-secondary">Join Premium Waitlist</a>
-                    <a href="{{ CONSULTANCY_FORM_URL }}" class="btn btn-secondary">Book Consultancy</a>
-                </p>
-                <p>Contact us at <a href="mailto:Ficoreai@outlook.com">Ficoreai@outlook.com</a> for support.</p>
+        <!-- Full-Width What's Next Section -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card full-width-card">
+                    <div class="card-header">
+                        🔓 What’s Next? Unlock Further Insights
+                    </div>
+                    <div class="card-body">
+                        <div class="d-flex flex-wrap justify-content-center gap-2 mb-3">
+                            <a href="{{ url_for('home') }}" class="btn btn-primary">Back to Home</a>
+                            <a href="{{ FEEDBACK_FORM_URL }}" class="btn btn-secondary">Provide Feedback</a>
+                            <a href="{{ WAITLIST_FORM_URL }}" class="btn btn-secondary">Join Premium Waitlist</a>
+                            <a href="{{ CONSULTANCY_FORM_URL }}" class="btn btn-secondary">Book Consultancy</a>
+                        </div>
+                        <p class="text-center">Contact us at <a href="mailto:Ficoreai@outlook.com">Ficoreai@outlook.com</a> for support.</p>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
