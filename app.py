@@ -422,6 +422,10 @@ def home():
 def submit():
     form = SubmissionForm()
     try:
+        # Log raw POST data for debugging
+        raw_data = request.form.to_dict()
+        logger.debug(f"Raw POST data: {raw_data}")
+
         if form.validate_on_submit():
             try:
                 # Extract and validate form data
@@ -523,7 +527,7 @@ def submit():
                 return redirect(url_for('dashboard', email=form.email.data, personalized_message=personalized_message))
             except ValueError as e:
                 logger.error(f"ValueError in submission: {e}")
-                flash(f"Invalid input: {str(e)}.", "error")
+                flash(f"Invalid input: {str(e)}. Please ensure all numeric fields contain valid numbers.", "error")
                 return redirect(url_for('home'))
             except Exception as e:
                 logger.error(f"Submission error: {e}")
@@ -534,7 +538,7 @@ def submit():
                 for error in errors:
                     logger.warning(f"Form validation error in {field}: {error}")
                     flash(f"Error in {field}: {error}", "error")
-            return redirect(url_for('home'))
+            return redirects(url_for('home'))
     except ImportError as e:
         logger.error(f"Email validation error: {e}")
         flash("Email validation setup error. Please contact Ficoreai@outlook.com for support.", "error")
