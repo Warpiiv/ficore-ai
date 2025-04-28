@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, get_flashed_messages
+from flask import Flask, render_template, request, redirect, url_for, flash, get_flashed_messages, send_from_directory
 from flask_wtf import FlaskForm
 from wtforms import StringField, FloatField, SubmitField, SelectField
 from wtforms.validators import DataRequired, Email, ValidationError
@@ -74,6 +74,11 @@ class SubmissionForm(FlaskForm):
     def validate_auto_email(self, auto_email):
         if auto_email.data != self.email.data:
             raise ValidationError('Email addresses must match.')
+
+# Serve favicon.ico from static directory
+@app.route('/favicon.ico')
+def favicon():
+    return send_from_directory(os.path.join(app.root_path, 'static'), 'favicon.ico', mimetype='image/vnd.microsoft.icon')
 
 # Authenticate with Google Sheets
 def authenticate_google_sheets():
