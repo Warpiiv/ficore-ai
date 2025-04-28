@@ -37,11 +37,15 @@
         .card-header {
             background: linear-gradient(135deg, #28A745, #1E88E5);
             color: white;
-            padding: 0.75rem;
-            border-radius: 10px 10px 0 0;
+            padding: 1rem; /* Increased for breathing room */
+            border-radius: 12px 12px 0 0; /* Adjusted to match card */
             text-align: center;
             font-weight: 600;
-            font-size: 1.5rem;
+            font-size: 1.75rem;
+            white-space: nowrap;
+            border: 2px solid #1565C0; /* Stylish frame */
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Outer shadow for depth */
+            margin-bottom: 0.5rem; /* Gap between header and body */
         }
         .card-body {
             padding: 1.25rem;
@@ -55,6 +59,9 @@
             color: #28A745;
             font-weight: 600;
         }
+        h3 {
+            font-size: 1.35rem;
+        }
         .subheading {
             color: #1565C0;
             font-style: italic;
@@ -62,7 +69,7 @@
         }
         .badge {
             display: inline-block;
-            background: #1E88E5;
+            background: #42A5F5;
             color: white;
             padding: 8px 12px;
             border-radius: 20px;
@@ -70,6 +77,7 @@
             font-size: 0.9rem;
             transition: transform 0.2s ease;
             border: 1px solid #1565C0;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.15);
         }
         .badge:hover {
             transform: scale(1.1);
@@ -153,6 +161,9 @@
         .tips-list li {
             margin-bottom: 0.75rem;
         }
+        .tips-list strong {
+            font-weight: 600;
+        }
         .grid-card {
             min-height: 300px;
         }
@@ -174,15 +185,26 @@
         .row.main-grid {
             margin-bottom: 0;
         }
+        .chart-empty-state {
+            background: #F5F5F5;
+            border-radius: 8px;
+            padding: 1rem;
+            text-align: center;
+            color: #666;
+            font-size: 0.95rem;
+        }
+        .chart-empty-state::before {
+            content: "📉";
+            display: block;
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
         @media (max-width: 600px) {
             .card {
                 padding: 1rem;
                 margin-bottom: 1rem;
             }
             .card-header {
-                font-size: 1.25rem;
-            }
-            h2 {
                 font-size: 1.5rem;
             }
             h3 {
@@ -196,6 +218,11 @@
             }
             .row.align-headers {
                 display: block;
+            }
+        }
+        @media (max-width: 400px) {
+            .emoji {
+                display: none;
             }
         }
     </style>
@@ -222,7 +249,7 @@
                 <!-- Welcome + Financial Health Score Card -->
                 <div class="card grid-card badges-card">
                     <div class="card-header">
-                        🎉 Welcome, {{ first_name }}!
+                        <span class="emoji">🎉</span> Welcome, {{ first_name }}!
                     </div>
                     <div class="card-body">
                         <p>Email: {{ email }}</p>
@@ -251,13 +278,15 @@
                 <!-- Score Breakdown Card -->
                 <div class="card grid-card">
                     <div class="card-header">
-                        📊 Score Breakdown
+                        <span class="emoji">📊</span> Score Breakdown
                     </div>
                     <div class="card-body">
                         {% if breakdown_plot %}
                             {{ breakdown_plot|safe }}
                         {% else %}
-                            <p>Score breakdown chart is currently unavailable.</p>
+                            <div class="chart-empty-state">
+                                Chart unavailable at this time.
+                            </div>
                         {% endif %}
                         <p class="insight-text">
                             Your score is composed of three components:
@@ -283,7 +312,7 @@
                 <!-- Badges + Recommended Learning Card -->
                 <div class="card grid-card badges-card">
                     <div class="card-header">
-                        🏅 Your Badges
+                        <span class="emoji">🏅</span> Your Badges
                     </div>
                     <div class="card-body">
                         {% if badges %}
@@ -307,19 +336,19 @@
                 <!-- Quick Financial Tips Card -->
                 <div class="card grid-card tips-card">
                     <div class="card-header">
-                        💡 Quick Financial Tips
+                        <span class="emoji">💡</span> Quick Financial Tips
                     </div>
                     <div class="card-body">
                         <ul class="tips-list">
                             {% if health_score >= 75 %}
-                                <li><strong>Invest Wisely</strong>: Allocate surplus cash to low-risk investments like treasury bonds to grow wealth.</li>
-                                <li><strong>Scale Smart</strong>: Reinvest profits into your business to expand operations sustainably.</li>
+                                <li><strong>Invest</strong> Wisely: Allocate surplus cash to low-risk investments like treasury bonds to grow wealth.</li>
+                                <li><strong>Scale</strong> Smart: Reinvest profits into your business to expand operations sustainably.</li>
                             {% elif health_score >= 50 %}
-                                <li><strong>Build Savings</strong>: Save 10% of your income monthly to create an emergency fund.</li>
-                                <li><strong>Cut Costs</strong>: Review expenses and reduce non-essential spending to boost cash flow.</li>
+                                <li><strong>Build</strong> Savings: Save 10% of your income monthly to create an emergency fund.</li>
+                                <li><strong>Cut</strong> Costs: Review expenses and reduce non-essential spending to boost cash flow.</li>
                             {% else %}
-                                <li><strong>Reduce Debt</strong>: Prioritize paying off high-interest loans to ease financial strain.</li>
-                                <li><strong>Boost Income</strong>: Explore side hustles or new revenue streams to improve cash flow.</li>
+                                <li><strong>Reduce</strong> Debt: Prioritize paying off high-interest loans to ease financial strain.</li>
+                                <li><strong>Boost</strong> Income: Explore side hustles or new revenue streams to improve cash flow.</li>
                             {% endif %}
                         </ul>
                     </div>
@@ -332,13 +361,15 @@
             <div class="col-12">
                 <div class="card full-width-card">
                     <div class="card-header">
-                        ⚖️ How You Compare to Others
+                        <span class="emoji">⚖️</span> How You Compare to Others
                     </div>
                     <div class="card-body">
                         {% if comparison_plot %}
                             {{ comparison_plot|safe }}
                         {% else %}
-                            <p>Comparison chart is currently unavailable.</p>
+                            <div class="chart-empty-state">
+                                Chart unavailable at this time.
+                            </div>
                         {% endif %}
                         <p class="insight-text">
                             Your rank of #{{ rank }} out of {{ total_users }} users places you:
@@ -363,7 +394,7 @@
             <div class="col-12">
                 <div class="card full-width-card">
                     <div class="card-header">
-                        🔓 What’s Next? Unlock Further Insights
+                        <span class="emoji">🔓</span> What’s Next? Unlock Further Insights
                     </div>
                     <div class="card-body">
                         <div class="d-flex flex-wrap justify-content-center gap-2 mb-3">
