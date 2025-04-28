@@ -65,7 +65,7 @@ class SubmissionForm(FlaskForm):
     auto_email = StringField('Auto Email', validators=[DataRequired(), Email()])
     phone_number = StringField('Phone Number')
     first_name = StringField('First Name', validators=[DataRequired()])
-    last_name = StringField('Last Name', validators=[DataRequired()])
+    last_name = StringField('Last Name')
     user_type = StringField('User Type', validators=[DataRequired()])
     email = StringField('Email', validators=[DataRequired(), Email()])
     submit = SubmitField('Submit')
@@ -78,22 +78,26 @@ class SubmissionForm(FlaskForm):
 def authenticate_google_sheets():
     creds_json = os.environ.get('GOOGLE_CREDENTIALS_JSON')
     if not creds_json:
-        raise Exception("GOOGLE_CREDENTIALS_JSON environment variable not set.")
+        logger.error("GOOGLE_CREDENTIALS_JSON environment variable not set.")
+        return None
     try:
         creds_info = json.loads(creds_json)
         creds = service_account.Credentials.from_service_account_info(creds_info, scopes=SCOPES)
         return build('sheets', 'v4', credentials=creds)
     except json.JSONDecodeError as e:
-        raise Exception(f"Error decoding GOOGLE_CREDENTIALS_JSON: {e}")
+        logger.error(f"Error decoding GOOGLE_CREDENTIALS_JSON: {e}")
+        return None
     except Exception as e:
-        raise Exception(f"Error authenticating with Google Sheets: {e}")
+        logger.error(f"Error authenticating with Google Sheets: {e}")
+        return None
 
 # Set Google Sheet headers
 def set_sheet_headers():
     try:
         service = authenticate_google_sheets()
         if not service:
-            raise Exception("Google Sheets authentication failed.")
+            logger.error("Failed to authenticate with Google Sheets.")
+            return False
         sheet = service.spreadsheets()
         body = {'values': [PREDETERMINED_HEADERS]}
         sheet.values().update(
@@ -103,35 +107,49 @@ def set_sheet_headers():
             body=body
         ).execute()
         logger.info("Sheet1 headers set to predetermined values.")
+        return True
     except Exception as e:
         logger.error(f"Error setting headers: {e}")
-        raise
+        return False
 
 # Get the number of rows in the sheet to determine where to append
 def get_row_count():
     try:
         service = authenticate_google_sheets()
+        if not service:
+            logger.error("Failed to authenticate with Google Sheets.")
+            return 0
         sheet = service.spreadsheets()
         result = sheet.values().get(spreadsheetId=SPREADSHEET_ID, range=DATA_RANGE_NAME).execute()
         values = result.get('values', [])
         return len(values) if values else 0
     except Exception as e:
         logger.error(f"Error getting row count: {e}")
-        raise
+        return 0
 
 # Append data to Google Sheet with badges included
 def append_to_sheet(data):
     try:
         service = authenticate_google_sheets()
+        if not service:
+            logger.error("Failed to authenticate with Google Sheets.")
+            return False
         sheet = service.spreadsheets()
 
         # Set headers if the sheet is empty
         row_count = get_row_count()
         if row_count == 0:
-            set_sheet_headers()
+            if not set_sheet_headers():
+                logger.error("Failed to set sheet headers.")
+                return False
             row_count = 1  # After setting headers
 
-        # Append the data by updating the next row
+        # Ensure data matches headers
+        if len(data) != len(PREDETERMINED_HEADERS):
+            logger.error(f"Data length ({len(data)}) does not match headers ({len(PREDETERMINED_HEADERS)}): {data}")
+            return False
+
+        # Append the data
         range_to_update = f'Sheet1!A{row_count + 1}:M{row_count + 1}'
         body = {'values': [data]}
         sheet.values().update(
@@ -140,11 +158,12 @@ def append_to_sheet(data):
             valueInputOption='RAW',
             body=body
         ).execute()
-        logger.info(f"Appending data with badges to sheet at row {row_count + 1}: {data[-1]}")
+        logger.info(f"Appended data to sheet at row {row_count + 1}: {data}")
         time.sleep(1)  # Small delay to allow propagation
+        return True
     except Exception as e:
         logger.error(f"Error appending to sheet: {e}")
-        raise
+        return False
 
 # Fetch data from Google Sheet with retry mechanism and caching
 @cache.memoize(timeout=300)  # Cache for 5 minutes
@@ -153,7 +172,8 @@ def fetch_data_from_sheet(max_retries=5, delay=2):
         try:
             service = authenticate_google_sheets()
             if not service:
-                raise Exception("Google Sheets authentication failed.")
+                logger.error("Google Sheets authentication failed.")
+                return None
             sheet = service.spreadsheets()
             result = sheet.values().get(spreadsheetId=SPREADSHEET_ID, range=DATA_RANGE_NAME).execute()
             values = result.get('values', [])
@@ -163,26 +183,30 @@ def fetch_data_from_sheet(max_retries=5, delay=2):
                 if attempt < max_retries - 1:
                     time.sleep(delay * (2 ** attempt))
                     continue
-                return None
+                return pd.DataFrame(columns=PREDETERMINED_HEADERS)
             
             headers = values[0]
             rows = values[1:] if len(values) > 1 else []
             expected_columns = PREDETERMINED_HEADERS
             
-            # Log the fetched data
             logger.debug(f"Attempt {attempt + 1}: Fetched headers: {headers}")
             logger.debug(f"Attempt {attempt + 1}: Fetched rows: {rows}")
 
-            # If headers don't match expected columns, reset the headers
+            # If headers don't match, reset headers
             if headers != expected_columns:
                 logger.warning(f"Attempt {attempt + 1}: Headers do not match expected columns. Resetting headers.")
-                set_sheet_headers()
+                if not set_sheet_headers():
+                    logger.error("Failed to reset headers.")
+                    if attempt < max_retries - 1:
+                        time.sleep(delay * (2 ** attempt))
+                        continue
+                    return pd.DataFrame(columns=expected_columns)
                 if not rows:
                     if attempt < max_retries - 1:
                         time.sleep(delay * (2 ** attempt))
                         continue
-                    return None
-                # Normalize rows to match expected columns
+                    return pd.DataFrame(columns=expected_columns)
+                # Normalize rows
                 normalized_rows = []
                 for row in rows:
                     if len(row) < len(expected_columns):
@@ -192,7 +216,7 @@ def fetch_data_from_sheet(max_retries=5, delay=2):
                     normalized_rows.append(row)
                 rows = normalized_rows
             else:
-                # Ensure rows match the number of headers
+                # Normalize rows to match headers
                 normalized_rows = []
                 for row in rows:
                     if len(row) < len(headers):
@@ -202,32 +226,30 @@ def fetch_data_from_sheet(max_retries=5, delay=2):
                     normalized_rows.append(row)
                 rows = normalized_rows
             
-            # Create DataFrame with correct column names
+            # Create DataFrame
             if not rows:
-                logger.info(f"Attempt {attempt + 1}: No data rows found, creating empty DataFrame.")
+                logger.info(f"Attempt {attempt + 1}: No data rows found.")
                 df = pd.DataFrame(columns=expected_columns)
             else:
                 df = pd.DataFrame(rows, columns=headers)
-                # Ensure all expected columns are present
                 for col in expected_columns:
                     if col not in df.columns:
                         df[col] = ""
-                # Reorder columns to match expected_columns
                 df = df[expected_columns]
             
             logger.debug(f"Attempt {attempt + 1}: Created DataFrame with shape {df.shape}")
-            logger.debug(f"Attempt {attempt + 1}: DataFrame head:\n{df.head()}")
             return df
         
         except Exception as e:
-            logger.error(f"Attempt {attempt + 1}: Error fetching data from Google Sheet: {e}")
+            logger.error(f"Attempt {attempt + 1}: Error fetching data: {e}")
             if attempt < max_retries - 1:
                 time.sleep(delay * (2 ** attempt))
                 continue
-            raise
-    raise Exception("Max retries reached while fetching data from Google Sheet.")
+            return None
+    logger.error("Max retries reached while fetching data.")
+    return None
 
-# Calculate Financial Health Score, determine course suggestion, and assign badges
+# Calculate Financial Health Score
 def calculate_health_score(df):
     try:
         if df.empty:
@@ -293,23 +315,21 @@ def calculate_health_score(df):
 # Assign badges based on user submission
 def assign_badges(user_df, all_users_df):
     badges = []
+    if user_df.empty:
+        logger.warning("Empty user_df in assign_badges.")
+        return badges
     user_row = user_df.iloc[0]
     email = user_row['Email']
     health_score = user_row['HealthScore']
     current_debt = user_row['DebtLoan']
 
-    # Check for "First Health Score Completed!" badge
     user_submissions = all_users_df[all_users_df['Email'] == email]
-    if len(user_submissions) == 1:  # This is the user's first submission
+    if len(user_submissions) <= 1:
         badges.append("First Health Score Completed!")
-
-    # Check for "Financial Stability Achieved!" badge
     if health_score > 80:
         badges.append("Financial Stability Achieved!")
-
-    # Check for "Debt Slayer!" badge
-    if len(user_submissions) > 1:  # User has previous submissions
-        previous_submission = user_submissions.iloc[-2]  # Second-to-last submission
+    if len(user_submissions) > 1:
+        previous_submission = user_submissions.iloc[-2]
         previous_debt = float(previous_submission['DebtLoan'])
         if current_debt < previous_debt:
             badges.append("Debt Slayer!")
@@ -322,16 +342,12 @@ def send_email(recipient_email, user_name, health_score, score_description, cour
     sender_email = os.environ.get('SENDER_EMAIL')
     sender_password = os.environ.get('SENDER_PASSWORD')
     if not sender_email or not sender_password:
-        raise Exception("SENDER_EMAIL or SENDER_PASSWORD environment variable not set.")
+        logger.error("SENDER_EMAIL or SENDER_PASSWORD not set.")
+        return False
 
-    # Determine gamified subject line
     top_10_percent = (rank / total_users) <= 0.1
-    if top_10_percent:
-        subject = "🔥 You're Top 10%! Your Ficore Score Report Awaits!"
-    else:
-        subject = f"📊 Your Ficore Score Report is Ready, {user_name}!"
+    subject = "🔥 You're Top 10%! Your Ficore Score Report Awaits!" if top_10_percent else f"📊 Your Ficore Score Report is Ready, {user_name}!"
 
-    # HTML email body with styled heading, subheading, buttons, and course suggestion
     html_body = f"""
     <html>
     <body style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
@@ -351,30 +367,24 @@ def send_email(recipient_email, user_name, health_score, score_description, cour
         <p>Follow the advice above to improve your financial health. We’re here to support you every step of the way—take one small action today to grow stronger financially for your business, your goals, and your future!</p>
         <p style="margin-bottom: 10px;">
             Want to learn more? Check out this course: 
-            <a href="{course_url}" style="display: inline-block; padding: 10px 20px; background-color: #FBC02D; color: #333; text-decoration: none; border-radius: 5px; font-size: 0.9rem; transition: background-color 0.3s;">{course_title}</a>
+            <a href="{course_url}" style="display: inline-block; padding: 10px 20px; background-color: #FBC02D; color: #333; text-decoration: none; border-radius: 5px; font-size: 0.9rem;">{course_title}</a>
         </p>
         <p style="margin-bottom: 10px;">
             Please provide feedback on your experience: 
-            <a href="{FEEDBACK_FORM_URL}" style="display: inline-block; padding: 10px 20px; background-color: #2E7D32; color: white; text-decoration: none; border-radius: 5px; font-size: 0.9rem; transition: background-color 0.3s;">Feedback Form</a>
+            <a href="{FEEDBACK_FORM_URL}" style="display: inline-block; padding: 10px 20px; background-color: #2E7D32; color: white; text-decoration: none; border-radius: 5px; font-size: 0.9rem;">Feedback Form</a>
         </p>
         <p style="margin-bottom: 10px;">
             Want Smart Insights? Join the waitlist for Ficore Premium: 
-            <a href="{WAITLIST_FORM_URL}" style="display: inline-block; padding: 10px 20px; background-color: #1976D2; color: white; text-decoration: none; border-radius: 5px; font-size: 0.9rem; transition: background-color 0.3s;">Join Waitlist</a>
+            <a href="{WAITLIST_FORM_URL}" style="display: inline-block; padding: 10px 20px; background-color: #1976D2; color: white; text-decoration: none; border-radius: 5px; font-size: 0.9rem;">Join Waitlist</a>
         </p>
         <p style="margin-bottom: 10px;">
             Need personalized advice? 
-            <a href="{CONSULTANCY_FORM_URL}" style="display: inline-block; padding: 10px 20px; background-color: #388E3C; color: white; text-decoration: none; border-radius: 5px; font-size: 0.9rem; transition: background-color 0.3s;">Book Consultancy</a>
+            <a href="{CONSULTANCY_FORM_URL}" style="display: inline-block; padding: 10px 20px; background-color: #388E3C; color: white; text-decoration: none; border-radius: 5px; font-size: 0.9rem;">Book Consultancy</a>
         </p>
         <style>
-            a:hover {{
-                background-color: #1B5E20 !important; /* Darker green for Feedback and Consultancy buttons */
-            }}
-            a[href="{WAITLIST_FORM_URL}"]:hover {{
-                background-color: #0D47A1 !important; /* Darker blue for Waitlist button */
-            }}
-            a[href="{course_url}"]:hover {{
-                background-color: #F9A825 !important; /* Darker yellow for Course button */
-            }}
+            a:hover {{ background-color: #1B5E20 !important; }}
+            a[href="{WAITLIST_FORM_URL}"]:hover {{ background-color: #0D47A1 !important; }}
+            a[href="{course_url}"]:hover {{ background-color: #F9A825 !important; }}
         </style>
         <p>Best regards,<br>The Ficore AI Team</p>
     </body>
@@ -393,19 +403,19 @@ def send_email(recipient_email, user_name, health_score, score_description, cour
                 server.starttls()
                 server.login(sender_email, sender_password)
                 server.sendmail(sender_email, recipient_email, msg.as_string())
-                logger.info(f"Email successfully sent to {recipient_email} (primary email)")
+                logger.info(f"Email sent to {recipient_email}")
                 return True
         except Exception as e:
-            logger.error(f"Attempt {attempt + 1} failed: {e}")
+            logger.error(f"Email attempt {attempt + 1} failed: {e}")
             time.sleep(2)
-    logger.error(f"Failed to send email to {recipient_email} (primary email) after 3 attempts")
+    logger.error(f"Failed to send email to {recipient_email} after 3 attempts")
     return False
 
 # Homepage route
 @app.route('/')
 def home():
     form = SubmissionForm()
-    return render_template('index.html', form=form, messages=get_flashed_messages(with_categories=True))
+    return render_template('index.html', form=form, FEEDBACK_FORM_URL=FEEDBACK_FORM_URL)
 
 # Form submission route
 @app.route('/submit', methods=['POST'])
@@ -413,51 +423,60 @@ def submit():
     form = SubmissionForm()
     if form.validate_on_submit():
         try:
-            # Extract form data
-            timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            # Extract and validate form data
             data = [
-                timestamp,
-                form.business_name.data,
-                form.income_revenue.data,
-                form.expenses_costs.data,
-                form.debt_loan.data,
-                form.debt_interest_rate.data,
-                form.auto_email.data,
-                form.phone_number.data,
-                form.first_name.data,
-                form.last_name.data,
-                form.user_type.data,
-                form.email.data,
+                datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                str(form.business_name.data),
+                float(form.income_revenue.data),
+                float(form.expenses_costs.data),
+                float(form.debt_loan.data),
+                float(form.debt_interest_rate.data),
+                str(form.auto_email.data),
+                str(form.phone_number.data or ""),
+                str(form.first_name.data),
+                str(form.last_name.data or ""),
+                str(form.user_type.data),
+                str(form.email.data),
                 ""  # Placeholder for badges
             ]
-            if len(data) != len(PREDETERMINED_HEADERS):
-                raise ValueError(f"Data column count ({len(data)}) does not match expected headers ({len(PREDETERMINED_HEADERS)}).")
+            logger.debug(f"Form data: {data}")
 
-            # Fetch all users data to determine badges
+            # Clear cache to ensure fresh data
+            cache.delete_memoized(fetch_data_from_sheet)
+            logger.debug("Cleared fetch_data_from_sheet cache")
+
+            # Fetch all users data
             all_users_df = fetch_data_from_sheet()
-            if all_users_df is None or all_users_df.empty:
-                all_users_df = pd.DataFrame(columns=PREDETERMINED_HEADERS)
+            if all_users_df is None:
+                logger.error("Failed to fetch data from Google Sheet.")
+                flash("Unable to connect to data storage. Please try again later.", "error")
+                return redirect(url_for('home'))
 
-            # Calculate health score and badges for the new submission
+            # Create temp DataFrame for new submission
             temp_df = pd.DataFrame([data], columns=PREDETERMINED_HEADERS)
             for col in ['IncomeRevenue', 'ExpensesCosts', 'DebtLoan', 'DebtInterestRate']:
                 temp_df[col] = pd.to_numeric(temp_df[col], errors='coerce').fillna(0)
+            
+            # Calculate health score and badges
             temp_df = calculate_health_score(temp_df)
             new_badges = assign_badges(temp_df, all_users_df)
-            data[-1] = ",".join(new_badges)  # Update badges in the data
+            data[-1] = ",".join(new_badges) if new_badges else ""
 
-            # Append data with badges
-            logger.debug(f"Appending data to sheet: {data}")
-            append_to_sheet(data)
-
-            # Fetch updated data
-            all_users_df = fetch_data_from_sheet()
-            if all_users_df is None or all_users_df.empty:
-                logger.warning("No data found in Google Sheet after submission.")
-                flash("No data found in Google Sheet after submission. Please try again later or contact Ficoreai@outlook.com for support.", "error")
+            # Append data to sheet
+            if not append_to_sheet(data):
+                logger.error("Failed to append data to Google Sheet.")
+                flash("Unable to save data. Please try again later.", "error")
                 return redirect(url_for('home'))
 
-            # Convert numeric columns to float
+            # Fetch updated data
+            cache.delete_memoized(fetch_data_from_sheet)
+            all_users_df = fetch_data_from_sheet()
+            if all_users_df is None or all_users_df.empty:
+                logger.error("No data found in Google Sheet after submission.")
+                flash("Data submission failed. Please try again.", "error")
+                return redirect(url_for('home'))
+
+            # Convert numeric columns
             numeric_cols = ['IncomeRevenue', 'ExpensesCosts', 'DebtLoan', 'DebtInterestRate']
             for col in numeric_cols:
                 all_users_df[col] = pd.to_numeric(all_users_df[col], errors='coerce').fillna(0)
@@ -465,15 +484,15 @@ def submit():
             # Calculate health scores
             all_users_df = calculate_health_score(all_users_df)
 
-            # Sort by HealthScore and assign ranks
+            # Assign ranks
             all_users_df = all_users_df.sort_values(by='HealthScore', ascending=False)
             all_users_df['Rank'] = range(1, len(all_users_df) + 1)
 
-            # Filter for the current user
+            # Filter for current user
             user_df = all_users_df[all_users_df['Email'] == form.email.data]
             if user_df.empty:
-                logger.warning(f"No data found for user with email: {form.email.data}")
-                flash(f"No data found for user with email: {form.email.data}. Please contact Ficoreai@outlook.com for support.", "error")
+                logger.error(f"No data found for email: {form.email.data}")
+                flash("Submission not found. Please try again.", "error")
                 return redirect(url_for('home'))
 
             # Extract user data
@@ -493,22 +512,21 @@ def submit():
             elif new_badges:
                 personalized_message = f"🎉 Great job! You earned a new badge: {new_badges[-1]}"
 
-            # Send email with course suggestion
-            user_name = f"{form.first_name.data} {form.last_name.data}"
+            # Send email
+            user_name = f"{form.first_name.data} {form.last_name.data}".strip()
             email_sent = send_email(form.email.data, user_name, health_score, score_description, course_title, course_url, rank, total_users)
             if not email_sent:
                 personalized_message += " ⚠️ Unable to send email report. Please check your spam folder or contact support."
 
-            # Flash success message
             flash("Data submitted successfully!", "success")
             return redirect(url_for('dashboard', email=form.email.data, personalized_message=personalized_message))
         except ValueError as e:
-            logger.error(f"ValueError in form submission: {str(e)}")
-            flash(f"Invalid input format: {str(e)}. Please ensure all numeric fields contain valid numbers.", "error")
+            logger.error(f"ValueError in submission: {e}")
+            flash(f"Invalid input: {str(e)}.", "error")
             return redirect(url_for('home'))
         except Exception as e:
-            logger.error(f"Error in form submission: {e}")
-            flash(f"Error processing your submission: {str(e)}. Please try again later or contact Ficoreai@outlook.com for support.", "error")
+            logger.error(f"Submission error: {e}")
+            flash(f"Submission failed: {str(e)}. Please try again or contact support.", "error")
             return redirect(url_for('home'))
     else:
         for field, errors in form.errors.items():
@@ -520,45 +538,35 @@ def submit():
 @app.route('/dashboard')
 def dashboard():
     try:
-        # Get the user's email and personalized message from query parameters
         email = request.args.get('email', 'test@example.com')
         personalized_message = request.args.get('personalized_message', '')
 
-        # Fetch data from Google Sheets
         all_users_df = fetch_data_from_sheet()
         if all_users_df is None or all_users_df.empty:
-            logger.warning("No data found in Google Sheet for dashboard.")
-            flash("No data found in Google Sheet. Please try again later or contact Ficoreai@outlook.com for support.", "error")
+            logger.error("No data found in Google Sheet for dashboard.")
+            flash("No data found. Please try again later.", "error")
             return redirect(url_for('home'))
 
-        # Convert numeric columns to float
         numeric_cols = ['IncomeRevenue', 'ExpensesCosts', 'DebtLoan', 'DebtInterestRate']
         for col in numeric_cols:
             all_users_df[col] = pd.to_numeric(all_users_df[col], errors='coerce').fillna(0)
 
-        # Calculate health scores for all users
         all_users_df = calculate_health_score(all_users_df)
-
-        # Sort by HealthScore and assign ranks
         all_users_df = all_users_df.sort_values(by='HealthScore', ascending=False)
         all_users_df['Rank'] = range(1, len(all_users_df) + 1)
 
-        # Filter for the current user
         user_df = all_users_df[all_users_df['Email'] == email]
         if user_df.empty:
-            logger.warning(f"No data found for user with email: {email} in dashboard.")
-            flash(f"No data found for user with email: {email}. Please contact Ficoreai@outlook.com for support.", "error")
+            logger.error(f"No data found for email: {email}")
+            flash(f"No data found for email: {email}.", "error")
             return redirect(url_for('home'))
 
-        # Ensure badges are present
         user_row = user_df.iloc[-1]
         if not user_row['Badges']:
             user_df = calculate_health_score(user_df)
             new_badges = assign_badges(user_df, all_users_df)
             user_df['Badges'] = ",".join(new_badges)
-            # Update the sheet if necessary (optional, since we now include badges on append)
 
-        # Extract user data (latest submission)
         user_row = user_df.iloc[-1]
         health_score = user_row['HealthScore']
         rank = user_row['Rank']
@@ -570,10 +578,9 @@ def dashboard():
         cash_flow_score = round(user_row['NormCashFlow'] * 100, 2)
         debt_to_income_score = round(user_row['NormDebtToIncome'] * 100, 2)
         debt_interest_score = round(user_row['NormDebtInterest'] * 100, 2)
-        first_name = user_row['FirstName']  # Added for personalized greeting
-        email = user_row['Email']  # Added for email display
+        first_name = user_row['FirstName']
+        email = user_row['Email']
 
-        # Create Plotly charts
         breakdown_data = {
             "Component": ["Cash Flow", "Debt-to-Income Ratio", "Debt Interest Burden"],
             "Score": [cash_flow_score, debt_to_income_score, debt_interest_score]
@@ -631,20 +638,22 @@ def dashboard():
             personalized_message=personalized_message,
             breakdown_plot=breakdown_plot,
             comparison_plot=comparison_plot,
-            first_name=first_name,  # Added
-            email=email,  # Added
-            messages=get_flashed_messages(with_categories=True)
+            first_name=first_name,
+            email=email,
+            FEEDBACK_FORM_URL=FEEDBACK_FORM_URL,
+            WAITLIST_FORM_URL=WAITLIST_FORM_URL,
+            CONSULTANCY_FORM_URL=CONSULTANCY_FORM_URL
         )
     except Exception as e:
-        logger.error(f"Error rendering dashboard: {e}")
-        flash(f"Error rendering dashboard: {str(e)}. Please try again later or contact Ficoreai@outlook.com for support.", "error")
+        logger.error(f"Dashboard error: {e}")
+        flash(f"Error loading dashboard: {str(e)}.", "error")
         return redirect(url_for('home'))
 
 # Global error handler
 @app.errorhandler(Exception)
 def handle_exception(e):
     logger.error(f"Unhandled exception: {e}")
-    flash("An unexpected error occurred. Please try again later or contact Ficoreai@outlook.com for support.", "error")
+    flash("An unexpected error occurred. Please try again or contact support.", "error")
     return redirect(url_for('home'))
 
 if __name__ == "__main__":
