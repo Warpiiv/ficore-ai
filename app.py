@@ -336,9 +336,15 @@ def assign_badges(user_df, all_users_df):
         badges.append("Financial Stability Achieved!")
     if len(user_submissions) > 1:
         previous_submission = user_submissions.iloc[-2]
-        previous_debt = float(previous_submission['DebtLoan'])
-        if current_debt < previous_debt:
-            badges.append("Debt Slayer!")
+        try:
+            # Remove commas and convert to float
+            previous_debt_str = str(previous_submission['DebtLoan']).replace(',', '')
+            previous_debt = float(previous_debt_str)
+            if current_debt < previous_debt:
+                badges.append("Debt Slayer!")
+        except (ValueError, TypeError) as e:
+            logger.error(f"Error converting DebtLoan to float: {previous_submission['DebtLoan']}, error: {e}")
+            # Skip assigning Debt Slayer badge if conversion fails
 
     logger.debug(f"Assigned badges for email {email}: {badges}")
     return badges
