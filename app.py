@@ -570,6 +570,8 @@ def dashboard():
         cash_flow_score = round(user_row['NormCashFlow'] * 100, 2)
         debt_to_income_score = round(user_row['NormDebtToIncome'] * 100, 2)
         debt_interest_score = round(user_row['NormDebtInterest'] * 100, 2)
+        first_name = user_row['FirstName']  # Added for personalized greeting
+        email = user_row['Email']  # Added for email display
 
         # Create Plotly charts
         breakdown_data = {
@@ -629,6 +631,8 @@ def dashboard():
             personalized_message=personalized_message,
             breakdown_plot=breakdown_plot,
             comparison_plot=comparison_plot,
+            first_name=first_name,  # Added
+            email=email,  # Added
             messages=get_flashed_messages(with_categories=True)
         )
     except Exception as e:
