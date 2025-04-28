@@ -3,106 +3,135 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ficore AI - Your Financial Dashboard</title>
     <meta name="description" content="Track your financial health with Ficore AI. See your score, earn badges, and get smart insights.">
     <meta name="keywords" content="ficore ai, financial health, dashboard, Africa SME finance, smart insights">
     <meta name="author" content="Ficore AI">
-
-    <!-- Poppins font with font-display swap -->
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-
-    <!-- Bootstrap 5 for button styling -->
+    <title>Ficore AI - Your Financial Dashboard</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-
-    <!-- Plotly CDN (v2.35.2) -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script defer src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
-
     <style>
         body {
             font-family: 'Poppins', sans-serif;
-            background: linear-gradient(to bottom, #F5F7FA, #E3F2FD);
+            background: linear-gradient(135deg, #E3F2FD, #F5F7FA);
             margin: 0;
             padding: 20px;
             box-sizing: border-box;
         }
-
         .container {
-            background: #FFFFFF;
-            padding: 2rem;
+            max-width: 900px;
+            margin: auto;
+        }
+        .card {
+            background: #fff;
             border-radius: 12px;
             box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
-            max-width: 800px;
-            margin: auto;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.15);
+        }
+        .card-header {
+            background: linear-gradient(135deg, #28A745, #1E88E5);
+            color: white;
+            padding: 1rem;
+            border-radius: 10px 10px 0 0;
             text-align: center;
+            font-weight: 600;
         }
-
-        h2 {
+        .card-body {
+            padding: 1.5rem;
+        }
+        h2, h3 {
             color: #28A745;
-            margin-bottom: 10px;
-            font-size: 2rem;
+            font-weight: 600;
         }
-
         .subheading {
             color: #1E88E5;
             font-style: italic;
-            margin-bottom: 20px;
             font-size: 1.1rem;
         }
-
         .badge {
             display: inline-block;
-            background-color: #1E88E5;
+            background: #1E88E5;
             color: white;
             padding: 8px 12px;
             border-radius: 20px;
             margin: 5px;
             font-size: 0.9rem;
+            transition: transform 0.2s ease;
         }
-
+        .badge:hover {
+            transform: scale(1.1);
+        }
         .alert {
-            padding: 1rem;
-            margin-bottom: 1.5rem;
             border-radius: 8px;
             font-weight: 500;
+            margin-bottom: 1.5rem;
         }
-
         .alert-success {
             background-color: #D4EDDA;
             color: #155724;
         }
-
         .alert-danger {
             background-color: #F8D7DA;
             color: #721C24;
         }
-
         .btn-primary {
             background: linear-gradient(135deg, #28A745, #1E88E5);
             border: none;
+            padding: 10px 20px;
             font-weight: 500;
+            border-radius: 8px;
             transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
-
         .btn-primary:hover {
             transform: translateY(-2px);
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
         }
-
         .btn-secondary {
             background: linear-gradient(135deg, #1DA1F2, #0d47a1);
             border: none;
+            padding: 10px 20px;
             font-weight: 500;
+            border-radius: 8px;
             transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
-
         .btn-secondary:hover {
             transform: translateY(-2px);
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
         }
-
+        .course-link {
+            display: inline-block;
+            background: #FFC107;
+            color: black;
+            padding: 10px 20px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: transform 0.2s ease;
+        }
+        .course-link:hover {
+            transform: translateY(-2px);
+        }
+        .insight-text {
+            color: #333;
+            font-size: 0.95rem;
+            line-height: 1.6;
+            margin-top: 1rem;
+        }
         @media (max-width: 600px) {
+            .card {
+                padding: 1rem;
+            }
             h2 {
                 font-size: 1.5rem;
+            }
+            h3 {
+                font-size: 1.25rem;
             }
             .subheading {
                 font-size: 1rem;
@@ -111,79 +140,157 @@
     </style>
 </head>
 <body>
+    <div class="container">
+        <!-- Welcome Card -->
+        <div class="card">
+            <div class="card-header">
+                Welcome, {{ first_name }}!
+            </div>
+            <div class="card-body">
+                <p>Email: {{ email }}</p>
+                <p class="subheading">Your Financial Health Summary</p>
+                {% if personalized_message %}
+                    <p><strong>{{ personalized_message }}</strong></p>
+                {% endif %}
+            </div>
+        </div>
 
-<div class="container">
-
-    <!-- Flash Messages (Success/Error after submit) -->
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            {% for category, message in messages %}
-                <div class="alert alert-{{ 'success' if category == 'success' else 'danger' }}">
-                    {{ message }}
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="alert-container my-3">
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ 'success' if category == 'success' else 'danger' }}">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
                 </div>
-            {% endfor %}
-        {% endif %}
-    {% endwith %}
+            {% endif %}
+        {% endwith %}
 
-    <!-- Personalized Greeting and Email -->
-    <h2>Welcome, {{ first_name }}!</h2>
-    <p>Email: {{ email }}</p>
-    <p class="subheading">Your Financial Health Summary</p>
+        <!-- Score and Rank Card -->
+        <div class="card">
+            <div class="card-header">
+                Your Financial Health Score
+            </div>
+            <div class="card-body">
+                <h3>{{ health_score }}/100</h3>
+                <p>Ranked #{{ rank }} out of {{ total_users }} users</p>
+                <p class="insight-text">
+                    {% if health_score >= 75 %}
+                        Your score indicates strong financial health. Focus on investing surplus funds to grow your wealth.
+                    {% elif health_score >= 50 %}
+                        Your finances are stable but could improve. Consider saving more or reducing expenses.
+                    {% elif health_score >= 25 %}
+                        Your score suggests financial strain. Prioritize paying off debt and managing expenses.
+                    {% else %}
+                        Your finances need urgent attention. Seek professional advice and explore recovery strategies.
+                    {% endif %}
+                </p>
+            </div>
+        </div>
 
-    {% if personalized_message %}
-    <p><strong>{{ personalized_message }}</strong></p>
-    {% endif %}
+        <!-- Badges Card -->
+        <div class="card">
+            <div class="card-header">
+                Your Badges
+            </div>
+            <div class="card-body">
+                {% if badges %}
+                    {% for badge in badges %}
+                        <span class="badge">{{ badge }}</span>
+                    {% endfor %}
+                {% else %}
+                    <p>No badges earned yet. Keep submitting to earn more!</p>
+                {% endif %}
+            </div>
+        </div>
 
-    <h3>Your Score: {{ health_score }}/100</h3>
-    <p>Ranked #{{ rank }} out of {{ total_users }} users</p>
+        <!-- Recommended Learning Card -->
+        <div class="card">
+            <div class="card-header">
+                Recommended Learning
+            </div>
+            <div class="card-body">
+                <a href="{{ course_url }}" target="_blank" class="course-link" aria-label="Recommended Course: {{ course_title }}">
+                    📚 {{ course_title }}
+                </a>
+            </div>
+        </div>
 
-    <!-- Your Badges Section -->
-    <div>
-        <h4>Your Badges</h4>
-        {% if badges %}
-            {% for badge in badges %}
-                <span class="badge">{{ badge }}</span>
-            {% endfor %}
-        {% else %}
-            <p>No badges earned yet. Keep submitting to earn more!</p>
-        {% endif %}
+        <!-- Score Breakdown Card -->
+        <div class="card">
+            <div class="card-header">
+                Score Breakdown
+            </div>
+            <div class="card-body">
+                {% if breakdown_plot %}
+                    {{ breakdown_plot|safe }}
+                {% else %}
+                    <p>Score breakdown chart is currently unavailable.</p>
+                {% endif %}
+                <p class="insight-text">
+                    Your score is composed of three components:
+                    <ul>
+                        <li><strong>Cash Flow</strong>: Reflects how much income remains after expenses. Higher values indicate better financial flexibility.</li>
+                        <li><strong>Debt-to-Income Ratio</strong>: Measures debt relative to income. Lower ratios suggest manageable debt levels.</li>
+                        <li><strong>Debt Interest Burden</strong>: Indicates the impact of interest rates on your finances. Lower burdens mean less strain from debt.</li>
+                    </ul>
+                    {% if health_score >= 75 %}
+                        Your components show balanced financial health. Maintain strong cash flow and low debt.
+                    {% elif health_score >= 50 %}
+                        One or more components may need attention. Focus on improving cash flow or reducing debt.
+                    {% else %}
+                        Your components indicate challenges. Work on increasing income, cutting expenses, or lowering debt interest.
+                    {% endif %}
+                </p>
+            </div>
+        </div>
+
+        <!-- Comparison Card -->
+        <div class="card">
+            <div class="card-header">
+                How You Compare to Others
+            </div>
+            <div class="card-body">
+                {% if comparison_plot %}
+                    {{ comparison_plot|safe }}
+                {% else %}
+                    <p>Comparison chart is currently unavailable.</p>
+                {% endif %}
+                <p class="insight-text">
+                    Your rank of #{{ rank }} out of {{ total_users }} users places you:
+                    {% if rank <= total_users * 0.1 %}
+                        in the <strong>top 10%</strong> of users, indicating exceptional financial health compared to peers.
+                    {% elif rank <= total_users * 0.3 %}
+                        in the <strong>top 30%</strong>, showing above-average financial stability.
+                    {% elif rank <= total_users * 0.7 %}
+                        in the <strong>middle range</strong>, suggesting room for improvement to climb the ranks.
+                    {% else %}
+                        in the <strong>lower range</strong>, highlighting the need for strategic financial planning.
+                    {% endif %}
+                    Regular submissions can help track your progress and improve your standing.
+                </p>
+            </div>
+        </div>
+
+        <!-- Links Card -->
+        <div class="card">
+            <div class="card-header">
+                Explore More
+            </div>
+            <div class="card-body">
+                <p>
+                    <a href="{{ url_for('home') }}" class="btn btn-primary">Back to Home</a>
+                    <a href="{{ FEEDBACK_FORM_URL }}" class="btn btn-secondary">Provide Feedback</a>
+                    <a href="{{ WAITLIST_FORM_URL }}" class="btn btn-secondary">Join Premium Waitlist</a>
+                    <a href="{{ CONSULTANCY_FORM_URL }}" class="btn btn-secondary">Book Consultancy</a>
+                </p>
+                <p>Contact us at <a href="mailto:Ficoreai@outlook.com">Ficoreai@outlook.com</a> for support.</p>
+            </div>
+        </div>
     </div>
 
-    <div style="margin-top: 30px;">
-        <h3>Recommended Learning:</h3>
-        <a href="{{ course_url }}" target="_blank" aria-label="Recommended Course: {{ course_title }}" style="display: inline-block; background: #FFC107; padding: 10px 20px; border-radius: 8px; text-decoration: none; color: black; font-weight: 500;">
-            📚 {{ course_title }}
-        </a>
-    </div>
-
-    <div style="margin-top: 40px;">
-        <h3>Score Breakdown</h3>
-        {% if breakdown_plot %}
-            {{ breakdown_plot|safe }}
-        {% else %}
-            <p>Score breakdown chart is currently unavailable.</p>
-        {% endif %}
-    </div>
-
-    <div style="margin-top: 40px;">
-        <h3>How You Compare to Others</h3>
-        {% if comparison_plot %}
-            {{ comparison_plot|safe }}
-        {% else %}
-            <p>Comparison chart is currently unavailable.</p>
-        {% endif %}
-    </div>
-
-    <!-- Links Section -->
-    <p>
-        <a href="{{ url_for('home') }}" class="btn btn-primary">Back to Home</a>
-        <a href="{{ FEEDBACK_FORM_URL }}" class="btn btn-secondary">Provide Feedback</a>
-        <a href="{{ WAITLIST_FORM_URL }}" class="btn btn-secondary">Join Premium Waitlist</a>
-        <a href="{{ CONSULTANCY_FORM_URL }}" class="btn btn-secondary">Book Consultancy</a>
-    </p>
-    <p>Contact us at <a href="mailto:Ficoreai@outlook.com">Ficoreai@outlook.com</a> for support.</p>
-</div>
-
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
