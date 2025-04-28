@@ -8,12 +8,6 @@ gspread==6.2.0
 pandas==2.2.3
 plotly==6.0.1
 python-dotenv==1.1.0
-pillow==11.2.1  # For PDF reports (images)
-openpyxl==3.1.5  # For Excel exports
-pyarrow==19.0.1  # For deeper analytics
-beautifulsoup4==4.13.4
-Flask-Login==0.6.3  # For user authentication and session management
-bcrypt==4.2.0  # For password hashing
-psycopg2-binary==2.9.10  # PostgreSQL adapter
-SQLAlchemy==2.0.35  # ORM for database interactions
+flask-wtf==1.2.2
+flask-caching==2.3.0
 reportlab==4.2.2  # For PDF generation
