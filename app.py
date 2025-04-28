@@ -18,6 +18,7 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import time
 import logging
+import traceback
 
 # Set up logging
 logging.basicConfig(level=logging.DEBUG)
@@ -443,6 +444,7 @@ def submit():
 
         if form.validate():
             try:
+                logger.debug("Starting form data extraction")
                 # Extract and validate form data
                 data = [
                     datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
@@ -461,10 +463,12 @@ def submit():
                 ]
                 logger.debug(f"Form data: {data}")
 
+                logger.debug("Clearing cache for fetch_data_from_sheet")
                 # Clear cache to ensure fresh data
                 cache.delete_memoized(fetch_data_from_sheet)
                 logger.debug("Cleared fetch_data_from_sheet cache")
 
+                logger.debug("Fetching all users data")
                 # Fetch all users data
                 all_users_df = fetch_data_from_sheet()
                 if all_users_df is None:
@@ -472,22 +476,27 @@ def submit():
                     flash("Unable to connect to data storage. Please try again later.", "error")
                     return redirect(url_for('home'))
 
+                logger.debug("Creating temp DataFrame")
                 # Create temp DataFrame for new submission
                 temp_df = pd.DataFrame([data], columns=PREDETERMINED_HEADERS)
                 for col in ['IncomeRevenue', 'ExpensesCosts', 'DebtLoan', 'DebtInterestRate']:
                     temp_df[col] = pd.to_numeric(temp_df[col], errors='coerce').fillna(0)
                 
+                logger.debug("Calculating health score")
                 # Calculate health score and badges
                 temp_df = calculate_health_score(temp_df)
                 new_badges = assign_badges(temp_df, all_users_df)
                 data[-1] = ",".join(new_badges) if new_badges else ""
+                logger.debug(f"Assigned badges: {new_badges}")
 
+                logger.debug("Appending data to sheet")
                 # Append data to sheet
                 if not append_to_sheet(data):
                     logger.error("Failed to append data to Google Sheet.")
                     flash("Unable to save data. Please try again later.", "error")
                     return redirect(url_for('home'))
 
+                logger.debug("Fetching updated data")
                 # Fetch updated data
                 cache.delete_memoized(fetch_data_from_sheet)
                 all_users_df = fetch_data_from_sheet()
@@ -496,18 +505,22 @@ def submit():
                     flash("Data submission failed. Please try again.", "error")
                     return redirect(url_for('home'))
 
+                logger.debug("Converting numeric columns")
                 # Convert numeric columns
                 numeric_cols = ['IncomeRevenue', 'ExpensesCosts', 'DebtLoan', 'DebtInterestRate']
                 for col in numeric_cols:
                     all_users_df[col] = pd.to_numeric(all_users_df[col], errors='coerce').fillna(0)
 
+                logger.debug("Calculating health scores for all users")
                 # Calculate health scores
                 all_users_df = calculate_health_score(all_users_df)
 
+                logger.debug("Assigning ranks")
                 # Assign ranks
                 all_users_df = all_users_df.sort_values(by='HealthScore', ascending=False)
                 all_users_df['Rank'] = range(1, len(all_users_df) + 1)
 
+                logger.debug(f"Filtering for user email: {form.email.data}")
                 # Filter for current user
                 user_df = all_users_df[all_users_df['Email'] == form.email.data]
                 if user_df.empty:
@@ -524,7 +537,9 @@ def submit():
                 course_title = user_row['CourseTitle']
                 course_url = user_row['CourseURL']
                 badges = user_row['Badges'].split(",") if user_row['Badges'] else []
+                logger.debug(f"User data: health_score={health_score}, rank={rank}, total_users={total_users}")
 
+                logger.debug("Generating personalized message")
                 # Generate personalized message
                 personalized_message = ""
                 if "First Health Score Completed!" in new_badges:
@@ -532,20 +547,18 @@ def submit():
                 elif new_badges:
                     personalized_message = f"🎉 Great job! You earned a new badge: {new_badges[-1]}"
 
+                logger.debug("Sending email")
                 # Send email
                 user_name = f"{form.first_name.data} {form.last_name.data}".strip()
                 email_sent = send_email(form.email.data, user_name, health_score, score_description, course_title, course_url, rank, total_users)
                 if not email_sent:
                     personalized_message += " ⚠️ Unable to send email report. Please check your spam folder or contact support."
 
+                logger.debug("Submission successful, redirecting to dashboard")
                 flash("Data submitted successfully!", "success")
                 return redirect(url_for('dashboard', email=form.email.data, personalized_message=personalized_message))
-            except ValueError as e:
-                logger.error(f"ValueError in submission: {e}")
-                flash(f"Invalid input: {str(e)}. Please ensure all numeric fields contain valid numbers.", "error")
-                return redirect(url_for('home'))
             except Exception as e:
-                logger.error(f"Submission error: {e}")
+                logger.error(f"Error in submission processing: {e}\n{traceback.format_exc()}")
                 flash(f"Submission failed: {str(e)}. Please try again or contact support.", "error")
                 return redirect(url_for('home'))
         else:
@@ -554,9 +567,9 @@ def submit():
                     logger.warning(f"Form validation error in {field}: {error}")
                     flash(f"Error in {field}: {error}", "error")
             return redirect(url_for('home'))
-    except ImportError as e:
-        logger.error(f"Email validation error: {e}")
-        flash("Email validation setup error. Please contact Ficoreai@outlook.com for support.", "error")
+    except Exception as e:
+        logger.error(f"Outer submission error: {e}\n{traceback.format_exc()}")
+        flash(f"Submission failed: {str(e)}. Please try again or contact support.", "error")
         return redirect(url_for('home'))
 
 # Dashboard route
@@ -677,7 +690,7 @@ def dashboard():
 # Global error handler
 @app.errorhandler(Exception)
 def handle_exception(e):
-    logger.error(f"Unhandled exception: {e}")
+    logger.error(f"Unhandled exception: {e}\n{traceback.format_exc()}")
     flash("An unexpected error occurred. Please try again or contact support.", "error")
     return redirect(url_for('home'))
 
