@@ -382,9 +382,9 @@ def send_email(recipient_email, user_name, health_score, score_description, cour
             <a href="{CONSULTANCY_FORM_URL}" style="display: inline-block; padding: 10px 20px; background-color: #388E3C; color: white; text-decoration: none; border-radius: 5px; font-size: 0.9rem;">Book Consultancy</a>
         </p>
         <style>
-            a:hover {{ background-color: #1B5E20 !important; }}
-            a[href="{WAITLIST_FORM_URL}"]:hover {{ background-color: #0D47A1 !important; }}
-            a[href="{course_url}"]:hover {{ background-color: #F9A825 !important; }}
+            a:hover { background-color: #1B5E20 !important; }
+            a[href="{WAITLIST_FORM_URL}"]:hover { background-color: #0D47A1 !important; }
+            a[href="{course_url}"]:hover { background-color: #F9A825 !important; }
         </style>
         <p>Best regards,<br>The Ficore AI Team</p>
     </body>
@@ -425,6 +425,11 @@ def submit():
         # Log raw POST data for debugging
         raw_data = request.form.to_dict()
         logger.debug(f"Raw POST data: {raw_data}")
+        # Log specific financial fields
+        logger.debug(f"Received financial fields: income_revenue={raw_data.get('income_revenue')}, "
+                    f"expenses_costs={raw_data.get('expenses_costs')}, "
+                    f"debt_loan={raw_data.get('debt_loan')}, "
+                    f"debt_interest_rate={raw_data.get('debt_interest_rate')}")
 
         if form.validate_on_submit():
             try:
