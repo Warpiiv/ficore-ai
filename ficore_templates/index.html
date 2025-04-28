@@ -9,6 +9,7 @@
     <title>Ficore AI - Financial Health Score</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
     <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
     <style>
         body {
@@ -105,7 +106,7 @@
         <header class="text-center my-4">
             <img src="{{ url_for('static', filename='img/ficore_logo.png') }}" alt="Ficore AI Logo" class="img-fluid" style="max-width: 200px;">
             <h1>Ficore AI Financial Health Score</h1>
-            <p class="lead">Get your financial health score and personalized insights instantly!.</p>
+            <p class="lead">Get your financial health score and personalized insights instantly!</p>
         </header>
 
         <!-- Flash Messages -->
@@ -168,22 +169,18 @@
                         <div class="mb-3">
                             {{ form.income_revenue.label(class="form-label") }}
                             {{ form.income_revenue(class="form-control number-input", placeholder="Enter monthly income/revenue", type="text") }}
-                            <input type="hidden" name="income_revenue" id="income_revenue_hidden">
                         </div>
                         <div class="mb-3">
                             {{ form.expenses_costs.label(class="form-label") }}
                             {{ form.expenses_costs(class="form-control number-input", placeholder="Enter monthly expenses/costs", type="text") }}
-                            <input type="hidden" name="expenses_costs" id="expenses_costs_hidden">
                         </div>
                         <div class="mb-3">
                             {{ form.debt_loan.label(class="form-label") }}
                             {{ form.debt_loan(class="form-control number-input", placeholder="Enter total debt/loan amount", type="text") }}
-                            <input type="hidden" name="debt_loan" id="debt_loan_hidden">
                         </div>
                         <div class="mb-3">
                             {{ form.debt_interest_rate.label(class="form-label") }}
                             {{ form.debt_interest_rate(class="form-control number-input", placeholder="Enter debt interest rate (%)", type="text") }}
-                            <input type="hidden" name="debt_interest_rate" id="debt_interest_rate_hidden">
                         </div>
 
                         <!-- Submit Button -->
@@ -214,8 +211,6 @@
                 let value = e.target.value.replace(/[^0-9.]/g, ''); // Allow numbers and decimal point
                 if (value === '') {
                     e.target.value = '';
-                    // Update corresponding hidden input
-                    document.getElementById(e.target.id + '_hidden').value = '';
                     return;
                 }
                 let parts = value.split('.');
@@ -223,26 +218,21 @@
                 let decimalPart = parts[1] ? '.' + parts[1].slice(0, 2) : ''; // Limit to 2 decimal places
                 integerPart = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
                 e.target.value = integerPart + decimalPart;
-                // Update corresponding hidden input with clean value
-                document.getElementById(e.target.id + '_hidden').value = value;
             });
             input.addEventListener('blur', function(e) {
                 let cleanValue = e.target.value.replace(/,/g, '');
                 if (cleanValue === '' || isNaN(parseFloat(cleanValue))) {
                     e.target.value = '';
-                    document.getElementById(e.target.id + '_hidden').value = '';
                 } else {
                     e.target.value = parseFloat(cleanValue).toLocaleString('en-US', {
                         minimumFractionDigits: 0,
                         maximumFractionDigits: 2
                     });
-                    document.getElementById(e.target.id + '_hidden').value = cleanValue;
                 }
             });
             input.addEventListener('focus', function(e) {
                 let value = e.target.value.replace(/,/g, '');
                 e.target.value = value;
-                document.getElementById(e.target.id + '_hidden').value = value;
             });
         });
 
@@ -251,11 +241,10 @@
             document.querySelectorAll('.number-input').forEach(input => {
                 let cleanValue = input.value.replace(/,/g, '');
                 if (cleanValue === '' || isNaN(parseFloat(cleanValue))) {
-                    cleanValue = '';
+                    input.value = '';
                 } else {
-                    cleanValue = parseFloat(cleanValue).toString();
+                    input.value = parseFloat(cleanValue).toString();
                 }
-                document.getElementById(input.id + '_hidden').value = cleanValue;
             });
         });
     </script>
