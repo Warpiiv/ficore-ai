@@ -67,26 +67,26 @@
                     </div>
                     <div class="mb-3">
                         {{ form.user_type.label(class="form-label") }}
-                        {{ form.user_type(class="form-control", placeholder="e.g., Business, Individual") }}
+                        {{ form.user_type(class="form-select") }}
                     </div>
 
                     <!-- Financial Information -->
                     <h3 class="mb-3">Financial Information</h3>
                     <div class="mb-3">
                         {{ form.income_revenue.label(class="form-label") }}
-                        {{ form.income_revenue(class="form-control", placeholder="Enter monthly income/revenue", type="number", step="any") }}
+                        {{ form.income_revenue(class="form-control number-input", placeholder="Enter monthly income/revenue", type="text") }}
                     </div>
                     <div class="mb-3">
                         {{ form.expenses_costs.label(class="form-label") }}
-                        {{ form.expenses_costs(class="form-control", placeholder="Enter monthly expenses/costs", type="number", step="any") }}
+                        {{ form.expenses_costs(class="form-control number-input", placeholder="Enter monthly expenses/costs", type="text") }}
                     </div>
                     <div class="mb-3">
                         {{ form.debt_loan.label(class="form-label") }}
-                        {{ form.debt_loan(class="form-control", placeholder="Enter total debt/loan amount", type="number", step="any") }}
+                        {{ form.debt_loan(class="form-control number-input", placeholder="Enter total debt/loan amount", type="text") }}
                     </div>
                     <div class="mb-3">
                         {{ form.debt_interest_rate.label(class="form-label") }}
-                        {{ form.debt_interest_rate(class="form-control", placeholder="Enter debt interest rate (%)", type="number", step="any") }}
+                        {{ form.debt_interest_rate(class="form-control number-input", placeholder="Enter debt interest rate (%)", type="text") }}
                     </div>
 
                     <!-- Submit Button -->
@@ -109,5 +109,38 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+    <script>
+        // Format number inputs with thousands separators
+        document.querySelectorAll('.number-input').forEach(input => {
+            input.addEventListener('input', function(e) {
+                let value = e.target.value.replace(/[^0-9.]/g, ''); // Allow numbers and decimal point
+                if (value === '') {
+                    e.target.value = '';
+                    return;
+                }
+                let parts = value.split('.');
+                let integerPart = parts[0];
+                let decimalPart = parts[1] ? '.' + parts[1].slice(0, 2) : ''; // Limit to 2 decimal places
+                // Add commas to integer part
+                integerPart = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+                e.target.value = integerPart + decimalPart;
+            });
+            input.addEventListener('blur', function(e) {
+                // Clean value for form submission (remove commas)
+                let cleanValue = e.target.value.replace(/,/g, '');
+                if (cleanValue === '' || isNaN(parseFloat(cleanValue))) {
+                    e.target.value = '';
+                } else {
+                    e.target.value = parseFloat(cleanValue).toLocaleString('en-US', {
+                        minimumFractionDigits: 0,
+                        maximumFractionDigits: 2
+                    });
+                }
+            });
+            input.addEventListener('focus', function(e) {
+                // Show raw number on focus for editing
+                let value = e.target.value.replace(/,/g, '');
+                e.target.value = value;
+            });
+        });
+    </script>
