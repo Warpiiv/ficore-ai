@@ -4,6 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ficore AI - Financial Health Score</title>
+    <!-- Added SEO meta tags for consistency with dashboard.html -->
+    <meta name="description" content="Submit your financial data to get your Ficore AI Financial Health Score and personalized insights.">
+    <meta name="keywords" content="financial health, Ficore AI, Africa finance, SME growth, financial score">
+    <meta name="author" content="Ficore AI">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -104,10 +108,15 @@
             box-shadow: 0 0 8px rgba(30, 136, 229, 0.2);
         }
 
+        /* Added invalid state styling */
+        input:invalid, select:invalid {
+            border-color: #E53E3E;
+        }
+
         button {
             width: 100%;
             padding: 1.2rem;
-            background: linear-gradient(135deg, #28A745, #1E88E5);
+            background: #28A745; /* Changed to solid color to differentiate from dashboard buttons */
             color: white;
             border: none;
             border-radius: 6px;
@@ -126,6 +135,25 @@
             font-size: 0.85rem;
             color: #718096;
             margin-bottom: 0.5rem;
+        }
+
+        /* Added flash message styling */
+        .flash-message {
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            border-radius: 6px;
+            font-size: 1rem;
+            text-align: center;
+        }
+
+        .flash-message.success {
+            background: #C6F6D5;
+            color: #2F855A;
+        }
+
+        .flash-message.error {
+            background: #FED7D7;
+            color: #E53E3E;
         }
 
         @keyframes fadeIn {
@@ -207,7 +235,17 @@
         <img src="{{ url_for('static', filename='img/ficore_logo.png') }}" alt="Ficore Logo" class="logo">
         <h2>Ficore AI Financial Health Score</h2>
         <p class="subheading">Financial growth passport for Africa - democratizing finances for Africa’s SMEs and individuals...</p>
+        <!-- Added flash messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="flash-message {{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
         <form action="/submit" method="POST">
+            <!-- Added CSRF token -->
+            {{ form.csrf_token }}
             <div class="section-group">
                 <h3><i class="fas fa-user"></i> Personal Information</h3>
                 <div class="form-group">
@@ -215,8 +253,8 @@
                     <input type="text" id="first_name" name="first_name" required>
                 </div>
                 <div class="form-group">
-                    <label for="last_name">Last Name *</label>
-                    <input type="text" id="last_name" name="last_name" required>
+                    <label for="last_name">Last Name</label> <!-- Removed required -->
+                    <input type="text" id="last_name" name="last_name">
                 </div>
                 <div class="form-group">
                     <label for="auto_email">Your Email Address (for receiving your Health Score) *</label>
@@ -227,9 +265,9 @@
                     <input type="email" id="email" name="email" required>
                 </div>
                 <div class="form-group">
-                    <label for="phone_number">Phone Number *</label>
+                    <label for="phone_number">Phone Number</label> <!-- Removed required -->
                     <div class="note">For your Ficore reports</div>
-                    <input type="text" id="phone_number" name="phone_number" required>
+                    <input type="text" id="phone_number" name="phone_number">
                 </div>
             </div>
 
@@ -283,6 +321,12 @@
                 return;
             }
             let num = parseFloat(value);
+            if (num < 0) { // Added negative number check
+                input.value = '';
+                input.setCustomValidity('Value cannot be negative.');
+                return;
+            }
+            input.setCustomValidity(''); // Clear validation message
             if (num === 0) {
                 input.value = '0';
             } else {
