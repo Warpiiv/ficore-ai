@@ -383,9 +383,9 @@ def send_email(recipient_email, user_name, health_score, score_description, cour
             <a href="{CONSULTANCY_FORM_URL}" style="display: inline-block; padding: 10px 20px; background-color: #388E3C; color: white; text-decoration: none; border-radius: 5px; font-size: 0.9rem;">Book Consultancy</a>
         </p>
         <style>
-            a:hover { background-color: #1B5E20 !important; }
-            a[href="{WAITLIST_FORM_URL}"]:hover { background-color: #0D47A1 !important; }
-            a[href="{course_url}"]:hover { background-color: #F9A825 !important; }
+            a:hover {{ background-color: #1B5E20 !important; }}
+            a[href="{WAITLIST_FORM_URL}"]:hover {{ background-color: #0D47A1 !important; }}
+            a[href="{course_url}"]:hover {{ background-color: #F9A825 !important; }}
         </style>
         <p>Best regards,<br>The Ficore AI Team</p>
     </body>
