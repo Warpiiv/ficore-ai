@@ -421,117 +421,123 @@ def home():
 @app.route('/submit', methods=['POST'])
 def submit():
     form = SubmissionForm()
-    if form.validate_on_submit():
-        try:
-            # Extract and validate form data
-            data = [
-                datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-                str(form.business_name.data),
-                float(form.income_revenue.data),
-                float(form.expenses_costs.data),
-                float(form.debt_loan.data),
-                float(form.debt_interest_rate.data),
-                str(form.auto_email.data),
-                str(form.phone_number.data or ""),
-                str(form.first_name.data),
-                str(form.last_name.data or ""),
-                str(form.user_type.data),
-                str(form.email.data),
-                ""  # Placeholder for badges
-            ]
-            logger.debug(f"Form data: {data}")
+    try:
+        if form.validate_on_submit():
+            try:
+                # Extract and validate form data
+                data = [
+                    datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                    str(form.business_name.data),
+                    float(form.income_revenue.data),
+                    float(form.expenses_costs.data),
+                    float(form.debt_loan.data),
+                    float(form.debt_interest_rate.data),
+                    str(form.auto_email.data),
+                    str(form.phone_number.data or ""),
+                    str(form.first_name.data),
+                    str(form.last_name.data or ""),
+                    str(form.user_type.data),
+                    str(form.email.data),
+                    ""  # Placeholder for badges
+                ]
+                logger.debug(f"Form data: {data}")
 
-            # Clear cache to ensure fresh data
-            cache.delete_memoized(fetch_data_from_sheet)
-            logger.debug("Cleared fetch_data_from_sheet cache")
+                # Clear cache to ensure fresh data
+                cache.delete_memoized(fetch_data_from_sheet)
+                logger.debug("Cleared fetch_data_from_sheet cache")
 
-            # Fetch all users data
-            all_users_df = fetch_data_from_sheet()
-            if all_users_df is None:
-                logger.error("Failed to fetch data from Google Sheet.")
-                flash("Unable to connect to data storage. Please try again later.", "error")
+                # Fetch all users data
+                all_users_df = fetch_data_from_sheet()
+                if all_users_df is None:
+                    logger.error("Failed to fetch data from Google Sheet.")
+                    flash("Unable to connect to data storage. Please try again later.", "error")
+                    return redirect(url_for('home'))
+
+                # Create temp DataFrame for new submission
+                temp_df = pd.DataFrame([data], columns=PREDETERMINED_HEADERS)
+                for col in ['IncomeRevenue', 'ExpensesCosts', 'DebtLoan', 'DebtInterestRate']:
+                    temp_df[col] = pd.to_numeric(temp_df[col], errors='coerce').fillna(0)
+                
+                # Calculate health score and badges
+                temp_df = calculate_health_score(temp_df)
+                new_badges = assign_badges(temp_df, all_users_df)
+                data[-1] = ",".join(new_badges) if new_badges else ""
+
+                # Append data to sheet
+                if not append_to_sheet(data):
+                    logger.error("Failed to append data to Google Sheet.")
+                    flash("Unable to save data. Please try again later.", "error")
+                    return redirect(url_for('home'))
+
+                # Fetch updated data
+                cache.delete_memoized(fetch_data_from_sheet)
+                all_users_df = fetch_data_from_sheet()
+                if all_users_df is None or all_users_df.empty:
+                    logger.error("No data found in Google Sheet after submission.")
+                    flash("Data submission failed. Please try again.", "error")
+                    return redirect(url_for('home'))
+
+                # Convert numeric columns
+                numeric_cols = ['IncomeRevenue', 'ExpensesCosts', 'DebtLoan', 'DebtInterestRate']
+                for col in numeric_cols:
+                    all_users_df[col] = pd.to_numeric(all_users_df[col], errors='coerce').fillna(0)
+
+                # Calculate health scores
+                all_users_df = calculate_health_score(all_users_df)
+
+                # Assign ranks
+                all_users_df = all_users_df.sort_values(by='HealthScore', ascending=False)
+                all_users_df['Rank'] = range(1, len(all_users_df) + 1)
+
+                # Filter for current user
+                user_df = all_users_df[all_users_df['Email'] == form.email.data]
+                if user_df.empty:
+                    logger.error(f"No data found for email: {form.email.data}")
+                    flash("Submission not found. Please try again.", "error")
+                    return redirect(url_for('home'))
+
+                # Extract user data
+                user_row = user_df.iloc[-1]
+                health_score = user_row['HealthScore']
+                rank = user_row['Rank']
+                total_users = len(all_users_df)
+                score_description = user_row['ScoreDescription']
+                course_title = user_row['CourseTitle']
+                course_url = user_row['CourseURL']
+                badges = user_row['Badges'].split(",") if user_row['Badges'] else []
+
+                # Generate personalized message
+                personalized_message = ""
+                if "First Health Score Completed!" in new_badges:
+                    personalized_message = "🎉 Congratulations, you earned your first badge: Financial Explorer!"
+                elif new_badges:
+                    personalized_message = f"🎉 Great job! You earned a new badge: {new_badges[-1]}"
+
+                # Send email
+                user_name = f"{form.first_name.data} {form.last_name.data}".strip()
+                email_sent = send_email(form.email.data, user_name, health_score, score_description, course_title, course_url, rank, total_users)
+                if not email_sent:
+                    personalized_message += " ⚠️ Unable to send email report. Please check your spam folder or contact support."
+
+                flash("Data submitted successfully!", "success")
+                return redirect(url_for('dashboard', email=form.email.data, personalized_message=personalized_message))
+            except ValueError as e:
+                logger.error(f"ValueError in submission: {e}")
+                flash(f"Invalid input: {str(e)}.", "error")
                 return redirect(url_for('home'))
-
-            # Create temp DataFrame for new submission
-            temp_df = pd.DataFrame([data], columns=PREDETERMINED_HEADERS)
-            for col in ['IncomeRevenue', 'ExpensesCosts', 'DebtLoan', 'DebtInterestRate']:
-                temp_df[col] = pd.to_numeric(temp_df[col], errors='coerce').fillna(0)
-            
-            # Calculate health score and badges
-            temp_df = calculate_health_score(temp_df)
-            new_badges = assign_badges(temp_df, all_users_df)
-            data[-1] = ",".join(new_badges) if new_badges else ""
-
-            # Append data to sheet
-            if not append_to_sheet(data):
-                logger.error("Failed to append data to Google Sheet.")
-                flash("Unable to save data. Please try again later.", "error")
+            except Exception as e:
+                logger.error(f"Submission error: {e}")
+                flash(f"Submission failed: {str(e)}. Please try again or contact support.", "error")
                 return redirect(url_for('home'))
-
-            # Fetch updated data
-            cache.delete_memoized(fetch_data_from_sheet)
-            all_users_df = fetch_data_from_sheet()
-            if all_users_df is None or all_users_df.empty:
-                logger.error("No data found in Google Sheet after submission.")
-                flash("Data submission failed. Please try again.", "error")
-                return redirect(url_for('home'))
-
-            # Convert numeric columns
-            numeric_cols = ['IncomeRevenue', 'ExpensesCosts', 'DebtLoan', 'DebtInterestRate']
-            for col in numeric_cols:
-                all_users_df[col] = pd.to_numeric(all_users_df[col], errors='coerce').fillna(0)
-
-            # Calculate health scores
-            all_users_df = calculate_health_score(all_users_df)
-
-            # Assign ranks
-            all_users_df = all_users_df.sort_values(by='HealthScore', ascending=False)
-            all_users_df['Rank'] = range(1, len(all_users_df) + 1)
-
-            # Filter for current user
-            user_df = all_users_df[all_users_df['Email'] == form.email.data]
-            if user_df.empty:
-                logger.error(f"No data found for email: {form.email.data}")
-                flash("Submission not found. Please try again.", "error")
-                return redirect(url_for('home'))
-
-            # Extract user data
-            user_row = user_df.iloc[-1]
-            health_score = user_row['HealthScore']
-            rank = user_row['Rank']
-            total_users = len(all_users_df)
-            score_description = user_row['ScoreDescription']
-            course_title = user_row['CourseTitle']
-            course_url = user_row['CourseURL']
-            badges = user_row['Badges'].split(",") if user_row['Badges'] else []
-
-            # Generate personalized message
-            personalized_message = ""
-            if "First Health Score Completed!" in new_badges:
-                personalized_message = "🎉 Congratulations, you earned your first badge: Financial Explorer!"
-            elif new_badges:
-                personalized_message = f"🎉 Great job! You earned a new badge: {new_badges[-1]}"
-
-            # Send email
-            user_name = f"{form.first_name.data} {form.last_name.data}".strip()
-            email_sent = send_email(form.email.data, user_name, health_score, score_description, course_title, course_url, rank, total_users)
-            if not email_sent:
-                personalized_message += " ⚠️ Unable to send email report. Please check your spam folder or contact support."
-
-            flash("Data submitted successfully!", "success")
-            return redirect(url_for('dashboard', email=form.email.data, personalized_message=personalized_message))
-        except ValueError as e:
-            logger.error(f"ValueError in submission: {e}")
-            flash(f"Invalid input: {str(e)}.", "error")
+        else:
+            for field, errors in form.errors.items():
+                for error in errors:
+                    logger.warning(f"Form validation error in {field}: {error}")
+                    flash(f"Error in {field}: {error}", "error")
             return redirect(url_for('home'))
-        except Exception as e:
-            logger.error(f"Submission error: {e}")
-            flash(f"Submission failed: {str(e)}. Please try again or contact support.", "error")
-            return redirect(url_for('home'))
-    else:
-        for field, errors in form.errors.items():
-            for error in errors:
-                flash(f"Error in {field}: {error}", "error")
+    except ImportError as e:
+        logger.error(f"Email validation error: {e}")
+        flash("Email validation setup error. Please contact Ficoreai@outlook.com for support.", "error")
         return redirect(url_for('home'))
 
 # Dashboard route
@@ -646,7 +652,7 @@ def dashboard():
         )
     except Exception as e:
         logger.error(f"Dashboard error: {e}")
-        flash(f"Error loading dashboard: {str(e)}.", "error")
+        flash(f"Error loading dashboard: {str(e)}. Please try again or contact support.", "error")
         return redirect(url_for('home'))
 
 # Global error handler
