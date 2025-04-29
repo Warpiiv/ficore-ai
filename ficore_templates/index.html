@@ -7,13 +7,12 @@
     <meta name="keywords" content="ficore ai, financial health, score calculator, Africa SME finance">
     <meta name="author" content="Ficore AI">
     <title>Ficore AI - Financial Health Score</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/bootstrap.min.css') }}" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
-    <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
     <style>
         body {
-            font-family: 'Poppins', sans-serif;
+            font-family: 'Noto Sans', sans-serif;
             background: linear-gradient(135deg, #E3F2FD, #F5F7FA);
             margin: 0;
             padding: 20px;
@@ -105,8 +104,8 @@
     <div class="container">
         <header class="text-center my-4">
             <img src="{{ url_for('static', filename='img/ficore_logo.png') }}" alt="Ficore AI Logo" class="img-fluid" style="max-width: 200px;">
-            <h1>Ficore AI Financial Health Score</h1>
-            <p class="lead">Get your financial health score and personalized insights instantly!</p>
+            <h1>{{ translations[language]['Ficore AI Financial Health Score'] }}</h1>
+            <p class="lead">{{ translations[language]['Get Your Score'] }}</p>
         </header>
 
         <!-- Flash Messages -->
@@ -131,61 +130,65 @@
                         {{ form.csrf_token }}
 
                         <!-- Personal Information -->
-                        <h3>Personal Information</h3>
+                        <h3>{{ translations[language]['Personal Information'] }}</h3>
                         <div class="mb-3">
-                            {{ form.first_name.label(class="form-label") }}
-                            {{ form.first_name(class="form-control", placeholder="Enter your first name") }}
+                            {{ form.first_name.label(class="form-label", **{'for': 'first_name'}) }}
+                            {{ form.first_name(class="form-control", placeholder=translations[language]['Enter your first name'], required=True, **{'data-error': translations[language]['First Name Required']}) }}
                         </div>
                         <div class="mb-3">
-                            {{ form.last_name.label(class="form-label") }}
-                            {{ form.last_name(class="form-control", placeholder="Enter your last name (optional)") }}
+                            {{ form.last_name.label(class="form-label", **{'for': 'last_name'}) }}
+                            {{ form.last_name(class="form-control", placeholder=translations[language]['Enter your last name (optional)']) }}
                         </div>
                         <div class="mb-3">
-                            {{ form.email.label(class="form-label") }}
-                            {{ form.email(class="form-control", placeholder="Enter your email", type="email") }}
+                            {{ form.email.label(class="form-label", **{'for': 'email'}) }}
+                            {{ form.email(class="form-control", placeholder=translations[language]['Enter your email'], type="email", required=True, pattern="[^@]+@[^@]+\.[^@]+", **{'data-error': translations[language]['Invalid Email']}) }}
                         </div>
                         <div class="mb-3">
-                            {{ form.auto_email.label(class="form-label") }}
-                            {{ form.auto_email(class="form-control", placeholder="Confirm your email", type="email") }}
+                            {{ form.auto_email.label(class="form-label", **{'for': 'auto_email'}) }}
+                            {{ form.auto_email(class="form-control", placeholder=translations[language]['Confirm your email'], type="email", required=True, pattern="[^@]+@[^@]+\.[^@]+", **{'data-error': translations[language]['Invalid Email']}) }}
                         </div>
                         <div class="mb-3">
-                            {{ form.phone_number.label(class="form-label") }}
-                            {{ form.phone_number(class="form-control", placeholder="Enter phone number (optional)", type="tel") }}
+                            {{ form.phone_number.label(class="form-label", **{'for': 'phone_number'}) }}
+                            {{ form.phone_number(class="form-control", placeholder=translations[language]['Enter phone number (optional)'], type="tel") }}
+                        </div>
+                        <div class="mb-3">
+                            {{ form.language.label(class="form-label", **{'for': 'language'}) }}
+                            {{ form.language(class="form-select", required=True) }}
                         </div>
 
                         <!-- Business Information -->
-                        <h3>Business Information</h3>
+                        <h3>{{ translations[language]['Business Information'] }}</h3>
                         <div class="mb-3">
-                            {{ form.business_name.label(class="form-label") }}
-                            {{ form.business_name(class="form-control", placeholder="Enter your business name") }}
+                            {{ form.business_name.label(class="form-label", **{'for': 'business_name'}) }}
+                            {{ form.business_name(class="form-control", placeholder=translations[language]['Enter your business name'], required=True, **{'data-error': translations[language]['Business Name Required']}) }}
                         </div>
                         <div class="mb-3">
-                            {{ form.user_type.label(class="form-label") }}
-                            {{ form.user_type(class="form-select") }}
+                            {{ form.user_type.label(class="form-label", **{'for': 'user_type'}) }}
+                            {{ form.user_type(class="form-select", required=True) }}
                         </div>
 
                         <!-- Financial Information -->
-                        <h3>Financial Information</h3>
+                        <h3>{{ translations[language]['Financial Information'] }}</h3>
                         <div class="mb-3">
-                            {{ form.income_revenue.label(class="form-label") }}
-                            {{ form.income_revenue(class="form-control number-input", placeholder="Enter monthly income/revenue", type="text") }}
+                            {{ form.income_revenue.label(class="form-label", **{'for': 'income_revenue'}) }}
+                            {{ form.income_revenue(class="form-control number-input", placeholder=translations[language]['Enter monthly income/revenue'], type="text", required=True, pattern="^[0-9,]+(\.[0-9]{1,2})?$", **{'data-error': translations[language]['Invalid Number']}) }}
                         </div>
                         <div class="mb-3">
-                            {{ form.expenses_costs.label(class="form-label") }}
-                            {{ form.expenses_costs(class="form-control number-input", placeholder="Enter monthly expenses/costs", type="text") }}
+                            {{ form.expenses_costs.label(class="form-label", **{'for': 'expenses_costs'}) }}
+                            {{ form.expenses_costs(class="form-control number-input", placeholder=translations[language]['Enter monthly expenses/costs'], type="text", required=True, pattern="^[0-9,]+(\.[0-9]{1,2})?$", **{'data-error': translations[language]['Invalid Number']}) }}
                         </div>
                         <div class="mb-3">
-                            {{ form.debt_loan.label(class="form-label") }}
-                            {{ form.debt_loan(class="form-control number-input", placeholder="Enter total debt/loan amount", type="text") }}
+                            {{ form.debt_loan.label(class="form-label", **{'for': 'debt_loan'}) }}
+                            {{ form.debt_loan(class="form-control number-input", placeholder=translations[language]['Enter total debt/loan amount'], type="text", required=True, pattern="^[0-9,]+(\.[0-9]{1,2})?$", **{'data-error': translations[language]['Invalid Number']}) }}
                         </div>
                         <div class="mb-3">
-                            {{ form.debt_interest_rate.label(class="form-label") }}
-                            {{ form.debt_interest_rate(class="form-control number-input", placeholder="Enter debt interest rate (%)", type="text") }}
+                            {{ form.debt_interest_rate.label(class="form-label", **{'for': 'debt_interest_rate'}) }}
+                            {{ form.debt_interest_rate(class="form-control number-input", placeholder=translations[language]['Enter debt interest rate (%)'], type="text", required=True, pattern="^[0-9,]+(\.[0-9]{1,2})?$", **{'data-error': translations[language]['Invalid Number']}) }}
                         </div>
 
                         <!-- Submit Button -->
                         <div class="d-grid">
-                            {{ form.submit(class="btn btn-primary btn-lg") }}
+                            {{ form.submit(class="btn btn-primary btn-lg", value=translations[language]['Submit']) }}
                         </div>
                     </form>
                 </div>
@@ -194,28 +197,28 @@
 
         <!-- Contact Information -->
         <div class="text-center my-4">
-            <p>For support, contact us at <a href="mailto:Ficoreai@outlook.com">Ficoreai@outlook.com</a>.</p>
+            <p>{{ translations[language]['Contact Us'] }} <a href="mailto:Ficoreai@outlook.com">Ficoreai@outlook.com</a> {{ translations[language]['for support'] }}.</p>
         </div>
 
         <!-- Feedback Link -->
         <div class="text-center my-4">
-            <a href="{{ FEEDBACK_FORM_URL }}" class="btn btn-secondary">Provide Feedback</a>
+            <a href="{{ FEEDBACK_FORM_URL }}" class="btn btn-secondary">{{ translations[language]['Provide Feedback'] }}</a>
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
     <script>
         // Format number inputs with thousands separators
         document.querySelectorAll('.number-input').forEach(input => {
             input.addEventListener('input', function(e) {
-                let value = e.target.value.replace(/[^0-9.]/g, ''); // Allow numbers and decimal point
+                let value = e.target.value.replace(/[^0-9.]/g, '');
                 if (value === '') {
                     e.target.value = '';
                     return;
                 }
                 let parts = value.split('.');
                 let integerPart = parts[0];
-                let decimalPart = parts[1] ? '.' + parts[1].slice(0, 2) : ''; // Limit to 2 decimal places
+                let decimalPart = parts[1] ? '.' + parts[1].slice(0, 2) : '';
                 integerPart = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
                 e.target.value = integerPart + decimalPart;
             });
@@ -233,6 +236,16 @@
             input.addEventListener('focus', function(e) {
                 let value = e.target.value.replace(/,/g, '');
                 e.target.value = value;
+            });
+        });
+
+        // Custom HTML5 validation with translated error messages
+        document.querySelectorAll('.form-control, .form-select').forEach(input => {
+            input.addEventListener('invalid', function(e) {
+                e.target.setCustomValidity(e.target.dataset.error);
+            });
+            input.addEventListener('input', function(e) {
+                e.target.setCustomValidity('');
             });
         });
 
