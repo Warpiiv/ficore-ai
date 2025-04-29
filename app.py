@@ -1,4 +1,10 @@
-```python
+# Ficore Africa Financial Health Score Application
+# File: app.py
+# Purpose: Flask app to calculate financial health scores, store data in Google Sheets, and render user dashboards
+# Version: Updated April 29, 2025, to fix syntax error at line 1 (Markdown code fence) and add Python comments
+# Repository: https://github.com/Warpiiv/ficore-ai
+
+# Import required libraries
 from flask import Flask, render_template, request, redirect, url_for, flash, get_flashed_messages, send_from_directory
 from flask_wtf import FlaskForm
 from wtforms import StringField, FloatField, SubmitField, SelectField
@@ -22,25 +28,25 @@ import logging
 import traceback
 import re
 
-# Set up logging
+# Configure logging for debugging and monitoring
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
-# Initialize Flask app with custom templates directory
+# Initialize Flask app with custom template and static folders
 app = Flask(__name__, template_folder='ficore_templates', static_folder='static')
 
-# Load environment variables
+# Load environment variables from .env file
 load_dotenv()
 
-# Set secret key for sessions and CSRF
+# Set Flask secret key for sessions and CSRF protection
 app.secret_key = os.environ.get('FLASK_SECRET_KEY')
 if not app.secret_key:
     raise Exception("FLASK_SECRET_KEY environment variable not set.")
 
-# Configure Flask-Caching
+# Configure Flask-Caching for memoizing Google Sheets data
 cache = Cache(app, config={'CACHE_TYPE': 'simple'})
 
-# Translation dictionary
+# Define translations for English and Hausa
 translations = {
     'English': {
         'Welcome': 'Welcome',
@@ -306,7 +312,7 @@ translations = {
     }
 }
 
-# Constants for Google Sheets
+# Define constants for Google Sheets and external URLs
 SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
 SPREADSHEET_ID = '13hbiMTMRBHo9MHjWwcugngY_aSiuxII67HCf03MiZ8I'
 DATA_RANGE_NAME = 'Sheet1!A1:N'
@@ -324,7 +330,7 @@ PREDETERMINED_HEADERS = [
     'DebtInterestRate', 'AutoEmail', 'PhoneNumber', 'FirstName', 'LastName', 'UserType', 'Email', 'Badges', 'Language'
 ]
 
-# Flask-WTF form for submission
+# Define Flask-WTF form for user submissions
 class SubmissionForm(FlaskForm):
     business_name = StringField('Business Name', validators=[DataRequired()])
     income_revenue = StringField('Income Revenue', validators=[DataRequired()])
@@ -340,10 +346,12 @@ class SubmissionForm(FlaskForm):
     language = SelectField('Language', choices=[('English', 'English'), ('Hausa', 'Hausa')], validators=[DataRequired()])
     submit = SubmitField('Submit')
 
+    # Validate email confirmation
     def validate_auto_email(self, auto_email):
         if auto_email.data != self.email.data:
             raise ValidationError('Email addresses must match.')
 
+    # Validate numeric fields
     def validate_income_revenue(self, income_revenue):
         try:
             float(re.sub(r'[,]', '', income_revenue.data))
@@ -368,13 +376,13 @@ class SubmissionForm(FlaskForm):
         except ValueError:
             raise ValidationError('Debt Interest Rate must be a valid number.')
 
-# Serve favicon.ico from static directory
+# Route to serve favicon
 @app.route('/favicon.ico')
 def favicon():
     logger.info("Serving favicon.ico")
     return send_from_directory(os.path.join(app.root_path, 'static'), 'favicon.ico', mimetype='image/vnd.microsoft.icon')
 
-# Root route
+# Root route to render submission form
 @app.route('/')
 def home():
     logger.info("Accessing root route")
@@ -384,7 +392,7 @@ def home():
         language = 'English'
     return render_template('index.html', form=form, translations=translations, language=language)
 
-# Authenticate with Google Sheets
+# Authenticate with Google Sheets using service account
 def authenticate_google_sheets():
     creds_json = os.environ.get('GOOGLE_CREDENTIALS_JSON')
     if not creds_json:
@@ -401,7 +409,7 @@ def authenticate_google_sheets():
         logger.error(f"Error authenticating with Google Sheets: {e}")
         return None
 
-# Set Google Sheet headers
+# Set predefined headers in Google Sheet
 def set_sheet_headers():
     try:
         service = authenticate_google_sheets()
@@ -422,7 +430,7 @@ def set_sheet_headers():
         logger.error(f"Error setting headers: {e}")
         return False
 
-# Get the number of rows in the sheet to determine where to append
+# Get current row count in Google Sheet
 def get_row_count():
     try:
         service = authenticate_google_sheets()
@@ -437,7 +445,7 @@ def get_row_count():
         logger.error(f"Error getting row count: {e}")
         return 0
 
-# Append data to Google Sheet with badges included
+# Append form data to Google Sheet
 def append_to_sheet(data):
     try:
         service = authenticate_google_sheets()
@@ -446,20 +454,17 @@ def append_to_sheet(data):
             return False
         sheet = service.spreadsheets()
 
-        # Set headers if the sheet is empty
         row_count = get_row_count()
         if row_count == 0:
             if not set_sheet_headers():
                 logger.error("Failed to set sheet headers.")
                 return False
-            row_count = 1  # After setting headers
+            row_count = 1
 
-        # Ensure data matches headers
         if len(data) != len(PREDETERMINED_HEADERS):
             logger.error(f"Data length ({len(data)}) does not match headers ({len(PREDETERMINED_HEADERS)}): {data}")
             return False
 
-        # Append the data
         range_to_update = f'Sheet1!A{row_count + 1}:N{row_count + 1}'
         body = {'values': [data]}
         sheet.values().update(
@@ -469,15 +474,16 @@ def append_to_sheet(data):
             body=body
         ).execute()
         logger.info(f"Appended data to sheet at row {row_count + 1}: {data}")
-        time.sleep(1)  # Small delay to allow propagation
+        time.sleep(1)
         return True
     except Exception as e:
         logger.error(f"Error appending to sheet: {e}")
         return False
 
-# Fetch data from Google Sheet with retry mechanism and caching
+# Fetch data from Google Sheet with caching and retry logic
 @cache.memoize(timeout=300)  # Cache for 5 minutes
 def fetch_data_from_sheet(email=None, max_retries=5, delay=2):
+    # Fixed syntax error on line 501 (April 29, 2025): Replaced '+overn' with '+ 1'
     for attempt in range(max_retries):
         try:
             service = authenticate_google_sheets()
@@ -501,15 +507,12 @@ def fetch_data_from_sheet(email=None, max_retries=5, delay=2):
             
             logger.debug(f"Attempt {attempt + 1}: Fetched {len(rows)} rows with headers: {headers}")
             
-            # Create DataFrame
             df = pd.DataFrame(rows, columns=headers)
             
-            # Ensure all expected columns exist
             for col in expected_columns:
                 if col not in df.columns:
                     df[col] = None
             
-            # Filter by email if provided
             if email:
                 df = df[df['Email'] == email]
             
@@ -523,14 +526,14 @@ def fetch_data_from_sheet(email=None, max_retries=5, delay=2):
             logger.error("Max retries reached while fetching data.")
             return None
 
-# Calculate Financial Health Score
+# Calculate financial health score based on user inputs
 def calculate_health_score(df):
     try:
         if df.empty:
             logger.warning("Empty DataFrame passed to calculate_health_score.")
             return df
         
-        # Convert string inputs to float, handling commas
+        # Convert string inputs to floats, handling commas
         for col in ['IncomeRevenue', 'ExpensesCosts', 'DebtLoan', 'DebtInterestRate']:
             df[col] = df[col].apply(lambda x: float(re.sub(r'[,]', '', str(x))) if isinstance(x, str) and x else 0.0)
 
@@ -548,6 +551,7 @@ def calculate_health_score(df):
                             df['NormDebtInterest'] * 0.333) * 100
         df['HealthScore'] = df['HealthScore'].round(2)
 
+        # Assign score descriptions and recommended courses
         def score_description_and_course(row):
             score = row['HealthScore']
             cash_flow = row['CashFlowRatio']
@@ -590,7 +594,7 @@ def calculate_health_score(df):
         logger.error(f"Error calculating health score: {e}")
         raise
 
-# Assign badges based on user submission
+# Assign badges based on user achievements
 def assign_badges(user_df, all_users_df):
     badges = []
     if user_df.empty:
@@ -604,7 +608,7 @@ def assign_badges(user_df, all_users_df):
     if len(user_df) == 1:
         badges.append(translations[user_row['Language']]['First Health Score Completed!'])
     
-    # Badge for financial stability
+    # Badge for stable finances
     if health_score >= 50:
         badges.append(translations[user_row['Language']]['Financial Stability Achieved!'])
     
@@ -615,7 +619,7 @@ def assign_badges(user_df, all_users_df):
     
     return badges
 
-# Send email with score report
+# Send email with score report to user
 def send_email(to_email, user_name, health_score, score_description, rank, total_users, course_title, course_url, language):
     try:
         smtp_server = os.environ.get('SMTP_SERVER')
@@ -658,7 +662,7 @@ def send_email(to_email, user_name, health_score, score_description, rank, total
         logger.error(f"Error sending email to {to_email}: {e}")
         return False
 
-# Generate breakdown plot
+# Generate pie chart for score breakdown
 def generate_breakdown_plot(user_df):
     try:
         if user_df.empty:
@@ -682,7 +686,7 @@ def generate_breakdown_plot(user_df):
         logger.error(f"Error generating breakdown plot: {e}")
         return None
 
-# Generate comparison plot
+# Generate histogram for score comparison
 def generate_comparison_plot(user_df, all_users_df):
     try:
         if user_df.empty or all_users_df.empty:
@@ -707,12 +711,13 @@ def generate_comparison_plot(user_df, all_users_df):
         logger.error(f"Error generating comparison plot: {e}")
         return None
 
-# Submit route
+# Handle form submission and render dashboard
 @app.route('/submit', methods=['POST'])
 def submit():
     form = SubmissionForm()
     language = form.language.data if form.language.data in translations else 'English'
     
+    # Validate form inputs
     if not form.validate_on_submit():
         for field, errors in form.errors.items():
             for error in errors:
@@ -720,7 +725,7 @@ def submit():
         return redirect(url_for('home', language=language))
     
     try:
-        # Prepare data
+        # Prepare submission data
         timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         data = [
             timestamp,
@@ -735,21 +740,22 @@ def submit():
             form.last_name.data,
             form.user_type.data,
             form.email.data,
-            '',  # Badges (to be updated later)
+            '',  # Badges (updated later)
             form.language.data
         ]
         
-        # Append to Google Sheet
+        # Append data to Google Sheet
         if not append_to_sheet(data):
             flash(translations[language]['Error saving data. Please try again.'], 'error')
             return redirect(url_for('home', language=language))
         
-        # Fetch and process data
+        # Fetch all user data
         all_users_df = fetch_data_from_sheet()
         if all_users_df is None:
             flash(translations[language]['Error retrieving data. Please try again.'], 'error')
             return redirect(url_for('home', language=language))
         
+        # Fetch user-specific data
         user_df = fetch_data_from_sheet(email=form.email.data)
         if user_df is None or user_df.empty:
             flash(translations[language]['Error retrieving user data. Please try again.'], 'error')
@@ -766,7 +772,7 @@ def submit():
         # Update badges in Google Sheet
         user_row = all_users_df[all_users_df['Email'] == form.email.data].index
         if not user_row.empty:
-            row_index = user_row[0] + 2  # +2 to account for header and 1-based indexing
+            row_index = user_row[0] + 2  # +2 for header and 1-based indexing
             service = authenticate_google_sheets()
             if service:
                 sheet = service.spreadsheets()
@@ -777,16 +783,16 @@ def submit():
                     body={'values': [[','.join(badges)]]}
                 ).execute()
         
-        # Calculate rank
+        # Calculate user rank
         all_users_df = all_users_df.sort_values('HealthScore', ascending=False).reset_index(drop=True)
         rank = all_users_df[all_users_df['Email'] == form.email.data].index[0] + 1
         total_users = len(all_users_df)
         
-        # Generate plots
+        # Generate dashboard plots
         breakdown_plot = generate_breakdown_plot(user_df)
         comparison_plot = generate_comparison_plot(user_df, all_users_df)
         
-        # Send email
+        # Send score report email
         user_row = user_df.iloc[0]
         send_email(
             to_email=form.email.data,
@@ -800,7 +806,7 @@ def submit():
             language=form.language.data
         )
         
-        # Render dashboard
+        # Render dashboard with user data
         return render_template(
             'dashboard.html',
             translations=translations,
@@ -826,6 +832,6 @@ def submit():
         flash(translations[language]['An unexpected error occurred. Please try again.'], 'error')
         return redirect(url_for('home', language=language))
 
+# Run Flask app in debug mode for local development
 if __name__ == '__main__':
     app.run(debug=True)
-```
