@@ -3,16 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Calculate your financial health score with Ficore AI and get personalized insights.">
-    <meta name="keywords" content="ficore ai, financial health, score calculator, Africa SME finance">
-    <meta name="author" content="Ficore AI">
-    <title>Ficore AI - Financial Health Score</title>
+    <meta name="description" content="Calculate your financial health score with Ficore Africa and get personalized insights.">
+    <meta name="keywords" content="ficore africa, financial health, score calculator, Africa SME finance">
+    <meta name="author" content="Ficore Africa">
+    <title>Ficore Africa - Financial Health Score</title>
     <link href="{{ url_for('static', filename='css/bootstrap.min.css') }}" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;600&display=swap" rel="stylesheet">
     <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
     <style>
         body {
-            font-family: 'Noto Sans', sans-serif;
+            font-family: 'Open Sans', sans-serif;
             background: linear-gradient(135deg, #E3F2FD, #F5F7FA);
             margin: 0;
             padding: 20px;
@@ -28,6 +28,13 @@
             border-radius: 12px;
             box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
             margin-bottom: 2rem;
+            text-align: center;
+        }
+        .logo-container {
+            margin-bottom: 1rem;
+        }
+        .logo-container img {
+            max-width: 200px;
         }
         .form-card {
             background: #fff;
@@ -40,36 +47,43 @@
             transform: translateY(-5px);
         }
         h3 {
-            color: #28A745;
+            color: #2E7D32;
             font-weight: 600;
             margin-bottom: 1.5rem;
         }
         .form-label {
-            color: #1E88E5;
+            color: #0288D1;
             font-weight: 500;
         }
         .form-control, .form-select {
-            border: 2px solid #1E88E5;
+            border: 2px solid #0288D1;
             border-radius: 8px;
             padding: 10px;
             transition: border-color 0.3s ease, box-shadow 0.3s ease;
         }
         .form-control:focus, .form-select:focus {
-            border-color: #28A745;
-            box-shadow: 0 0 8px rgba(40, 167, 69, 0.3);
+            border-color: #2E7D32;
+            box-shadow: 0 0 8px rgba(46, 125, 50, 0.3);
             outline: none;
         }
         .btn-primary {
-            background: linear-gradient(135deg, #28A745, #1E88E5);
+            background: linear-gradient(135deg, #2E7D32, #0288D1);
             border: none;
-            padding: 12px;
-            font-weight: 500;
+            padding: 12px 24px;
+            font-weight: 600;
             border-radius: 8px;
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            font-size: 1.1rem;
+            color: white;
+            transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
         }
         .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            transform: scale(1.05);
+            background: linear-gradient(135deg, #1B5E20, #01579B);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
+            border: 1px solid #4CAF50;
         }
         .btn-secondary {
             background: linear-gradient(135deg, #1DA1F2, #0d47a1);
@@ -102,9 +116,11 @@
 </head>
 <body>
     <div class="container">
-        <header class="text-center my-4">
-            <img src="{{ url_for('static', filename='img/ficore_logo.png') }}" alt="Ficore AI Logo" class="img-fluid" style="max-width: 200px;">
-            <h1>{{ translations[language]['Ficore AI Financial Health Score'] }}</h1>
+        <header class="my-4">
+            <div class="logo-container">
+                <img src="{{ url_for('static', filename='img/ficore_logo.png') }}" alt="Ficore Africa Logo" class="img-fluid">
+            </div>
+            <h1>{{ translations[language]['Ficore Africa Financial Health Score'] }}</h1>
             <p class="lead">{{ translations[language]['Get Your Score'] }}</p>
         </header>
 
@@ -156,8 +172,8 @@
                             {{ form.language(class="form-select", required=True) }}
                         </div>
 
-                        <!-- Business Information -->
-                        <h3>{{ translations[language]['Business Information'] }}</h3>
+                        <!-- User Information -->
+                        <h3>{{ translations[language]['User Information'] }}</h3>
                         <div class="mb-3">
                             {{ form.business_name.label(class="form-label", **{'for': 'business_name'}) }}
                             {{ form.business_name(class="form-control", placeholder=translations[language]['Enter your business name'], required=True, **{'data-error': translations[language]['Business Name Required']}) }}
@@ -197,7 +213,7 @@
 
         <!-- Contact Information -->
         <div class="text-center my-4">
-            <p>{{ translations[language]['Contact Us'] }} <a href="mailto:Ficoreai@outlook.com">Ficoreai@outlook.com</a> {{ translations[language]['for support'] }}.</p>
+            <p>{{ translations[language]['Contact Us'] }} <a href="mailto:Ficoreafrica@outlook.com">Ficoreafrica@outlook.com</a> {{ translations[language]['for support'] }}.</p>
         </div>
 
         <!-- Feedback Link -->
