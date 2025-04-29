@@ -1,7 +1,7 @@
 # Ficore Africa Financial Health Score Application
 # File: app.py
 # Purpose: Flask app to calculate financial health scores, store data in Google Sheets, and render user dashboards
-# Version: Updated April 29, 2025, to fix KeyError in assign_badges due to missing Language values
+# Version: Updated April 29, 2025, to fix ValueError in timestamp parsing due to mixed formats
 # Repository: https://github.com/Warpiiv/ficore-ai
 
 # Import required libraries
@@ -648,8 +648,13 @@ def assign_badges(user_df, all_users_df):
         return badges
     
     # Sort by Timestamp to get the most recent submission
-    user_df['Timestamp'] = pd.to_datetime(user_df['Timestamp'])
-    user_df = user_df.sort_values('Timestamp', ascending=False)
+    try:
+        user_df['Timestamp'] = pd.to_datetime(user_df['Timestamp'], format='mixed', dayfirst=True, errors='coerce')
+        user_df = user_df.sort_values('Timestamp', ascending=False)
+    except Exception as e:
+        logger.error(f"Error parsing timestamps in assign_badges: {e}")
+        raise
+    
     user_row = user_df.iloc[0]
     
     email = user_row['Email']
@@ -726,7 +731,7 @@ def generate_breakdown_plot(user_df):
             return None
         
         # Sort by Timestamp to get the most recent submission
-        user_df['Timestamp'] = pd.to_datetime(user_df['Timestamp'])
+        user_df['Timestamp'] = pd.to_datetime(user_df['Timestamp'], format='mixed', dayfirst=True, errors='coerce')
         user_df = user_df.sort_values('Timestamp', ascending=False)
         user_row = user_df.iloc[0]
         
@@ -755,7 +760,7 @@ def generate_comparison_plot(user_df, all_users_df):
             return None
         
         # Sort by Timestamp to get the most recent submission
-        user_df['Timestamp'] = pd.to_datetime(user_df['Timestamp'])
+        user_df['Timestamp'] = pd.to_datetime(user_df['Timestamp'], format='mixed', dayfirst=True, errors='coerce')
         user_df = user_df.sort_values('Timestamp', ascending=False)
         user_score = user_df.iloc[0]['HealthScore']
         
@@ -848,13 +853,13 @@ def submit():
         
         # Update badges in Google Sheet for the most recent submission
         logger.info("Updating badges in Google Sheet")
-        user_df['Timestamp'] = pd.to_datetime(user_df['Timestamp'])
+        user_df['Timestamp'] = pd.to_datetime(user_df['Timestamp'], format='mixed', dayfirst=True, errors='coerce')
         user_df = user_df.sort_values('Timestamp', ascending=False)
         most_recent_row = user_df.iloc[0]
         user_row_index = all_users_df[all_users_df['Email'] == form.email.data].index
         if not user_row_index.empty:
             # Find the index of the most recent submission
-            all_users_df['Timestamp'] = pd.to_datetime(all_users_df['Timestamp'])
+            all_users_df['Timestamp'] = pd.to_datetime(all_users_df['Timestamp'], format='mixed', dayfirst=True, errors='coerce')
             user_rows = all_users_df[all_users_df['Email'] == form.email.data]
             most_recent_idx = user_rows['Timestamp'].idxmax()
             row_index = most_recent_idx + 2  # +2 for header and 1-based indexing
