@@ -1,7 +1,7 @@
 # Ficore Africa Financial Health Score Application
 # File: app.py
 # Purpose: Flask app to calculate financial health scores, store data in Google Sheets, and render user dashboards
-# Version: Updated April 29, 2025, to fix syntax error at line 1 (Markdown code fence) and add Python comments
+# Version: Updated April 29, 2025, to fix Google Sheet header mismatch and static file serving
 # Repository: https://github.com/Warpiiv/ficore-ai
 
 # Import required libraries
@@ -41,6 +41,7 @@ load_dotenv()
 # Set Flask secret key for sessions and CSRF protection
 app.secret_key = os.environ.get('FLASK_SECRET_KEY')
 if not app.secret_key:
+    logger.error("FLASK_SECRET_KEY environment variable not set. CSRF protection and sessions will fail.")
     raise Exception("FLASK_SECRET_KEY environment variable not set.")
 
 # Configure Flask-Caching for memoizing Google Sheets data
@@ -128,6 +129,10 @@ translations = {
         'Enter debt interest rate (%)': 'Enter debt interest rate (%)',
         'Invalid Number': 'Please enter a valid number.',
         'Submit': 'Submit',
+        'Error saving data. Please try again.': 'Error saving data. Please try again.',
+        'Error retrieving data. Please try again.': 'Error retrieving data. Please try again.',
+        'Error retrieving user data. Please try again.': 'Error retrieving user data. Please try again.',
+        'An unexpected error occurred. Please try again.': 'An unexpected error occurred. Please try again.',
         'Top 10% Subject': '🔥 You\'re Top 10%! Your Ficore Score Report Awaits!',
         'Score Report Subject': '📊 Your Ficore Score Report is Ready, {user_name}!',
         'Email Body': '''
@@ -259,6 +264,10 @@ translations = {
         'Enter debt interest rate (%)': 'Shigar da ƙimar ribar bashi (%)',
         'Invalid Number': 'Da fatan za a shigar da lamba mai inganci.',
         'Submit': 'Sallama',
+        'Error saving data. Please try again.': 'Kuskure wajen adana bayanai. Da fatan za a sake gwadawa.',
+        'Error retrieving data. Please try again.': 'Kuskure wajen dawo da bayanai. Da fatan za a sake gwadawa.',
+        'Error retrieving user data. Please try again.': 'Kuskure wajen dawo da bayanan mai amfani. Da fatan za a sake gwadawa.',
+        'An unexpected error occurred. Please try again.': 'Wani kuskure wanda ba a zata ba ya faru. Da fatan za a sake gwadawa.',
         'Top 10% Subject': '🔥 Kuna cikin Sama da 10%! Rahoton Makiyon Ficore Yana Jiran Ku!',
         'Score Report Subject': '📊 Rahoton Makiyon Ficore Yana Shirye, {user_name}!',
         'Email Body': '''
@@ -327,7 +336,8 @@ DEBT_COURSE_URL = 'https://youtube.com/@ficore.africa?si=myoEpotNALfGK4eI'
 RECOVERY_COURSE_URL = 'https://youtube.com/@ficore.africa?si=myoEpotNALfGK4eI'
 PREDETERMINED_HEADERS = [
     'Timestamp', 'BusinessName', 'IncomeRevenue', 'ExpensesCosts', 'DebtLoan',
-    'DebtInterestRate', 'AutoEmail', 'PhoneNumber', 'FirstName', 'LastName', 'UserType', 'Email', 'Badges', 'Language'
+    'DebtInterestRate', 'AutoEmail', 'PhoneNumber', 'FirstName', 'LastName',
+    'UserType', 'Email', 'Badges', 'Language'
 ]
 
 # Define Flask-WTF form for user submissions
@@ -409,7 +419,22 @@ def authenticate_google_sheets():
         logger.error(f"Error authenticating with Google Sheets: {e}")
         return None
 
-# Set predefined headers in Google Sheet
+# Fetch current headers from Google Sheet
+def get_sheet_headers():
+    try:
+        service = authenticate_google_sheets()
+        if not service:
+            logger.error("Failed to authenticate with Google Sheets.")
+            return None
+        sheet = service.spreadsheets()
+        result = sheet.values().get(spreadsheetId=SPREADSHEET_ID, range='Sheet1!A1:N1').execute()
+        headers = result.get('values', [[]])[0]
+        return headers
+    except Exception as e:
+        logger.error(f"Error fetching sheet headers: {e}")
+        return None
+
+# Set or update predefined headers in Google Sheet
 def set_sheet_headers():
     try:
         service = authenticate_google_sheets()
@@ -420,11 +445,11 @@ def set_sheet_headers():
         body = {'values': [PREDETERMINED_HEADERS]}
         sheet.values().update(
             spreadsheetId=SPREADSHEET_ID,
-            range='Sheet1!A1',
+            range='Sheet1!A1:N1',
             valueInputOption='RAW',
             body=body
         ).execute()
-        logger.info("Sheet1 headers set to predetermined values.")
+        logger.info("Sheet1 headers updated to predetermined values.")
         return True
     except Exception as e:
         logger.error(f"Error setting headers: {e}")
@@ -453,6 +478,13 @@ def append_to_sheet(data):
             logger.error("Failed to authenticate with Google Sheets.")
             return False
         sheet = service.spreadsheets()
+
+        # Check and update headers if necessary
+        current_headers = get_sheet_headers()
+        if not current_headers or current_headers != PREDETERMINED_HEADERS:
+            if not set_sheet_headers():
+                logger.error("Failed to set sheet headers.")
+                return False
 
         row_count = get_row_count()
         if row_count == 0:
@@ -483,7 +515,6 @@ def append_to_sheet(data):
 # Fetch data from Google Sheet with caching and retry logic
 @cache.memoize(timeout=300)  # Cache for 5 minutes
 def fetch_data_from_sheet(email=None, max_retries=5, delay=2):
-    # Fixed syntax error on line 501 (April 29, 2025): Replaced '+overn' with '+ 1'
     for attempt in range(max_retries):
         try:
             service = authenticate_google_sheets()
@@ -507,7 +538,16 @@ def fetch_data_from_sheet(email=None, max_retries=5, delay=2):
             
             logger.debug(f"Attempt {attempt + 1}: Fetched {len(rows)} rows with headers: {headers}")
             
-            df = pd.DataFrame(rows, columns=headers)
+            # Adjust rows to match expected columns
+            adjusted_rows = []
+            for row in rows:
+                if len(row) < len(expected_columns):
+                    row.extend([''] * (len(expected_columns) - len(row)))
+                elif len(row) > len(expected_columns):
+                    row = row[:len(expected_columns)]
+                adjusted_rows.append(row)
+            
+            df = pd.DataFrame(adjusted_rows, columns=expected_columns)
             
             for col in expected_columns:
                 if col not in df.columns:
@@ -714,17 +754,22 @@ def generate_comparison_plot(user_df, all_users_df):
 # Handle form submission and render dashboard
 @app.route('/submit', methods=['POST'])
 def submit():
+    logger.info("Received /submit request")
     form = SubmissionForm()
     language = form.language.data if form.language.data in translations else 'English'
     
-    # Validate form inputs
-    if not form.validate_on_submit():
-        for field, errors in form.errors.items():
-            for error in errors:
-                flash(error, 'error')
-        return redirect(url_for('home', language=language))
-    
     try:
+        # Validate form inputs
+        logger.info("Validating form submission")
+        if not form.validate_on_submit():
+            logger.warning(f"Form validation failed: {form.errors}")
+            for field, errors in form.errors.items():
+                for error in errors:
+                    flash(error, 'error')
+            return redirect(url_for('home', language=language))
+        
+        logger.info("Form validated successfully")
+        
         # Prepare submission data
         timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         data = [
@@ -745,31 +790,37 @@ def submit():
         ]
         
         # Append data to Google Sheet
+        logger.info("Appending data to Google Sheet")
         if not append_to_sheet(data):
             flash(translations[language]['Error saving data. Please try again.'], 'error')
             return redirect(url_for('home', language=language))
         
         # Fetch all user data
+        logger.info("Fetching all user data from Google Sheet")
         all_users_df = fetch_data_from_sheet()
         if all_users_df is None:
             flash(translations[language]['Error retrieving data. Please try again.'], 'error')
             return redirect(url_for('home', language=language))
         
         # Fetch user-specific data
+        logger.info(f"Fetching user data for email: {form.email.data}")
         user_df = fetch_data_from_sheet(email=form.email.data)
         if user_df is None or user_df.empty:
             flash(translations[language]['Error retrieving user data. Please try again.'], 'error')
             return redirect(url_for('home', language=language))
         
         # Calculate scores
+        logger.info("Calculating health scores")
         all_users_df = calculate_health_score(all_users_df)
         user_df = calculate_health_score(user_df)
         
         # Assign badges
+        logger.info("Assigning badges")
         badges = assign_badges(user_df, all_users_df)
         user_df['Badges'] = ','.join(badges)
         
         # Update badges in Google Sheet
+        logger.info("Updating badges in Google Sheet")
         user_row = all_users_df[all_users_df['Email'] == form.email.data].index
         if not user_row.empty:
             row_index = user_row[0] + 2  # +2 for header and 1-based indexing
@@ -784,15 +835,18 @@ def submit():
                 ).execute()
         
         # Calculate user rank
+        logger.info("Calculating user rank")
         all_users_df = all_users_df.sort_values('HealthScore', ascending=False).reset_index(drop=True)
         rank = all_users_df[all_users_df['Email'] == form.email.data].index[0] + 1
         total_users = len(all_users_df)
         
         # Generate dashboard plots
+        logger.info("Generating dashboard plots")
         breakdown_plot = generate_breakdown_plot(user_df)
         comparison_plot = generate_comparison_plot(user_df, all_users_df)
         
         # Send score report email
+        logger.info("Sending score report email")
         user_row = user_df.iloc[0]
         send_email(
             to_email=form.email.data,
@@ -807,6 +861,7 @@ def submit():
         )
         
         # Render dashboard with user data
+        logger.info("Rendering dashboard")
         return render_template(
             'dashboard.html',
             translations=translations,
@@ -828,7 +883,7 @@ def submit():
             CONSULTANCY_FORM_URL=CONSULTANCY_FORM_URL
         )
     except Exception as e:
-        logger.error(f"Error processing submission: {e}")
+        logger.error(f"Error processing submission: {str(e)}\n{traceback.format_exc()}")
         flash(translations[language]['An unexpected error occurred. Please try again.'], 'error')
         return redirect(url_for('home', language=language))
 
