@@ -1,7 +1,7 @@
 # Ficore Africa Financial Health Score Application
 # File: app.py
 # Purpose: Flask app to calculate financial health scores, store data in Google Sheets, and render user dashboards
-# Version: Updated April 29, 2025, to fix Google Sheet header mismatch and static file serving
+# Version: Updated April 29, 2025, to fix KeyError in assign_badges due to missing Language values
 # Repository: https://github.com/Warpiiv/ficore-ai
 
 # Import required libraries
@@ -81,7 +81,7 @@ translations = {
         'Enroll Now': 'Enroll Now',
         'Quick Financial Tips': 'Quick Financial Tips',
         'Invest': 'Invest',
-        'Invest Wisely': 'Allocate surplus cash to low-risk investments like treasury bonds to grow wealth.',
+        'Invest Wisely': 'Allocate surplus cash to low-risk investments like treasuryresearcher.com (https://www.researcher.com) treasury bonds to grow wealth.',
         'Scale': 'Scale',
         'Scale Smart': 'Reinvest profits into your business to expand operations sustainably.',
         'Build': 'Build',
@@ -551,7 +551,13 @@ def fetch_data_from_sheet(email=None, max_retries=5, delay=2):
             
             for col in expected_columns:
                 if col not in df.columns:
-                    df[col] = None
+                    df[col] = ''
+            
+            # Set default language to 'English' if Language is empty
+            df['Language'] = df['Language'].replace('', 'English')
+            # Ensure Language is a valid key in translations
+            valid_languages = list(translations.keys())
+            df['Language'] = df['Language'].apply(lambda x: x if x in valid_languages else 'English')
             
             if email:
                 df = df[df['Email'] == email]
@@ -640,22 +646,33 @@ def assign_badges(user_df, all_users_df):
     if user_df.empty:
         logger.warning("Empty user_df in assign_badges.")
         return badges
+    
+    # Sort by Timestamp to get the most recent submission
+    user_df['Timestamp'] = pd.to_datetime(user_df['Timestamp'])
+    user_df = user_df.sort_values('Timestamp', ascending=False)
     user_row = user_df.iloc[0]
+    
     email = user_row['Email']
     health_score = user_row['HealthScore']
+    language = user_row['Language']
+    
+    # Validate language
+    if language not in translations:
+        logger.warning(f"Invalid language '{language}' for user {email}. Defaulting to English.")
+        language = 'English'
     
     # Badge for first submission
     if len(user_df) == 1:
-        badges.append(translations[user_row['Language']]['First Health Score Completed!'])
+        badges.append(translations[language]['First Health Score Completed!'])
     
     # Badge for stable finances
     if health_score >= 50:
-        badges.append(translations[user_row['Language']]['Financial Stability Achieved!'])
+        badges.append(translations[language]['Financial Stability Achieved!'])
     
     # Badge for low debt
     debt_to_income = user_row['DebtToIncomeRatio']
     if debt_to_income < 0.3:
-        badges.append(translations[user_row['Language']]['Debt Slayer!'])
+        badges.append(translations[language]['Debt Slayer!'])
     
     return badges
 
@@ -707,7 +724,12 @@ def generate_breakdown_plot(user_df):
     try:
         if user_df.empty:
             return None
+        
+        # Sort by Timestamp to get the most recent submission
+        user_df['Timestamp'] = pd.to_datetime(user_df['Timestamp'])
+        user_df = user_df.sort_values('Timestamp', ascending=False)
         user_row = user_df.iloc[0]
+        
         labels = ['Cash Flow', 'Debt-to-Income', 'Debt Interest']
         values = [
             user_row['NormCashFlow'] * 100 / 3,
@@ -731,7 +753,12 @@ def generate_comparison_plot(user_df, all_users_df):
     try:
         if user_df.empty or all_users_df.empty:
             return None
+        
+        # Sort by Timestamp to get the most recent submission
+        user_df['Timestamp'] = pd.to_datetime(user_df['Timestamp'])
+        user_df = user_df.sort_values('Timestamp', ascending=False)
         user_score = user_df.iloc[0]['HealthScore']
+        
         scores = all_users_df['HealthScore'].astype(float)
         fig = px.histogram(
             x=scores,
@@ -819,11 +846,18 @@ def submit():
         badges = assign_badges(user_df, all_users_df)
         user_df['Badges'] = ','.join(badges)
         
-        # Update badges in Google Sheet
+        # Update badges in Google Sheet for the most recent submission
         logger.info("Updating badges in Google Sheet")
-        user_row = all_users_df[all_users_df['Email'] == form.email.data].index
-        if not user_row.empty:
-            row_index = user_row[0] + 2  # +2 for header and 1-based indexing
+        user_df['Timestamp'] = pd.to_datetime(user_df['Timestamp'])
+        user_df = user_df.sort_values('Timestamp', ascending=False)
+        most_recent_row = user_df.iloc[0]
+        user_row_index = all_users_df[all_users_df['Email'] == form.email.data].index
+        if not user_row_index.empty:
+            # Find the index of the most recent submission
+            all_users_df['Timestamp'] = pd.to_datetime(all_users_df['Timestamp'])
+            user_rows = all_users_df[all_users_df['Email'] == form.email.data]
+            most_recent_idx = user_rows['Timestamp'].idxmax()
+            row_index = most_recent_idx + 2  # +2 for header and 1-based indexing
             service = authenticate_google_sheets()
             if service:
                 sheet = service.spreadsheets()
@@ -847,16 +881,15 @@ def submit():
         
         # Send score report email
         logger.info("Sending score report email")
-        user_row = user_df.iloc[0]
         send_email(
             to_email=form.email.data,
             user_name=form.first_name.data,
-            health_score=user_row['HealthScore'],
-            score_description=user_row['ScoreDescription'],
+            health_score=most_recent_row['HealthScore'],
+            score_description=most_recent_row['ScoreDescription'],
             rank=rank,
             total_users=total_users,
-            course_title=user_row['CourseTitle'],
-            course_url=user_row['CourseURL'],
+            course_title=most_recent_row['CourseTitle'],
+            course_url=most_recent_row['CourseURL'],
             language=form.language.data
         )
         
@@ -869,15 +902,15 @@ def submit():
             first_name=form.first_name.data,
             last_name=form.last_name.data or '',
             email=form.email.data,
-            health_score=user_row['HealthScore'],
+            health_score=most_recent_row['HealthScore'],
             rank=rank,
             total_users=total_users,
             badges=badges,
-            course_title=user_row['CourseTitle'],
-            course_url=user_row['CourseURL'],
+            course_title=most_recent_row['CourseTitle'],
+            course_url=most_recent_row['CourseURL'],
             breakdown_plot=breakdown_plot,
             comparison_plot=comparison_plot,
-            personalized_message=user_row['ScoreDescription'],
+            personalized_message=most_recent_row['ScoreDescription'],
             FEEDBACK_FORM_URL=FEEDBACK_FORM_URL,
             WAITLIST_FORM_URL=WAITLIST_FORM_URL,
             CONSULTANCY_FORM_URL=CONSULTANCY_FORM_URL
