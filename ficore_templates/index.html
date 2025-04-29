@@ -143,7 +143,7 @@
             <div class="col-md-10">
                 <div class="form-card">
                     <form id="submission-form" method="POST" action="{{ url_for('submit') }}">
-                        {{ form.csrf_token }}
+                        {{ form.hidden_tag() }} <!-- Ensure CSRF token is included -->
 
                         <!-- Personal Information -->
                         <h3>{{ translations[language]['Personal Information'] }}</h3>
@@ -265,16 +265,21 @@
             });
         });
 
-        // Clean number inputs before form submission
+        // Clean number inputs before form submission and debug submission method
         document.getElementById('submission-form').addEventListener('submit', function(e) {
-            document.querySelectorAll('.number-input').forEach(input => {
-                let cleanValue = input.value.replace(/,/g, '');
-                if (cleanValue === '' || isNaN(parseFloat(cleanValue))) {
-                    input.value = '';
-                } else {
-                    input.value = parseFloat(cleanValue).toString();
-                }
-            });
+            try {
+                console.log('Form submission triggered. Method:', document.getElementById('submission-form').getAttribute('method'));
+                document.querySelectorAll('.number-input').forEach(input => {
+                    let cleanValue = input.value.replace(/,/g, '');
+                    if (cleanValue === '' || isNaN(parseFloat(cleanValue))) {
+                        input.value = '';
+                    } else {
+                        input.value = parseFloat(cleanValue).toString();
+                    }
+                });
+            } catch (error) {
+                console.error('Error during form submission preprocessing:', error);
+            }
         });
     </script>
 </body>
