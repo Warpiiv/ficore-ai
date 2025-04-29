@@ -38,10 +38,276 @@ if not app.secret_key:
 # Configure Flask-Caching
 cache = Cache(app, config={'CACHE_TYPE': 'simple'})
 
+# Translation dictionary
+translations = {
+    'English': {
+        'Welcome': 'Welcome',
+        'Email': 'Email',
+        'Your Financial Health Summary': 'Your Financial Health Summary',
+        'Your Financial Health Score': 'Your Financial Health Score',
+        'Ranked': 'Ranked',
+        'out of': 'out of',
+        'users': 'users',
+        'Strong Financial Health': 'Your score indicates strong financial health. Focus on investing surplus funds to grow your wealth.',
+        'Stable Finances': 'Your finances are stable but could improve. Consider saving more or reducing expenses.',
+        'Financial Strain': 'Your score suggests financial strain. Prioritize paying off debt and managing expenses.',
+        'Urgent Attention Needed': 'Your finances need urgent attention. Seek professional advice and explore recovery strategies.',
+        'Score Breakdown': 'Score Breakdown',
+        'Chart Unavailable': 'Chart unavailable at this time.',
+        'Score Composition': 'Your score is composed of three components',
+        'Cash Flow': 'Cash Flow',
+        'Cash Flow Description': 'Reflects how much income remains after expenses. Higher values indicate better financial flexibility.',
+        'Debt-to-Income Ratio': 'Debt-to-Income Ratio',
+        'Debt-to-Income Description': 'Measures debt relative to income. Lower ratios suggest manageable debt levels.',
+        'Debt Interest Burden': 'Debt Interest Burden',
+        'Debt Interest Description': 'Indicates the impact of interest rates on your finances. Lower burdens mean less strain from debt.',
+        'Balanced Components': 'Your components show balanced financial health. Maintain strong cash flow and low debt.',
+        'Components Need Attention': 'One or more components may need attention. Focus on improving cash flow or reducing debt.',
+        'Components Indicate Challenges': 'Your components indicate challenges. Work on increasing income, cutting expenses, or lowering debt interest.',
+        'Your Badges': 'Your Badges',
+        'No Badges Yet': 'No badges earned yet. Keep submitting to earn more!',
+        'Recommended Learning': 'Recommended Learning',
+        'Recommended Course': 'Recommended Course',
+        'Enroll in': 'Enroll in',
+        'Enroll Now': 'Enroll Now',
+        'Quick Financial Tips': 'Quick Financial Tips',
+        'Invest': 'Invest',
+        'Invest Wisely': 'Allocate surplus cash to low-risk investments like treasury bonds to grow wealth.',
+        'Scale': 'Scale',
+        'Scale Smart': 'Reinvest profits into your business to expand operations sustainably.',
+        'Build': 'Build',
+        'Build Savings': 'Save 10% of your income monthly to create an emergency fund.',
+        'Cut': 'Cut',
+        'Cut Costs': 'Review expenses and reduce non-essential spending to boost cash flow.',
+        'Reduce': 'Reduce',
+        'Reduce Debt': 'Prioritize paying off high-interest loans to ease financial strain.',
+        'Boost': 'Boost',
+        'Boost Income': 'Explore side hustles or new revenue streams to improve cash flow.',
+        'How You Compare': 'How You Compare to Others',
+        'Your Rank': 'Your rank of',
+        'places you': 'places you',
+        'Top 10%': 'in the top 10% of users, indicating exceptional financial health compared to peers.',
+        'Top 30%': 'in the top 30%, showing above-average financial stability.',
+        'Middle Range': 'in the middle range, suggesting room for improvement to climb the ranks.',
+        'Lower Range': 'in the lower range, highlighting the need for strategic financial planning.',
+        'Regular Submissions': 'Regular submissions can help track your progress and improve your standing.',
+        'Whats Next': 'What’s Next? Unlock Further Insights',
+        'Back to Home': 'Back to Home',
+        'Provide Feedback': 'Provide Feedback',
+        'Join Waitlist': 'Join Premium Waitlist',
+        'Book Consultancy': 'Book Consultancy',
+        'Contact Us': 'Contact us at',
+        'for support': 'for support',
+        'Ficore AI Financial Health Score': 'Ficore AI Financial Health Score',
+        'Get Your Score': 'Get your financial health score and personalized insights instantly!',
+        'Personal Information': 'Personal Information',
+        'Enter your first name': 'Enter your first name',
+        'First Name Required': 'First name is required.',
+        'Enter your last name (optional)': 'Enter your last name (optional)',
+        'Enter your email': 'Enter your email',
+        'Invalid Email': 'Please enter a valid email address.',
+        'Confirm your email': 'Confirm your email',
+        'Enter phone number (optional)': 'Enter phone number (optional)',
+        'Language': 'Language',
+        'Business Information': 'Business Information',
+        'Enter your business name': 'Enter your business name',
+        'Business Name Required': 'Business name is required.',
+        'User Type': 'User Type',
+        'Financial Information': 'Financial Information',
+        'Enter monthly income/revenue': 'Enter monthly income/revenue',
+        'Enter monthly expenses/costs': 'Enter monthly expenses/costs',
+        'Enter total debt/loan amount': 'Enter total debt/loan amount',
+        'Enter debt interest rate (%)': 'Enter debt interest rate (%)',
+        'Invalid Number': 'Please enter a valid number.',
+        'Submit': 'Submit',
+        'Top 10% Subject': '🔥 You\'re Top 10%! Your Ficore Score Report Awaits!',
+        'Score Report Subject': '📊 Your Ficore Score Report is Ready, {user_name}!',
+        'Email Body': '''
+            <html>
+            <body style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+                <div style="background-color: #1E7F71; padding: 20px; border-radius: 10px; text-align: center; margin-bottom: 20px;">
+                    <h2 style="color: #FFFFFF; margin: 0;">Ficore AI Financial Health Score</h2>
+                    <p style="font-style: italic; color: #E0F7FA; font-size: 0.9rem; margin: 5px 0 0 0;">
+                        Financial growth passport for Africa
+                    </p>
+                </div>
+                <p>Dear {user_name},</p>
+                <p>We have calculated your Ficore AI Financial Health Score based on your recent submission.</p>
+                <ul>
+                    <li><strong>Score</strong>: {health_score}/100</li>
+                    <li><strong>Advice</strong>: {score_description}</li>
+                    <li><strong>Rank</strong>: #{int(rank)} out of {total_users} users</li>
+                </ul>
+                <p>Follow the advice above to improve your financial health. We’re here to support you every step of the way—take one small action today to grow stronger financially for your business, your goals, and your future!</p>
+                <p style="margin-bottom: 10px;">
+                    Want to learn more? Check out this course: 
+                    <a href="{course_url}" style="display: inline-block; padding: 10px 20px; background-color: #FBC02D; color: #333; text-decoration: none; border-radius: 5px; font-size: 0.9rem;">{course_title}</a>
+                </p>
+                <p style="margin-bottom: 10px;">
+                    Please provide feedback on your experience: 
+                    <a href="{FEEDBACK_FORM_URL}" style="display: inline-block; padding: 10px 20px; background-color: #2E7D32; color: white; text-decoration: none; border-radius: 5px; font-size: 0.9rem;">Feedback Form</a>
+                </p>
+                <p style="margin-bottom: 10px;">
+                    Want Smart Insights? Join the waitlist for Ficore Premium: 
+                    <a href="{WAITLIST_FORM_URL}" style="display: inline-block; padding: 10px 20px; background-color: #1976D2; color: white; text-decoration: none; border-radius: 5px; font-size: 0.9rem;">Join Waitlist</a>
+                </p>
+                <p style="margin-bottom: 10px;">
+                    Need personalized advice? 
+                    <a href="{CONSULTANCY_FORM_URL}" style="display: inline-block; padding: 10px 20px; background-color: #388E3C; color: white; text-decoration: none; border-radius: 5px; font-size: 0.9rem;">Book Consultancy</a>
+                </p>
+                <p style="margin-bottom: 10px;">
+                    If you don’t see this email in your inbox, please check your spam or junk folder.
+                </p>
+                <style>
+                    a:hover { background-color: #1B5E20 !important; }
+                    a[href="{WAITLIST_FORM_URL}"]:hover { background-color: #0D47A1 !important; }
+                    a[href="{course_url}"]:hover { background-color: #F9A825 !important; }
+                </style>
+                <p>Best regards,<br>The Ficore AI Team</p>
+            </body>
+            </html>
+        ''',
+        'First Health Score Completed!': 'First Health Score Completed!',
+        'Financial Stability Achieved!': 'Financial Stability Achieved!',
+        'Debt Slayer!': 'Debt Slayer!'
+    },
+    'Hausa': {
+        'Welcome': 'Barka da zuwa',
+        'Email': 'Imel',
+        'Your Financial Health Summary': 'Takaitaccen Lafiyar Kuɗin Ku',
+        'Your Financial Health Score': 'Makiyon Lafiyar Kuɗin Ku',
+        'Ranked': 'An sanya daraja',
+        'out of': 'daga cikin',
+        'users': 'masu amfani',
+        'Strong Financial Health': 'Makiyon ku yana nuna ƙarfin lafiyar kuɗi. Mai da hankali kan saka hannun jari a cikin kuɗin da ya rage don haɓaka dukiya.',
+        'Stable Finances': 'Kuɗin ku suna da kwanciyar hankali amma suna iya inganta. Yi la’akari da adanawa ko rage kashe kuɗi.',
+        'Financial Strain': 'Makiyon ku yana nuna damuwar kuɗi. Fifita biyan bashi da sarrafa kashe kuɗi.',
+        'Urgent Attention Needed': 'Kuɗin ku suna buƙatar kulawa cikin gaggawa. Nemi shawarar ƙwararru kuma bincika dabarun farfadowa.',
+        'Score Breakdown': 'Rarraba Makiyo',
+        'Chart Unavailable': 'Chart ba ya samuwa a wannan lokacin.',
+        'Score Composition': 'Makiyon ku ya ƙunshi abubuwa uku',
+        'Cash Flow': 'Kwararar Kuɗi',
+        'Cash Flow Description': 'Yana nuna adadin kuɗin shiga da ya rage bayan kashe kuɗi. Maɗaukakin ƙima yana nuna mafi kyawun sassaucin kuɗi.',
+        'Debt-to-Income Ratio': 'Rabo na Bashi zuwa Kuɗin shiga',
+        'Debt-to-Income Description': 'Yana auna bashi dangane da kuɗin shiga. Ƙananan rabon yana nuna matakan bashi mai sauƙi.',
+        'Debt Interest Burden': 'Nauyin Riba na Bashi',
+        'Debt Interest Description': 'Yana nuna tasirin ƙimar riba a kan kuɗin ku. Ƙananan nauyi yana nufin ƙarancin damuwa daga bashi.',
+        'Balanced Components': 'Abubuwan da ke cikin ku suna nuna daidaitaccen lafiyar kuɗi. Ci gaba da kiyaye kwararar kuɗi mai ƙarfi da ƙarancin bashi.',
+        'Components Need Attention': 'Ɗaya ko fiye da abubuwan da ke ciki na iya buƙatar kulawa. Mai da hankali kan inganta kwararar kuɗi ko rage bashi.',
+        'Components Indicate Challenges': 'Abubuwan da ke cikin ku suna nuna ƙalubale. Yi aiki kan ƙara kuɗin shiga, yanke kashe kuɗi, ko rage ribar bashi.',
+        'Your Badges': 'Bajojin Ku',
+        'No Badges Yet': 'Ba a sami baji ba tukuna. Ci gaba da ƙaddamarwa don samun ƙari!',
+        'Recommended Learning': 'Koyan da Aka Shawarta',
+        'Recommended Course': 'Koyan da Aka Shawarta',
+        'Enroll in': 'Shiga cikin',
+        'Enroll Now': 'Shiga Yanzu',
+        'Quick Financial Tips': 'Shawarwari na Kuɗi na Gaggawa',
+        'Invest': 'Saka hannun jari',
+        'Invest Wisely': 'Sanya kuɗin da ya rage a cikin saka hannun jari mai ƙarancin haɗari kamar takardun shaida don haɓaka dukiya.',
+        'Scale': 'Faɗaɗa',
+        'Scale Smart': 'Sake saka riba a cikin kasuwancin ku don faɗaɗa ayyuka cikin dorewa.',
+        'Build': 'Gina',
+        'Build Savings': 'Ajiye 10% na kuɗin shigarka kowane wata don ƙirƙirar asusun gaggawa.',
+        'Cut': 'Yanke',
+        'Cut Costs': 'Duba kashe kuɗi kuma rage kashe kuɗin da ba dole ba don haɓaka kwararar kuɗi.',
+        'Reduce': 'Rage',
+        'Reduce Debt': 'Fifita biyan lamuni masu ƙimar riba don sauƙaƙe damuwar kuɗi.',
+        'Boost': 'Ƙarfafa',
+        'Boost Income': 'Bincika ayyukan gefe ko sabbin hanyoyin samun kuɗin shiga don inganta kwararar kuɗi.',
+        'How You Compare': 'Yadda Kuke Kwatanta da Wasu',
+        'Your Rank': 'Matsayin ku na',
+        'places you': 'ya sanya ku',
+        'Top 10%': 'a cikin sama da 10% na masu amfani, yana nuna mafi kyawun lafiyar kuɗi idan aka kwatanta da takwarorinsu.',
+        'Top 30%': 'a cikin sama da 30%, yana nuna kwanciyar hankali na kuɗi sama da matsakaici.',
+        'Middle Range': 'a cikin kewayon tsakiya, yana nuna sarari don ingantawa don hawa matsayi.',
+        'Lower Range': 'a cikin kewayon ƙasa, yana nuna buƙatar tsara kuɗi mai dabara.',
+        'Regular Submissions': 'Ƙaddamarwa akai-akai na iya taimakawa wajen bin diddigin ci gaban ku da inganta matsayin ku.',
+        'Whats Next': 'Me ke Gaba? Buɗe Ƙarin Fahimta',
+        'Back to Home': 'Koma Gida',
+        'Provide Feedback': 'Bayar da Shawara',
+        'Join Waitlist': 'Shiga Jerin Jirage',
+        'Book Consultancy': 'Yi Alƙawarin Shawara',
+        'Contact Us': 'Tuntube mu a',
+        'for support': 'don tallafi',
+        'Ficore AI Financial Health Score': 'Makiyon Lafiyar Kuɗin Ficore AI',
+        'Get Your Score': 'Sami makiyon lafiyar kuɗin ku da fahimta na keɓaɓɓu nan take!',
+        'Personal Information': 'Bayanan Kai',
+        'Enter your first name': 'Shigar da sunanka na farko',
+        'First Name Required': 'Ana buƙatar sunan farko.',
+        'Enter your last name (optional)': 'Shigar da sunanka na ƙarshe (na zaɓi)',
+        'Enter your email': 'Shigar da imel ɗinka',
+        'Invalid Email': 'Da fatan za a shigar da adireshin imel mai inganci.',
+        'Confirm your email': 'Tabbatar da imel ɗinka',
+        'Enter phone number (optional)': 'Shigar da lambar waya (na zaɓi)',
+        'Language': 'Harshe',
+        'Business Information': 'Bayanan Kasuwanci',
+        'Enter your business name': 'Shigar da sunan kasuwancinka',
+        'Business Name Required': 'Ana buƙatar sunan kasuwanci.',
+        'User Type': 'Nau’in Mai Amfani',
+        'Financial Information': 'Bayanan Kuɗi',
+        'Enter monthly income/revenue': 'Shigar da kuɗin shiga/kudin shiga na wata-wata',
+        'Enter monthly expenses/costs': 'Shigar da kashe kuɗi/kudin wata-wata',
+        'Enter total debt/loan amount': 'Shigar da jimillar bashi/lamuni',
+        'Enter debt interest rate (%)': 'Shigar da ƙimar ribar bashi (%)',
+        'Invalid Number': 'Da fatan za a shigar da lamba mai inganci.',
+        'Submit': 'Sallama',
+        'Top 10% Subject': '🔥 Kuna cikin Sama da 10%! Rahoton Makiyon Ficore Yana Jiran Ku!',
+        'Score Report Subject': '📊 Rahoton Makiyon Ficore Yana Shirye, {user_name}!',
+        'Email Body': '''
+            <html>
+            <body style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+                <div style="background-color: #1E7F71; padding: 20px; border-radius: 10px; text-align: center; margin-bottom: 20px;">
+                    <h2 style="color: #FFFFFF; margin: 0;">Makiyon Lafiyar Kuɗin Ficore AI</h2>
+                    <p style="font-style: italic; color: #E0F7FA; font-size: 0.9rem; margin: 5px 0 0 0;">
+                        Tikitin ci gaban kuɗi na Afirka
+                    </p>
+                </div>
+                <p>Mai girma {user_name},</p>
+                <p>Mun ƙididdige Makiyon Lafiyar Kuɗin Ficore AI bisa ƙaddamarwar ku na kwanan nan.</p>
+                <ul>
+                    <li><strong>Makiyo</strong>: {health_score}/100</li>
+                    <li><strong>Shawara</strong>: {score_description}</li>
+                    <li><strong>Matsayi</strong>: #{int(rank)} daga cikin {total_users} masu amfani</li>
+                </ul>
+                <p>Bi shawarar da ke sama don inganta lafiyar kuɗin ku. Muna nan don tallafa muku kowane mataki—ɗauki ƙaramin aiki a yau don ƙarfafa kuɗin ku don kasuwancinku, burinku, da makomarku!</p>
+                <p style="margin-bottom: 10px;">
+                    Kuna son ƙarin koyo? Duba wannan kwas: 
+                    <a href="{course_url}" style="display: inline-block; padding: 10px 20px; background-color: #FBC02D; color: #333; text-decoration: none; border-radius: 5px; font-size: 0.9rem;">{course_title}</a>
+                </p>
+                <p style="margin-bottom: 10px;">
+                    Da fatan za a ba da shawara kan kwarewarku: 
+                    <a href="{FEEDBACK_FORM_URL}" style="display: inline-block; padding: 10px 20px; background-color: #2E7D32; color: white; text-decoration: none; border-radius: 5px; font-size: 0.9rem;">Fom ɗin Shawara</a>
+                </p>
+                <p style="margin-bottom: 10px;">
+                    Kuna son Fahimta Mai Hankali? Shiga jerin jiran Ficore Premium: 
+                    <a href="{WAITLIST_FORM_URL}" style="display: inline-block; padding: 10px 20px; background-color: #1976D2; color: white; text-decoration: none; border-radius: 5px; font-size: 0.9rem;">Shiga Jerin Jirage</a>
+                </p>
+                <p style="margin-bottom: 10px;">
+                    Kuna buƙatar shawara ta keɓaɓɓu? 
+                    <a href="{CONSULTANCY_FORM_URL}" style="display: inline-block; padding: 10px 20px; background-color: #388E3C; color: white; text-decoration: none; border-radius: 5px; font-size: 0.9rem;">Yi Alƙawarin Shawara</a>
+                </p>
+                <p style="margin-bottom: 10px;">
+                    Idan ba ku ga wannan imel a cikin akwatin saƙonninku ba, da fatan za a duba foldar spam ko junk ɗinku.
+                </p>
+                <style>
+                    a:hover { background-color: #1B5E20 !important; }
+                    a[href="{WAITLIST_FORM_URL}"]:hover { background-color: #0D47A1 !important; }
+                    a[href="{course_url}"]:hover { background-color: #F9A825 !important; }
+                </style>
+                <p>Gaisuwa mafi kyau,<br>Ƙungiyar Ficore AI</p>
+            </body>
+            </html>
+        ''',
+        'First Health Score Completed!': 'Makiyon Lafiya na Farko An Kammala!',
+        'Financial Stability Achieved!': 'An Sami Kwanciyar Hankali na Kuɗi!',
+        'Debt Slayer!': 'Mai Kashe Bashi!'
+    }
+}
+
 # Constants for Google Sheets
 SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
 SPREADSHEET_ID = '13hbiMTMRBHo9MHjWwcugngY_aSiuxII67HCf03MiZ8I'
-DATA_RANGE_NAME = 'Sheet1!A1:M'
+DATA_RANGE_NAME = 'Sheet1!A1:N'
 RESULTS_SHEET_NAME = 'FicoreAIResults'
 RESULTS_HEADER = ['Email', 'FicoreAIScore', 'FicoreAIRank']
 FEEDBACK_FORM_URL = 'https://forms.gle/NkiLicSykLyMnhJk7'
@@ -53,7 +319,7 @@ DEBT_COURSE_URL = 'https://youtube.com/@ficore.ai.africa?si=myoEpotNALfGK4eI'
 RECOVERY_COURSE_URL = 'https://youtube.com/@ficore.ai.africa?si=myoEpotNALfGK4eI'
 PREDETERMINED_HEADERS = [
     'Timestamp', 'BusinessName', 'IncomeRevenue', 'ExpensesCosts', 'DebtLoan',
-    'DebtInterestRate', 'AutoEmail', 'PhoneNumber', 'FirstName', 'LastName', 'UserType', 'Email', 'Badges'
+    'DebtInterestRate', 'AutoEmail', 'PhoneNumber', 'FirstName', 'LastName', 'UserType', 'Email', 'Badges', 'Language'
 ]
 
 # Flask-WTF form for submission
@@ -69,6 +335,7 @@ class SubmissionForm(FlaskForm):
     last_name = StringField('Last Name')
     user_type = SelectField('User Type', choices=[('Business', 'Business'), ('Individual', 'Individual')], validators=[DataRequired()])
     email = StringField('Email', validators=[DataRequired(), Email()])
+    language = SelectField('Language', choices=[('English', 'English'), ('Hausa', 'Hausa')], validators=[DataRequired()])
     submit = SubmitField('Submit')
 
     def validate_auto_email(self, auto_email):
@@ -156,7 +423,7 @@ def append_to_sheet(data):
             return False
 
         # Append the data
-        range_to_update = f'Sheet1!A{row_count + 1}:M{row_count + 1}'
+        range_to_update = f'Sheet1!A{row_count + 1}:N{row_count + 1}'
         body = {'values': [data]}
         sheet.values().update(
             spreadsheetId=SPREADSHEET_ID,
@@ -173,7 +440,7 @@ def append_to_sheet(data):
 
 # Fetch data from Google Sheet with retry mechanism and caching
 @cache.memoize(timeout=300)  # Cache for 5 minutes
-def fetch_data_from_sheet(max_retries=5, delay=2):
+def fetch_data_from_sheet(email=None, max_retries=5, delay=2):
     for attempt in range(max_retries):
         try:
             service = authenticate_google_sheets()
@@ -242,6 +509,10 @@ def fetch_data_from_sheet(max_retries=5, delay=2):
                     if col not in df.columns:
                         df[col] = ""
                 df = df[expected_columns]
+            
+            # Filter by email if provided
+            if email:
+                df = df[df['Email'] == email]
             
             logger.debug(f"Attempt {attempt + 1}: Created DataFrame with shape {df.shape}")
             return df
@@ -337,20 +608,68 @@ def assign_badges(user_df, all_users_df):
     if len(user_submissions) > 1:
         previous_submission = user_submissions.iloc[-2]
         try:
-            # Remove commas and convert to float
             previous_debt_str = str(previous_submission['DebtLoan']).replace(',', '')
             previous_debt = float(previous_debt_str)
             if current_debt < previous_debt:
                 badges.append("Debt Slayer!")
         except (ValueError, TypeError) as e:
             logger.error(f"Error converting DebtLoan to float: {previous_submission['DebtLoan']}, error: {e}")
-            # Skip assigning Debt Slayer badge if conversion fails
 
     logger.debug(f"Assigned badges for email {email}: {badges}")
     return badges
 
+# Cache Plotly charts
+@cache.memoize(timeout=3600)  # Cache for 1 hour
+def generate_plots(email, health_score, cash_flow_score, debt_to_income_score, debt_interest_score, rank, all_users_df):
+    breakdown_data = {
+        "Component": ["Cash Flow", "Debt-to-Income Ratio", "Debt Interest Burden"],
+        "Score": [cash_flow_score, debt_to_income_score, debt_interest_score]
+    }
+    breakdown_df = pd.DataFrame(breakdown_data)
+    fig_breakdown = px.bar(
+        breakdown_df,
+        x="Score",
+        y="Component",
+        orientation='h',
+        title="Score Breakdown",
+        labels={"Score": "Score (out of 100)"},
+        color="Component",
+        color_discrete_sequence=px.colors.qualitative.Plotly
+    )
+    fig_breakdown.update_layout(showlegend=False)
+    breakdown_plot = fig_breakdown.to_html(full_html=False, include_plotlyjs=False, config={'responsive': True})
+
+    fig_comparison = go.Figure()
+    fig_comparison.add_trace(
+        go.Scatter(
+            x=list(range(1, len(all_users_df) + 1)),
+            y=all_users_df['HealthScore'],
+            mode='lines+markers',
+            name='All Users',
+            line=dict(color='blue')
+        )
+    )
+    fig_comparison.add_trace(
+        go.Scatter(
+            x=[int(rank)],
+            y=[health_score],
+            mode='markers',
+            name='Your Score',
+            marker=dict(color='red', size=12, symbol='star')
+        )
+    )
+    fig_comparison.update_layout(
+        title="How You Compare to Others",
+        xaxis_title="User Rank",
+        yaxis_title="Health Score",
+        showlegend=True
+    )
+    comparison_plot = fig_comparison.to_html(full_html=False, include_plotlyjs=False, config={'responsive': True})
+
+    return breakdown_plot, comparison_plot
+
 # Send Email with course suggestion
-def send_email(recipient_email, user_name, health_score, score_description, course_title, course_url, rank, total_users):
+def send_email(recipient_email, user_name, health_score, score_description, course_title, course_url, rank, total_users, language):
     sender_email = os.environ.get('SENDER_EMAIL')
     sender_password = os.environ.get('SENDER_PASSWORD')
     if not sender_email or not sender_password:
@@ -358,353 +677,5 @@ def send_email(recipient_email, user_name, health_score, score_description, cour
         return False
 
     top_10_percent = (rank / total_users) <= 0.1
-    subject = "🔥 You're Top 10%! Your Ficore Score Report Awaits!" if top_10_percent else f"📊 Your Ficore Score Report is Ready, {user_name}!"
-
-    html_body = f"""
-    <html>
-    <body style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
-        <div style="background-color: #1E7F71; padding: 20px; border-radius: 10px; text-align: center; margin-bottom: 20px;">
-            <h2 style="color: #FFFFFF; margin: 0;">Ficore AI Financial Health Score</h2>
-            <p style="font-style: italic; color: #E0F7FA; font-size: 0.9rem; margin: 5px 0 0 0;">
-                Financial growth passport for Africa
-            </p>
-        </div>
-        <p>Dear {user_name},</p>
-        <p>We have calculated your Ficore AI Financial Health Score based on your recent submission.</p>
-        <ul>
-            <li><strong>Score</strong>: {health_score}/100</li>
-            <li><strong>Advice</strong>: {score_description}</li>
-            <li><strong>Rank</strong>: #{int(rank)} out of {total_users} users</li>
-        </ul>
-        <p>Follow the advice above to improve your financial health. We’re here to support you every step of the way—take one small action today to grow stronger financially for your business, your goals, and your future!</p>
-        <p style="margin-bottom: 10px;">
-            Want to learn more? Check out this course: 
-            <a href="{course_url}" style="display: inline-block; padding: 10px 20px; background-color: #FBC02D; color: #333; text-decoration: none; border-radius: 5px; font-size: 0.9rem;">{course_title}</a>
-        </p>
-        <p style="margin-bottom: 10px;">
-            Please provide feedback on your experience: 
-            <a href="{FEEDBACK_FORM_URL}" style="display: inline-block; padding: 10px 20px; background-color: #2E7D32; color: white; text-decoration: none; border-radius: 5px; font-size: 0.9rem;">Feedback Form</a>
-        </p>
-        <p style="margin-bottom: 10px;">
-            Want Smart Insights? Join the waitlist for Ficore Premium: 
-            <a href="{WAITLIST_FORM_URL}" style="display: inline-block; padding: 10px 20px; background-color: #1976D2; color: white; text-decoration: none; border-radius: 5px; font-size: 0.9rem;">Join Waitlist</a>
-        </p>
-        <p style="margin-bottom: 10px;">
-            Need personalized advice? 
-            <a href="{CONSULTANCY_FORM_URL}" style="display: inline-block; padding: 10px 20px; background-color: #388E3C; color: white; text-decoration: none; border-radius: 5px; font-size: 0.9rem;">Book Consultancy</a>
-        </p>
-        <style>
-            a:hover {{ background-color: #1B5E20 !important; }}
-            a[href="{WAITLIST_FORM_URL}"]:hover {{ background-color: #0D47A1 !important; }}
-            a[href="{course_url}"]:hover {{ background-color: #F9A825 !important; }}
-        </style>
-        <p>Best regards,<br>The Ficore AI Team</p>
-    </body>
-    </html>
-    """
-
-    msg = MIMEMultipart()
-    msg['From'] = f"Ficore AI <{sender_email}>"
-    msg['To'] = recipient_email
-    msg['Subject'] = subject
-    msg.attach(MIMEText(html_body, 'html'))
-
-    for attempt in range(3):
-        try:
-            with smtplib.SMTP('smtp.gmail.com', 587) as server:
-                server.starttls()
-                server.login(sender_email, sender_password)
-                server.sendmail(sender_email, recipient_email, msg.as_string())
-                logger.info(f"Email sent to {recipient_email}")
-                return True
-        except Exception as e:
-            logger.error(f"Email attempt {attempt + 1} failed: {e}")
-            time.sleep(2)
-    logger.error(f"Failed to send email to {recipient_email} after 3 attempts")
-    return False
-
-# Homepage route
-@app.route('/')
-def home():
-    form = SubmissionForm()
-    return render_template('index.html', form=form, FEEDBACK_FORM_URL=FEEDBACK_FORM_URL)
-
-# Form submission route
-@app.route('/submit', methods=['POST'])
-def submit():
-    form = SubmissionForm()
-    try:
-        # Log raw POST data for debugging
-        raw_data = request.form.to_dict()
-        logger.debug(f"Raw POST data: {raw_data}")
-
-        # Preprocess financial fields to strip commas
-        cleaned_data = raw_data.copy()
-        for field in ['income_revenue', 'expenses_costs', 'debt_loan', 'debt_interest_rate']:
-            if field in cleaned_data:
-                cleaned_data[field] = cleaned_data[field].replace(',', '') if cleaned_data[field] else ''
-        logger.debug(f"Cleaned POST data: {cleaned_data}")
-        # Log specific financial fields
-        logger.debug(f"Received financial fields: income_revenue={cleaned_data.get('income_revenue')}, "
-                    f"expenses_costs={cleaned_data.get('expenses_costs')}, "
-                    f"debt_loan={cleaned_data.get('debt_loan')}, "
-                    f"debt_interest_rate={cleaned_data.get('debt_interest_rate')}")
-
-        # Create a new form instance with cleaned data
-        form = SubmissionForm(formdata=None, data=cleaned_data)
-
-        if form.validate():
-            try:
-                logger.debug("Starting form data extraction")
-                # Extract and validate form data
-                data = [
-                    datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-                    str(form.business_name.data),
-                    float(form.income_revenue.data),
-                    float(form.expenses_costs.data),
-                    float(form.debt_loan.data),
-                    float(form.debt_interest_rate.data),
-                    str(form.auto_email.data),
-                    str(form.phone_number.data or ""),
-                    str(form.first_name.data),
-                    str(form.last_name.data or ""),
-                    str(form.user_type.data),
-                    str(form.email.data),
-                    ""  # Placeholder for badges
-                ]
-                logger.debug(f"Form data: {data}")
-
-                logger.debug("Clearing cache for fetch_data_from_sheet")
-                # Clear cache to ensure fresh data
-                cache.delete_memoized(fetch_data_from_sheet)
-                logger.debug("Cleared fetch_data_from_sheet cache")
-
-                logger.debug("Fetching all users data")
-                # Fetch all users data
-                all_users_df = fetch_data_from_sheet()
-                if all_users_df is None:
-                    logger.error("Failed to fetch data from Google Sheet.")
-                    flash("Unable to connect to data storage. Please try again later.", "error")
-                    return redirect(url_for('home'))
-
-                logger.debug("Creating temp DataFrame")
-                # Create temp DataFrame for new submission
-                temp_df = pd.DataFrame([data], columns=PREDETERMINED_HEADERS)
-                for col in ['IncomeRevenue', 'ExpensesCosts', 'DebtLoan', 'DebtInterestRate']:
-                    temp_df[col] = pd.to_numeric(temp_df[col], errors='coerce').fillna(0)
-                
-                logger.debug("Calculating health score")
-                # Calculate health score and badges
-                temp_df = calculate_health_score(temp_df)
-                new_badges = assign_badges(temp_df, all_users_df)
-                data[-1] = ",".join(new_badges) if new_badges else ""
-                logger.debug(f"Assigned badges: {new_badges}")
-
-                logger.debug("Appending data to sheet")
-                # Append data to sheet
-                if not append_to_sheet(data):
-                    logger.error("Failed to append data to Google Sheet.")
-                    flash("Unable to save data. Please try again later.", "error")
-                    return redirect(url_for('home'))
-
-                logger.debug("Fetching updated data")
-                # Fetch updated data
-                cache.delete_memoized(fetch_data_from_sheet)
-                all_users_df = fetch_data_from_sheet()
-                if all_users_df is None or all_users_df.empty:
-                    logger.error("No data found in Google Sheet after submission.")
-                    flash("Data submission failed. Please try again.", "error")
-                    return redirect(url_for('home'))
-
-                logger.debug("Converting numeric columns")
-                # Convert numeric columns
-                numeric_cols = ['IncomeRevenue', 'ExpensesCosts', 'DebtLoan', 'DebtInterestRate']
-                for col in numeric_cols:
-                    all_users_df[col] = pd.to_numeric(all_users_df[col], errors='coerce').fillna(0)
-
-                logger.debug("Calculating health scores for all users")
-                # Calculate health scores
-                all_users_df = calculate_health_score(all_users_df)
-
-                logger.debug("Assigning ranks")
-                # Assign ranks
-                all_users_df = all_users_df.sort_values(by='HealthScore', ascending=False)
-                all_users_df['Rank'] = range(1, len(all_users_df) + 1)
-
-                logger.debug(f"Filtering for user email: {form.email.data}")
-                # Filter for current user
-                user_df = all_users_df[all_users_df['Email'] == form.email.data]
-                if user_df.empty:
-                    logger.error(f"No data found for email: {form.email.data}")
-                    flash("Submission not found. Please try again.", "error")
-                    return redirect(url_for('home'))
-
-                # Extract user data
-                user_row = user_df.iloc[-1]
-                health_score = user_row['HealthScore']
-                rank = user_row['Rank']
-                total_users = len(all_users_df)
-                score_description = user_row['ScoreDescription']
-                course_title = user_row['CourseTitle']
-                course_url = user_row['CourseURL']
-                badges = user_row['Badges'].split(",") if user_row['Badges'] else []
-                logger.debug(f"User data: health_score={health_score}, rank={rank}, total_users={total_users}")
-
-                logger.debug("Generating personalized message")
-                # Generate personalized message
-                personalized_message = ""
-                if "First Health Score Completed!" in new_badges:
-                    personalized_message = "🎉 Congratulations, you earned your first badge: Financial Explorer!"
-                elif new_badges:
-                    personalized_message = f"🎉 Great job! You earned a new badge: {new_badges[-1]}"
-
-                logger.debug("Sending email")
-                # Send email
-                user_name = f"{form.first_name.data} {form.last_name.data}".strip()
-                email_sent = send_email(form.email.data, user_name, health_score, score_description, course_title, course_url, rank, total_users)
-                if not email_sent:
-                    personalized_message += " ⚠️ Unable to send email report. Please check your spam folder or contact support."
-
-                logger.debug("Submission successful, redirecting to dashboard")
-                flash("Data submitted successfully!", "success")
-                return redirect(url_for('dashboard', email=form.email.data, personalized_message=personalized_message))
-            except Exception as e:
-                logger.error(f"Error in submission processing: {e}\n{traceback.format_exc()}")
-                flash(f"Submission failed: {str(e)}. Please try again or contact support.", "error")
-                return redirect(url_for('home'))
-        else:
-            for field, errors in form.errors.items():
-                for error in errors:
-                    logger.warning(f"Form validation error in {field}: {error}")
-                    flash(f"Error in {field}: {error}", "error")
-            return redirect(url_for('home'))
-    except Exception as e:
-        logger.error(f"Outer submission error: {e}\n{traceback.format_exc()}")
-        flash(f"Submission failed: {str(e)}. Please try again or contact support.", "error")
-        return redirect(url_for('home'))
-
-# Dashboard route
-@app.route('/dashboard')
-def dashboard():
-    try:
-        email = request.args.get('email', 'test@example.com')
-        personalized_message = request.args.get('personalized_message', '')
-
-        all_users_df = fetch_data_from_sheet()
-        if all_users_df is None or all_users_df.empty:
-            logger.error("No data found in Google Sheet for dashboard.")
-            flash("No data found. Please try again later.", "error")
-            return redirect(url_for('home'))
-
-        numeric_cols = ['IncomeRevenue', 'ExpensesCosts', 'DebtLoan', 'DebtInterestRate']
-        for col in numeric_cols:
-            all_users_df[col] = pd.to_numeric(all_users_df[col], errors='coerce').fillna(0)
-
-        all_users_df = calculate_health_score(all_users_df)
-        all_users_df = all_users_df.sort_values(by='HealthScore', ascending=False)
-        all_users_df['Rank'] = range(1, len(all_users_df) + 1)
-
-        user_df = all_users_df[all_users_df['Email'] == email]
-        if user_df.empty:
-            logger.error(f"No data found for email: {email}")
-            flash(f"No data found for email: {email}.", "error")
-            return redirect(url_for('home'))
-
-        user_row = user_df.iloc[-1]
-        if not user_row['Badges']:
-            user_df = calculate_health_score(user_df)
-            new_badges = assign_badges(user_df, all_users_df)
-            user_df['Badges'] = ",".join(new_badges)
-
-        user_row = user_df.iloc[-1]
-        health_score = user_row['HealthScore']
-        rank = user_row['Rank']
-        total_users = len(all_users_df)
-        score_description = user_row['ScoreDescription']
-        course_title = user_row['CourseTitle']
-        course_url = user_row['CourseURL']
-        badges = user_row['Badges'].split(",") if user_row['Badges'] else []
-        cash_flow_score = round(user_row['NormCashFlow'] * 100, 2)
-        debt_to_income_score = round(user_row['NormDebtToIncome'] * 100, 2)
-        debt_interest_score = round(user_row['NormDebtInterest'] * 100, 2)
-        first_name = user_row['FirstName']
-        email = user_row['Email']
-
-        breakdown_data = {
-            "Component": ["Cash Flow", "Debt-to-Income Ratio", "Debt Interest Burden"],
-            "Score": [cash_flow_score, debt_to_income_score, debt_interest_score]
-        }
-        breakdown_df = pd.DataFrame(breakdown_data)
-        fig_breakdown = px.bar(
-            breakdown_df,
-            x="Score",
-            y="Component",
-            orientation='h',
-            title="Score Breakdown",
-            labels={"Score": "Score (out of 100)"},
-            color="Component",
-            color_discrete_sequence=px.colors.qualitative.Plotly
-        )
-        fig_breakdown.update_layout(showlegend=False)
-        breakdown_plot = fig_breakdown.to_html(full_html=False, include_plotlyjs=False)
-
-        fig_comparison = go.Figure()
-        fig_comparison.add_trace(
-            go.Scatter(
-                x=list(range(1, len(all_users_df) + 1)),
-                y=all_users_df['HealthScore'],
-                mode='lines+markers',
-                name='All Users',
-                line=dict(color='blue')
-            )
-        )
-        fig_comparison.add_trace(
-            go.Scatter(
-                x=[int(rank)],
-                y=[health_score],
-                mode='markers',
-                name='Your Score',
-                marker=dict(color='red', size=12, symbol='star')
-            )
-        )
-        fig_comparison.update_layout(
-            title="How You Compare to Others",
-            xaxis_title="User Rank",
-            yaxis_title="Health Score",
-            showlegend=True
-        )
-        comparison_plot = fig_comparison.to_html(full_html=False, include_plotlyjs=False)
-
-        return render_template(
-            'dashboard.html',
-            health_score=health_score,
-            rank=int(rank),
-            total_users=total_users,
-            score_description=score_description,
-            course_title=course_title,
-            course_url=course_url,
-            badges=badges,
-            personalized_message=personalized_message,
-            breakdown_plot=breakdown_plot,
-            comparison_plot=comparison_plot,
-            first_name=first_name,
-            email=email,
-            FEEDBACK_FORM_URL=FEEDBACK_FORM_URL,
-            WAITLIST_FORM_URL=WAITLIST_FORM_URL,
-            CONSULTANCY_FORM_URL=CONSULTANCY_FORM_URL
-        )
-    except Exception as e:
-        logger.error(f"Dashboard error: {e}")
-        flash(f"Error loading dashboard: {str(e)}. Please try again or contact support.", "error")
-        return redirect(url_for('home'))
-
-# Global error handler
-@app.errorhandler(Exception)
-def handle_exception(e):
-    logger.error(f"Unhandled exception: {e}\n{traceback.format_exc()}")
-    flash("An unexpected error occurred. Please try again or contact support.", "error")
-    return redirect(url_for('home'))
-
-if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port, debug=False)
+    subject = translations[language]['Top 10% Subject'] if top_10_percent else translations[language]['Score Report Subject'].format(user_name=user_name)
+    html
