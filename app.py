@@ -1,3 +1,4 @@
+```python
 from flask import Flask, render_template, request, redirect, url_for, flash, get_flashed_messages, send_from_directory
 from flask_wtf import FlaskForm
 from wtforms import StringField, FloatField, SubmitField, SelectField
@@ -498,10 +499,29 @@ def fetch_data_from_sheet(email=None, max_retries=5, delay=2):
             rows = values[1:] if len(values) > 1 else []
             expected_columns = PREDETERMINED_HEADERS
             
-            logger.debug(f"Attempt {attempt +overn
+            logger.debug(f"Attempt {attempt + 1}: Fetched {len(rows)} rows with headers: {headers}")
+            
+            # Create DataFrame
+            df = pd.DataFrame(rows, columns=headers)
+            
+            # Ensure all expected columns exist
+            for col in expected_columns:
+                if col not in df.columns:
+                    df[col] = None
+            
+            # Filter by email if provided
+            if email:
+                df = df[df['Email'] == email]
+            
+            logger.info(f"Successfully fetched data: {len(df)} rows for email {email if email else 'all'}")
+            return df
+        except Exception as e:
+            logger.error(f"Attempt {attempt + 1} failed: {e}")
+            if attempt < max_retries - 1:
+                time.sleep(delay * (2 ** attempt))
+                continue
+            logger.error("Max retries reached while fetching data.")
             return None
-    logger.error("Max retries reached while fetching data.")
-    return None
 
 # Calculate Financial Health Score
 def calculate_health_score(df):
@@ -605,3 +625,207 @@ def send_email(to_email, user_name, health_score, score_description, rank, total
         
         if not all([smtp_server, smtp_port, smtp_user, smtp_password]):
             logger.error("SMTP configuration environment variables not set.")
+            return False
+        
+        msg = MIMEMultipart()
+        msg['From'] = smtp_user
+        msg['To'] = to_email
+        subject = translations[language]['Top 10% Subject'] if rank <= total_users * 0.1 else translations[language]['Score Report Subject'].format(user_name=user_name)
+        msg['Subject'] = subject
+        
+        body = translations[language]['Email Body'].format(
+            user_name=user_name,
+            health_score=health_score,
+            score_description=score_description,
+            rank=rank,
+            total_users=total_users,
+            course_url=course_url,
+            course_title=course_title,
+            FEEDBACK_FORM_URL=FEEDBACK_FORM_URL,
+            WAITLIST_FORM_URL=WAITLIST_FORM_URL,
+            CONSULTANCY_FORM_URL=CONSULTANCY_FORM_URL
+        )
+        msg.attach(MIMEText(body, 'html'))
+        
+        with smtplib.SMTP(smtp_server, smtp_port) as server:
+            server.starttls()
+            server.login(smtp_user, smtp_password)
+            server.send_message(msg)
+        
+        logger.info(f"Email sent to {to_email}")
+        return True
+    except Exception as e:
+        logger.error(f"Error sending email to {to_email}: {e}")
+        return False
+
+# Generate breakdown plot
+def generate_breakdown_plot(user_df):
+    try:
+        if user_df.empty:
+            return None
+        user_row = user_df.iloc[0]
+        labels = ['Cash Flow', 'Debt-to-Income', 'Debt Interest']
+        values = [
+            user_row['NormCashFlow'] * 100 / 3,
+            user_row['NormDebtToIncome'] * 100 / 3,
+            user_row['NormDebtInterest'] * 100 / 3
+        ]
+        fig = px.pie(names=labels, values=values, title='Score Breakdown')
+        fig.update_layout(
+            margin=dict(l=20, r=20, t=40, b=20),
+            height=300,
+            paper_bgcolor='rgba(0,0,0,0)',
+            plot_bgcolor='rgba(0,0,0,0)'
+        )
+        return fig.to_html(full_html=False, include_plotlyjs=False)
+    except Exception as e:
+        logger.error(f"Error generating breakdown plot: {e}")
+        return None
+
+# Generate comparison plot
+def generate_comparison_plot(user_df, all_users_df):
+    try:
+        if user_df.empty or all_users_df.empty:
+            return None
+        user_score = user_df.iloc[0]['HealthScore']
+        scores = all_users_df['HealthScore'].astype(float)
+        fig = px.histogram(
+            x=scores,
+            nbins=20,
+            title='How Your Score Compares',
+            labels={'x': 'Financial Health Score', 'y': 'Number of Users'}
+        )
+        fig.add_vline(x=user_score, line_dash="dash", line_color="red")
+        fig.update_layout(
+            margin=dict(l=20, r=20, t=40, b=20),
+            height=300,
+            paper_bgcolor='rgba(0,0,0,0)',
+            plot_bgcolor='rgba(0,0,0,0)'
+        )
+        return fig.to_html(full_html=False, include_plotlyjs=False)
+    except Exception as e:
+        logger.error(f"Error generating comparison plot: {e}")
+        return None
+
+# Submit route
+@app.route('/submit', methods=['POST'])
+def submit():
+    form = SubmissionForm()
+    language = form.language.data if form.language.data in translations else 'English'
+    
+    if not form.validate_on_submit():
+        for field, errors in form.errors.items():
+            for error in errors:
+                flash(error, 'error')
+        return redirect(url_for('home', language=language))
+    
+    try:
+        # Prepare data
+        timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        data = [
+            timestamp,
+            form.business_name.data,
+            form.income_revenue.data,
+            form.expenses_costs.data,
+            form.debt_loan.data,
+            form.debt_interest_rate.data,
+            form.auto_email.data,
+            form.phone_number.data,
+            form.first_name.data,
+            form.last_name.data,
+            form.user_type.data,
+            form.email.data,
+            '',  # Badges (to be updated later)
+            form.language.data
+        ]
+        
+        # Append to Google Sheet
+        if not append_to_sheet(data):
+            flash(translations[language]['Error saving data. Please try again.'], 'error')
+            return redirect(url_for('home', language=language))
+        
+        # Fetch and process data
+        all_users_df = fetch_data_from_sheet()
+        if all_users_df is None:
+            flash(translations[language]['Error retrieving data. Please try again.'], 'error')
+            return redirect(url_for('home', language=language))
+        
+        user_df = fetch_data_from_sheet(email=form.email.data)
+        if user_df is None or user_df.empty:
+            flash(translations[language]['Error retrieving user data. Please try again.'], 'error')
+            return redirect(url_for('home', language=language))
+        
+        # Calculate scores
+        all_users_df = calculate_health_score(all_users_df)
+        user_df = calculate_health_score(user_df)
+        
+        # Assign badges
+        badges = assign_badges(user_df, all_users_df)
+        user_df['Badges'] = ','.join(badges)
+        
+        # Update badges in Google Sheet
+        user_row = all_users_df[all_users_df['Email'] == form.email.data].index
+        if not user_row.empty:
+            row_index = user_row[0] + 2  # +2 to account for header and 1-based indexing
+            service = authenticate_google_sheets()
+            if service:
+                sheet = service.spreadsheets()
+                sheet.values().update(
+                    spreadsheetId=SPREADSHEET_ID,
+                    range=f'Sheet1!M{row_index}',
+                    valueInputOption='RAW',
+                    body={'values': [[','.join(badges)]]}
+                ).execute()
+        
+        # Calculate rank
+        all_users_df = all_users_df.sort_values('HealthScore', ascending=False).reset_index(drop=True)
+        rank = all_users_df[all_users_df['Email'] == form.email.data].index[0] + 1
+        total_users = len(all_users_df)
+        
+        # Generate plots
+        breakdown_plot = generate_breakdown_plot(user_df)
+        comparison_plot = generate_comparison_plot(user_df, all_users_df)
+        
+        # Send email
+        user_row = user_df.iloc[0]
+        send_email(
+            to_email=form.email.data,
+            user_name=form.first_name.data,
+            health_score=user_row['HealthScore'],
+            score_description=user_row['ScoreDescription'],
+            rank=rank,
+            total_users=total_users,
+            course_title=user_row['CourseTitle'],
+            course_url=user_row['CourseURL'],
+            language=form.language.data
+        )
+        
+        # Render dashboard
+        return render_template(
+            'dashboard.html',
+            translations=translations,
+            language=form.language.data,
+            first_name=form.first_name.data,
+            last_name=form.last_name.data or '',
+            email=form.email.data,
+            health_score=user_row['HealthScore'],
+            rank=rank,
+            total_users=total_users,
+            badges=badges,
+            course_title=user_row['CourseTitle'],
+            course_url=user_row['CourseURL'],
+            breakdown_plot=breakdown_plot,
+            comparison_plot=comparison_plot,
+            personalized_message=user_row['ScoreDescription'],
+            FEEDBACK_FORM_URL=FEEDBACK_FORM_URL,
+            WAITLIST_FORM_URL=WAITLIST_FORM_URL,
+            CONSULTANCY_FORM_URL=CONSULTANCY_FORM_URL
+        )
+    except Exception as e:
+        logger.error(f"Error processing submission: {e}")
+        flash(translations[language]['An unexpected error occurred. Please try again.'], 'error')
+        return redirect(url_for('home', language=language))
+
+if __name__ == '__main__':
+    app.run(debug=True)
+```
