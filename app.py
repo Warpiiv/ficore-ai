@@ -1,7 +1,7 @@
 # Ficore Africa Financial Health Score Application
 # File: app.py
 # Purpose: Flask app to calculate financial health scores, store data in Google Sheets, and render user dashboards
-# Version: Updated April 30, 2025, to fix email sending issue by removing unsupported CSS and remove unused fields
+# Version: Updated April 30, 2025, to fix email sending issue by removing unsupported CSS
 # Repository: https://github.com/Warpiiv/ficore-ai
 
 # Import required libraries
@@ -115,9 +115,11 @@ translations = {
         'Personal Information': 'Personal Information',
         'Enter your first name': 'Enter your first name',
         'First Name Required': 'First name is required.',
+        'Enter your last name (optional)': 'Enter your last name (optional)',
         'Enter your email': 'Enter your email',
         'Invalid Email': 'Please enter a valid email address.',
         'Confirm your email': 'Confirm your email',
+        'Enter phone number (optional)': 'Enter phone number (optional)',
         'Language': 'Language',
         'User Information': 'User Information',
         'Enter your business name': 'Enter your business name',
@@ -186,7 +188,7 @@ translations = {
     },
     'Hausa': {
         'Welcome': 'Barka da zuwa',
-        'Email': 'Email',
+        'Email': 'Imel',
         'Your Financial Health Summary': 'Takaitaccen Bayanai Akan Lafiyar Kuɗin Ku!',
         'Your Financial Health Score': 'Maki Da Lafiyar Kuɗin Ku Ta Samu:',
         'Ranked': 'Darajar Lafiyar Kuɗin Ku',
@@ -226,7 +228,7 @@ translations = {
         'Reduce': 'Rage',
         'Reduce Debt': 'Fifita biyan Bashi masu Interest don sauƙaƙe damuwar kuɗi.',
         'Boost': 'Ƙarfafa',
-        'Boost Income': 'Bincika ayyuka a gefe ko ka nemi sabbin hanyoyin samun kuɗi don inganta Arzikinka.',
+        'Boost Income': 'Bincika ayyukan a gefe ko ka nemi sabbin hanyoyin samun kuɗi don inganta Arzikinka.',
         'How You Compare': 'Kwatanta ku da Sauran Masu Amfani da Ficore',
         'Your Rank': 'Matsayin ku',
         'places you': 'ya sanya ku',
@@ -247,9 +249,11 @@ translations = {
         'Personal Information': 'Bayanan Kai',
         'Enter your first name': 'Shigar da sunanka na farko',
         'First Name Required': 'Ana buƙatar sunan farko.',
+        'Enter your last name (optional)': 'Shigar da sunanka na ƙarshe (na zaɓi)',
         'Enter your email': 'Shigar da email ɗinka',
         'Invalid Email': 'Da fatan za a shigar da adireshin email mai inganci.',
         'Confirm your email': 'Sake Tabbatar da email ɗinka',
+        'Enter phone number (optional)': 'Shigar da lambar waya (na zaɓi)',
         'Language': 'Zabi Yare',
         'User Information': 'Bayanan Ka',
         'Enter your business name': 'Shigar da sunan kasuwancinka',
@@ -275,7 +279,7 @@ translations = {
                 <div style="background-color: #1E7F71; padding: 20px; border-radius: 10px; text-align: center; margin-bottom: 20px;">
                     <h2 style="color: #FFFFFF; margin: 0;">Makin Lafiyar Kuɗinku na Ficore Africa</h2>
                     <p style="font-style: italic; color: #E0F7FA; font-size: 0.9rem; margin: 5px 0 0 0;">
-                        Tikitin ci gaban arziki na yan Afirka
+                        Tikitin ci gaban arciki na yan Afirka
                     </p>
                 </div>
                 <p>Barka Da Warhaka {user_name},</p>
@@ -321,7 +325,7 @@ translations = {
 # Define constants for Google Sheets and external URLs
 SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
 SPREADSHEET_ID = '13hbiMTMRBHo9MHjWwcugngY_aSiuxII67HCf03MiZ8I'
-DATA_RANGE_NAME = 'Sheet1!A1:L'  # Updated range to match new headers (A to L)
+DATA_RANGE_NAME = 'Sheet1!A1:N'
 RESULTS_SHEET_NAME = 'FicoreAfricaResults'
 RESULTS_HEADER = ['Email', 'FicoreAfricaScore', 'FicoreAfricaRank']
 FEEDBACK_FORM_URL = 'https://forms.gle/NkiLicSykLyMnhJk7'
@@ -333,7 +337,8 @@ DEBT_COURSE_URL = 'https://youtube.com/@ficore.africa?si=myoEpotNALfGK4eI'
 RECOVERY_COURSE_URL = 'https://youtube.com/@ficore.africa?si=myoEpotNALfGK4eI'
 PREDETERMINED_HEADERS = [
     'Timestamp', 'BusinessName', 'IncomeRevenue', 'ExpensesCosts', 'DebtLoan',
-    'DebtInterestRate', 'AutoEmail', 'FirstName', 'UserType', 'Email', 'Badges', 'Language'
+    'DebtInterestRate', 'AutoEmail', 'PhoneNumber', 'FirstName', 'LastName',
+    'UserType', 'Email', 'Badges', 'Language'
 ]
 
 # Define Flask-WTF form for user submissions
@@ -344,7 +349,9 @@ class SubmissionForm(FlaskForm):
     debt_loan = StringField('Debt Loan', validators=[DataRequired()])
     debt_interest_rate = StringField('Debt Interest Rate', validators=[DataRequired()])
     auto_email = StringField('Confirm Your Email', validators=[DataRequired(), Email()])
+    phone_number = StringField('Phone Number')
     first_name = StringField('First Name', validators=[DataRequired()])
+    last_name = StringField('Last Name')
     user_type = SelectField('User Type', choices=[('Business', 'Business'), ('Individual', 'Individual')], validators=[DataRequired()])
     email = StringField('Email', validators=[DataRequired(), Email()])
     language = SelectField('Language', choices=[('English', 'English'), ('Hausa', 'Hausa')], validators=[DataRequired()])
@@ -429,7 +436,7 @@ def get_sheet_headers():
             logger.error("Failed to authenticate with Google Sheets.")
             return None
         sheet = service.spreadsheets()
-        result = sheet.values().get(spreadsheetId=SPREADSHEET_ID, range='Sheet1!A1:L1').execute()  # Updated range
+        result = sheet.values().get(spreadsheetId=SPREADSHEET_ID, range='Sheet1!A1:N1').execute()
         headers = result.get('values', [[]])[0]
         return headers
     except Exception as e:
@@ -447,7 +454,7 @@ def set_sheet_headers():
         body = {'values': [PREDETERMINED_HEADERS]}
         sheet.values().update(
             spreadsheetId=SPREADSHEET_ID,
-            range='Sheet1!A1:L1',  # Updated range
+            range='Sheet1!A1:N1',
             valueInputOption='RAW',
             body=body
         ).execute()
@@ -499,7 +506,7 @@ def append_to_sheet(data):
             logger.error(f"Data length ({len(data)}) does not match headers ({len(PREDETERMINED_HEADERS)}): {data}")
             return False
 
-        range_to_update = f'Sheet1!A{row_count + 1}:L{row_count + 1}'  # Updated range
+        range_to_update = f'Sheet1!A{row_count + 1}:N{row_count + 1}'
         body = {'values': [data]}
         sheet.values().update(
             spreadsheetId=SPREADSHEET_ID,
@@ -731,6 +738,65 @@ def send_email(to_email, user_name, health_score, score_description, rank, total
         logger.error(f"Error sending email to {to_email}: {e}")
         return False
 
+# Generate pie chart for score breakdown
+def generate_breakdown_plot(user_df):
+    try:
+        if user_df.empty:
+            return None
+        
+        # Sort by Timestamp to get the most recent submission
+        user_df['Timestamp'] = pd.to_datetime(user_df['Timestamp'], format='mixed', dayfirst=True, errors='coerce')
+        user_df = user_df.sort_values('Timestamp', ascending=False)
+        user_row = user_df.iloc[0]
+        
+        labels = ['Cash Flow', 'Debt-to-Income', 'Debt Interest']
+        values = [
+            user_row['NormCashFlow'] * 100 / 3,
+            user_row['NormDebtToIncome'] * 100 / 3,
+            user_row['NormDebtInterest'] * 100 / 3
+        ]
+        fig = px.pie(names=labels, values=values, title='Score Breakdown')
+        fig.update_layout(
+            margin=dict(l=20, r=20, t=40, b=20),
+            height=300,
+            paper_bgcolor='rgba(0,0,0,0)',
+            plot_bgcolor='rgba(0,0,0,0)'
+        )
+        return fig.to_html(full_html=False, include_plotlyjs=False)
+    except Exception as e:
+        logger.error(f"Error generating breakdown plot: {e}")
+        return None
+
+# Generate histogram for score comparison
+def generate_comparison_plot(user_df, all_users_df):
+    try:
+        if user_df.empty or all_users_df.empty:
+            return None
+        
+        # Sort by Timestamp to get the most recent submission
+        user_df['Timestamp'] = pd.to_datetime(user_df['Timestamp'], format='mixed', dayfirst=True, errors='coerce')
+        user_df = user_df.sort_values('Timestamp', ascending=False)
+        user_score = user_df.iloc[0]['HealthScore']
+        
+        scores = all_users_df['HealthScore'].astype(float)
+        fig = px.histogram(
+            x=scores,
+            nbins=20,
+            title='How Your Score Compares',
+            labels={'x': 'Financial Health Score', 'y': 'Number of Users'}
+        )
+        fig.add_vline(x=user_score, line_dash="dash", line_color="red")
+        fig.update_layout(
+            margin=dict(l=20, r=20, t=40, b=20),
+            height=300,
+            paper_bgcolor='rgba(0,0,0,0)',
+            plot_bgcolor='rgba(0,0,0,0)'
+        )
+        return fig.to_html(full_html=False, include_plotlyjs=False)
+    except Exception as e:
+        logger.error(f"Error generating comparison plot: {e}")
+        return None
+
 # Handle form submission and render dashboard
 @app.route('/submit', methods=['POST'])
 def submit():
@@ -764,7 +830,9 @@ def submit():
             form.debt_loan.data,
             form.debt_interest_rate.data,
             form.auto_email.data,
+            form.phone_number.data,
             form.first_name.data,
+            form.last_name.data,
             form.user_type.data,
             form.email.data,
             '',  # Badges (updated later)
@@ -818,7 +886,7 @@ def submit():
                 sheet = service.spreadsheets()
                 sheet.values().update(
                     spreadsheetId=SPREADSHEET_ID,
-                    range=f'Sheet1!K{row_index}',  # Updated column (Badges is now in column K)
+                    range=f'Sheet1!M{row_index}',
                     valueInputOption='RAW',
                     body={'values': [[','.join(badges)]]}
                 ).execute()
@@ -839,19 +907,10 @@ def submit():
         
         # Prepare user_data for the chart
         logger.info("Preparing user_data for dashboard")
-        # Compute the normalized scores as expected by dashboard.html
-        income = float(re.sub(r'[,]', '', form.income_revenue.data)) if form.income_revenue.data else 0.0
-        expenses = float(re.sub(r'[,]', '', form.expenses_costs.data)) if form.expenses_costs.data else 0.0
-        debt = float(re.sub(r'[,]', '', form.debt_loan.data)) if form.debt_loan.data else 0.0
-        debt_interest_rate = float(re.sub(r'[,]', '', form.debt_interest_rate.data)) if form.debt_interest_rate.data else 0.0
-        income_safe = income if income != 0 else 1e-10
-        cash_flow_ratio = (income - expenses) / income_safe
-        debt_to_income_ratio = debt / income_safe
-        debt_interest_burden = (debt_interest_rate / 20).clip(0, 1)
         user_data = {
-            'cash_flow_score': (cash_flow_ratio.clip(0, 1) * 100 / 3),  # Scaled to match dashboard's bar chart
-            'debt_to_income_score': ((1 - debt_to_income_ratio.clip(0, 1)) * 100 / 3),
-            'debt_interest_burden': ((1 - debt_interest_burden) * 100 / 3)
+            'income': float(re.sub(r'[,]', '', form.income_revenue.data)) if form.income_revenue.data else 0.0,
+            'expenses': float(re.sub(r'[,]', '', form.expenses_costs.data)) if form.expenses_costs.data else 0.0,
+            'debt': float(re.sub(r'[,]', '', form.debt_loan.data)) if form.debt_loan.data else 0.0
         }
         
         # Use the health_score from the most recent submission
@@ -861,8 +920,13 @@ def submit():
         logger.info("Preparing peer_data for dashboard")
         average_score = all_users_df['HealthScore'].mean() if not all_users_df.empty else 50.0
         peer_data = {
-            'average_score': round(average_score, 2)  # Renamed to match dashboard.html expectation
+            'averageScore': round(average_score, 2)
         }
+        
+        # Generate dashboard plots (your existing Plotly plots)
+        logger.info("Generating dashboard plots")
+        breakdown_plot = generate_breakdown_plot(user_df)
+        comparison_plot = generate_comparison_plot(user_df, all_users_df)
         
         # Send score report email
         logger.info("Sending score report email")
@@ -880,22 +944,25 @@ def submit():
         if not email_sent:
             logger.warning(f"Failed to send email to {form.email.data}, but proceeding to render dashboard.")
         
-        # Render dashboard with user data
+        # Render dashboard with user data, including the new variables
         logger.info("Rendering dashboard")
         return render_template(
             'dashboard.html',
             translations=translations,
             language=form.language.data,
             first_name=form.first_name.data,
+            last_name=form.last_name.data or '',
             email=form.email.data,
-            user_data=user_data,
-            health_score=health_score,
-            peer_data=peer_data,
+            user_data=user_data,  # Added for chart
+            health_score=health_score,  # Added for chart
+            peer_data=peer_data,  # Added for chart
             rank=rank,
             total_users=total_users,
             badges=badges,
             course_title=most_recent_row['CourseTitle'],
             course_url=most_recent_row['CourseURL'],
+            breakdown_plot=breakdown_plot,
+            comparison_plot=comparison_plot,
             personalized_message=most_recent_row['ScoreDescription'],
             FEEDBACK_FORM_URL=FEEDBACK_FORM_URL,
             WAITLIST_FORM_URL=WAITLIST_FORM_URL,
