@@ -319,7 +319,7 @@ translations = {
             </html>
         ''',
         'First Health Score Completed!': 'Makin Lafiyar Arziki na Farko ya Kammala!',
-        'Financial Stability Achieved!': 'Akwai Kwanciyar Hankali na Kuɗi!',
+        'Financial Stability Achieved!': 'Akwai Wadata!',
         'Debt Slayer!': 'Mai Ragargaza Bashi!',
         'Submission Success': 'An shigar da bayananka cikin nasara! Duba allon bayananka a ƙasa 👇',
         'Check Inbox': 'Da fatan za a duba akwatin saƙonku Inbox ko foldar na Spam ko Junk idan email ɗin bai zo ba cikin ƴan mintuna.',
