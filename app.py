@@ -182,21 +182,24 @@ translations = {
         ''',
         'First Health Score Completed!': 'First Health Score Completed!',
         'Financial Stability Achieved!': 'Financial Stability Achieved!',
-        'Debt Slayer!': 'Debt Slayer!'
+        'Debt Slayer!': 'Debt Slayer!',
+        'Submission Success': 'Your information is submitted successfully! Check your dashboard below 👇',
+        'Check Inbox': 'Please check your inbox or junk folders if email doesn’t arrive in a few minutes.',
+        'Your Financial Health Dashboard': 'Your Financial Health Dashboard'
     },
     'Hausa': {
         'Welcome': 'Barka da zuwa',
         'Email': 'Imel',
-        'Your Financial Health Summary': 'Takaitaccen Bayanai Akan Lafiyar Kuɗin Ku',
-        'Your Financial Health Score': 'Maki Da Lafiyar Kuɗin Ku Ta Samu',
+        'Your Financial Health Summary': 'Takaitaccen Bayanai Akan Lafiyar Kuɗin Ku!',
+        'Your Financial Health Score': 'Maki Da Lafiyar Kuɗin Ku Ta Samu:',
         'Ranked': 'Darajar Lafiyar Kuɗin Ku',
         'out of': 'Daga Cikin',
-        'users': 'Dukkan Masu Amfani Da Ficore Zuwa Yanzu',
+        'users': 'Dukkan Masu Amfani Da Ficore Zuwa Yanzu.',
         'Strong Financial Health': 'Makin ku yana nuna ƙarfin lafiyar kuɗinku. Ku Mai da hankali kan zuba hannun jari daga cikin kuɗin da ya rage muku don haɓaka dukiyarku.',
         'Stable Finances': 'Makin Kuɗin ku suna Nuni da kwanciyar hankali, amma zaku iya ingantashi duk da haka. Yi la’akari da adanawa ko rage wani bangare na kuɗin ta hanyar ajiya don gaba.',
         'Financial Strain': 'Makin ku yana nuna Akwai damuwar kuɗi. Ku Fifita biyan bashi sannan ku sarrafa kashe kuɗinku dakyau.',
         'Urgent Attention Needed': 'Makin Kuɗin ku suna Nuna buƙatar kulawa cikin gaggawa. Ku Nemi shawarar ƙwararru kuma Ku bincika dabarun farfadowa daga wannan yanayi.',
-        'Score Breakdown': 'Rarraba Makiyo',
+        'Score Breakdown': 'Rarraban Makin ku',
         'Chart Unavailable': 'Zanen Lissafi ba ya samuwa a wannan lokacin saboda Netowrk.',
         'Score Composition': 'Makin ku ya ƙunshi abubuwa uku',
         'Cash Flow': 'Kuɗin da Kuke Samu',
@@ -210,11 +213,11 @@ translations = {
         'Components Indicate Challenges': 'Abubuwan da ke ciki suna nuna ƙalubale. Yi aiki kan ƙara kuɗin shiga, rage kashe kuɗi, ko rage Interest da kake biya akan bashi.',
         'Your Badges': 'Lambar Yabon Ku',
         'No Badges Yet': 'Ba a sami Lambar Yabo ba tukuna. Ci gaba da Aiki da Ficore don samun Sabbin Lambobin Yabo!',
-        'Recommended Learning': 'Shawari aka Koyon Inganta Neman Kudi da Ajiya',
+        'Recommended Learning': 'Shawari aka Koyon Inganta Neman Kudi da Ajiya.',
         'Recommended Course': 'Darasi da Aka Shawarta Maka',
         'Enroll in': 'Shiga ciki',
         'Enroll Now': 'Shiga Yanzu',
-        'Quick Financial Tips': 'Shawarwari na Kuɗi na Masu Muhimmanci',
+        'Quick Financial Tips': 'Shawarwari na Kuɗi Masu Muhimmanci',
         'Invest': 'Saka hannun jari',
         'Invest Wisely': 'Sanya kuɗin da ya rage maka a cikin hannayen jari masu ƙarancin haɗari kamar takardun shaida daga Gwamnati ko Manyan Kamfanuwa don haɓaka dukiyarku.',
         'Scale': 'Faɗaɗa',
@@ -227,15 +230,15 @@ translations = {
         'Reduce Debt': 'Fifita biyan Bashi masu Interest don sauƙaƙe damuwar kuɗi.',
         'Boost': 'Ƙarfafa',
         'Boost Income': 'Bincika ayyukan a gefe ko ka nemi sabbin hanyoyin samun kuɗi don inganta Arzikinka.',
-        'How You Compare': 'Yadda Kuke Kwatanta da Sauran Masu Amfani da Ficore',
+        'How You Compare': 'Kwatanta ku da Sauran Masu Amfani da Ficore',
         'Your Rank': 'Matsayin ku',
         'places you': 'ya sanya ku',
         'Top 10%': 'a cikin sama da kaso goma 10% na masu amfani da Ficore, yana nuna akwai kyawun lafiyar kuɗi idan aka kwatanta da Sauran Mutane.',
         'Top 30%': 'a cikin sama da kaso talatin 30%, yana nuna akwai kwanciyar hankali na kuɗi sama da yawancin Mutane.',
-        'Middle Range': 'a cikin tsaka-tsaki, yana nuna akwai sarari don ingantawa samu domin hawa matsayi na gaba.',
+        'Middle Range': 'a cikin tsaka-tsaki, yana nuna akwai sarari don inganta samu domin hawa matsayi na gaba.',
         'Lower Range': 'a cikin mataki na ƙasa, yana nuna akwai buƙatar ku tsara kuɗinku dakyau cikin dabara daga yanzu.',
         'Regular Submissions': 'Amfani da Ficore akai-akai zai taimaka muku wajen bin diddigin ci gaban ku da kanku, don inganta matsayin Arzikinku.',
-        'Whats Next': 'Me ke Gaba? Ku Duba Wadannan',
+        'Whats Next': 'Me ke Gaba? Ku Duba Wadannan:',
         'Back to Home': 'Koma Sahfin Farko',
         'Provide Feedback': 'Danna Idan Kana da Shawara',
         'Join Waitlist': 'Masu Jiran Ficore Premium',
@@ -282,7 +285,7 @@ translations = {
                 <p>Mai girma {user_name},</p>
                 <p>Mun ƙididdige Makin Lafiyar Kuɗinku ta hanyar amfani da Ficore Africa bisa bayan da kuka bayar.</p>
                 <ul>
-                    <li><strong>Makiyo</strong>: {health_score}/100</li>
+                    <li><strong>Maki</strong>: {health_score}/100</li>
                     <li><strong>Shawara</strong>: {score_description}</li>
                     <li><strong>Matsayi</strong>: #{int(rank)} daga cikin {total_users} masu amfani</li>
                 </ul>
@@ -304,7 +307,7 @@ translations = {
                     <a href="{CONSULTANCY_FORM_URL}" style="display: inline-block; padding: 10px 20px; background-color: #388E3C; color: white; text-decoration: none; border-radius: 5px; font-size: 0.9rem;">Shiga Jerin Masu So</a>
                 </p>
                 <p style="margin-bottom: 10px;">
-                    Idan ba ku ga wannan email a cikin akwatin saƙonninku ba, ku duba foldar mai suna Spam ko Junk a email ɗinku.
+                    Idan ba ku ga wannan email a cikin akwatin saƙonninku ba Inbox, ku duba foldar mai suna Spam ko Junk a email ɗinku.
                 </p>
                 <style>
                     a:hover { background-color: #1B5E20 !important; }
@@ -315,9 +318,12 @@ translations = {
             </body>
             </html>
         ''',
-        'First Health Score Completed!': 'Makin Lafiyar Arziki na Farko An Kammala!',
+        'First Health Score Completed!': 'Makin Lafiyar Arziki na Farko ya Kammala!',
         'Financial Stability Achieved!': 'Akwai Kwanciyar Hankali na Kuɗi!',
-        'Debt Slayer!': 'Mai Ragargaza Bashi!'
+        'Debt Slayer!': 'Mai Ragargaza Bashi!',
+        'Submission Success': 'An shigar da bayananka cikin nasara! Duba allon bayananka a ƙasa 👇',
+        'Check Inbox': 'Da fatan za a duba akwatin saƙonku Inbox ko foldar na Spam ko Junk idan email ɗin bai zo ba cikin ƴan mintuna.',
+        'Your Financial Health Dashboard': 'Allon Lafiyar Kuɗin Ku'
     }
 }
 
