@@ -1,7 +1,7 @@
 # Ficore Africa Financial Health Score Application
 # File: app.py
 # Purpose: Flask app to calculate financial health scores, store data in Google Sheets, and render user dashboards
-# Version: Updated April 30, 2025, to fix CSRF token expiration issue
+# Version: Updated April 30, 2025, to fix email sending issue by removing unsupported CSS
 # Repository: https://github.com/Warpiiv/ficore-ai
 
 # Import required libraries
@@ -175,11 +175,6 @@ translations = {
                 <p style="margin-bottom: 10px;">
                     If you don’t see this email in your inbox, please check your spam or junk folder.
                 </p>
-                <style>
-                    a:hover { background-color: #1B5E20 !important; }
-                    a[href="{WAITLIST_FORM_URL}"]:hover { background-color: #0D47A1 !important; }
-                    a[href="{course_url}"]:hover { background-color: #F9A825 !important; }
-                </style>
                 <p>Best regards,<br>The Ficore Africa Team</p>
             </body>
             </html>
@@ -314,11 +309,6 @@ translations = {
                 <p style="margin-bottom: 10px;">
                     Idan ba ku ga wannan email a cikin akwatin saƙonninku ba Inbox, ku duba foldar mai suna Spam ko Junk a email ɗinku.
                 </p>
-                <style>
-                    a:hover { background-color: #1B5E20 !important; }
-                    a[href="{WAITLIST_FORM_URL}"]:hover { background-color: #0D47A1 !important; }
-                    a[href="{course_url}"]:hover { background-color: #F9A825 !important; }
-                </style>
                 <p>Gaisuwa,<br>Daga Ƙungiyar Ficore Africa</p>
             </body>
             </html>
