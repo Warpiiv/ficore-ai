@@ -186,7 +186,7 @@ translations = {
     },
     'Hausa': {
         'Welcome': 'Barka da zuwa',
-        'Email': 'Imel',
+        'Email': 'Email',
         'Your Financial Health Summary': 'Takaitaccen Bayanai Akan Lafiyar Kuɗin Ku!',
         'Your Financial Health Score': 'Maki Da Lafiyar Kuɗin Ku Ta Samu:',
         'Ranked': 'Darajar Lafiyar Kuɗin Ku',
@@ -226,7 +226,7 @@ translations = {
         'Reduce': 'Rage',
         'Reduce Debt': 'Fifita biyan Bashi masu Interest don sauƙaƙe damuwar kuɗi.',
         'Boost': 'Ƙarfafa',
-        'Boost Income': 'Bincika ayyukan a gefe ko ka nemi sabbin hanyoyin samun kuɗi don inganta Arzikinka.',
+        'Boost Income': 'Bincika ayyuka a gefe ko ka nemi sabbin hanyoyin samun kuɗi don inganta Arzikinka.',
         'How You Compare': 'Kwatanta ku da Sauran Masu Amfani da Ficore',
         'Your Rank': 'Matsayin ku',
         'places you': 'ya sanya ku',
@@ -275,7 +275,7 @@ translations = {
                 <div style="background-color: #1E7F71; padding: 20px; border-radius: 10px; text-align: center; margin-bottom: 20px;">
                     <h2 style="color: #FFFFFF; margin: 0;">Makin Lafiyar Kuɗinku na Ficore Africa</h2>
                     <p style="font-style: italic; color: #E0F7FA; font-size: 0.9rem; margin: 5px 0 0 0;">
-                        Tikitin ci gaban arciki na yan Afirka
+                        Tikitin ci gaban arziki na yan Afirka
                     </p>
                 </div>
                 <p>Barka Da Warhaka {user_name},</p>
