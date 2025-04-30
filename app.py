@@ -173,7 +173,7 @@ translations = {
                     <a href="{CONSULTANCY_FORM_URL}" style="display: inline-block; padding: 10px 20px; background-color: #388E3C; color: white; text-decoration: none; border-radius: 5px; font-size: 0.9rem;">Book Consultancy</a>
                 </p>
                 <p style="margin-bottom: 10px;">
-                    If you don’t see this email in your inbox, please check your spam or junk folder.
+                    Have a Nice Day!.
                 </p>
                 <p>Best regards,<br>The Ficore Africa Team</p>
             </body>
@@ -210,7 +210,7 @@ translations = {
         'Balanced Components': 'Abubuwan da ke ciki suna nuna daidaitaccen lafiyar kuɗi. Ci gaba da kiyaye kuɗi ta hanya mai kyau kuma da ƙarancin bashi.',
         'Components Need Attention': 'Ɗaya ko fiye da abubuwan da ke ciki na iya buƙatar kulawa. Mai da hankali kan inganta samun kuɗi ko rage bashi.',
         'Components Indicate Challenges': 'Abubuwan da ke ciki suna nuna ƙalubale. Yi aiki kan ƙara kuɗin shiga, rage kashe kuɗin, ko rage Interest da kake biya akan bashi.',
-        'Your Badges': 'Lambar Yabon',
+        'Your Badges': 'Lambar Yabo',
         'No Badges Yet': 'Ba a sami Lambar Yabo ba tukuna. Ci gaba da Aiki da Ficore don samun Sabbin Lambobin Yabo!',
         'Recommended Learning': 'Shawari aka Koyon Inganta Neman Kudi da Ajiya.',
         'Recommended Course': 'Darasi da Aka Shawarta Maka',
@@ -282,7 +282,7 @@ translations = {
                         Tikitin ci gaban arciki na yan Afirka
                     </p>
                 </div>
-                <p>Mai girma {user_name},</p>
+                <p>Barka Da Warhaka {user_name},</p>
                 <p>Mun ƙididdige Makin Lafiyar Kuɗinku ta hanyar amfani da Ficore Africa bisa bayanan da kuka bayar.</p>
                 <ul>
                     <li><strong>Maki</strong>: {health_score}/100</li>
@@ -300,14 +300,14 @@ translations = {
                 </p>
                 <p style="margin-bottom: 10px;">
                     Kuna son Shawarar daga Kwararru? Shiga jerin jiran Ficore Premium: 
-                    <a href="{WAITLIST_FORM_URL}" style="display: inline-block; padding: 10px 20px; background-color: #1976D2; color: white; text-decoration: none; border-radius: 5px; font-size: 0.9rem;">Shiga Jerin Jirage</a>
+                    <a href="{WAITLIST_FORM_URL}" style="display: inline-block; padding: 10px 20px; background-color: #1976D2; color: white; text-decoration: none; border-radius: 5px; font-size: 0.9rem;">Shiga Jerin Jira</a>
                 </p>
                 <p style="margin-bottom: 10px;">
                     Kuna buƙatar shawarwari keɓaɓɓu? 
                     <a href="{CONSULTANCY_FORM_URL}" style="display: inline-block; padding: 10px 20px; background-color: #388E3C; color: white; text-decoration: none; border-radius: 5px; font-size: 0.9rem;">Shiga Jerin Masu So</a>
                 </p>
                 <p style="margin-bottom: 10px;">
-                    Idan ba ku ga wannan email a cikin akwatin saƙonninku ba Inbox, ku duba foldar mai suna Spam ko Junk a email ɗinku.
+                    A huta Lafiya!
                 </p>
                 <p>Gaisuwa,<br>Daga Ƙungiyar Ficore Africa</p>
             </body>
