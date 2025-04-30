@@ -1,7 +1,7 @@
 # Ficore Africa Financial Health Score Application
 # File: app.py
 # Purpose: Flask app to calculate financial health scores, store data in Google Sheets, and render user dashboards
-# Version: Updated April 29, 2025, to fix ValueError in timestamp parsing due to mixed formats
+# Version: Updated April 30, 2025, to fix Object of type Undefined is not JSON serializable error
 # Repository: https://github.com/Warpiiv/ficore-ai
 
 # Import required libraries
@@ -52,14 +52,14 @@ translations = {
     'English': {
         'Welcome': 'Welcome',
         'Email': 'Email',
-        'Your Financial Health Summary': 'Your Financial Health Summary',
+        'Your Financial Health Summary': 'Your Financial Health Summary:',
         'Your Financial Health Score': 'Your Financial Health Score',
         'Ranked': 'Ranked',
         'out of': 'out of',
         'users': 'users',
-        'Strong Financial Health': 'Your score indicates strong financial health. Focus on investing surplus funds to grow your wealth.',
-        'Stable Finances': 'Your finances are stable but could improve. Consider saving more or reducing expenses.',
-        'Financial Strain': 'Your score suggests financial strain. Prioritize paying off debt and managing expenses.',
+        'Strong Financial Health': 'Your score indicates strong financial health. Focus on investing the surplus funds to grow your wealth.',
+        'Stable Finances': 'Your finances are stable but could improve. Consider saving more or reducing your expenses.',
+        'Financial Strain': 'Your score suggests financial strain. Prioritize paying off debt and managing your expenses.',
         'Urgent Attention Needed': 'Your finances need urgent attention. Seek professional advice and explore recovery strategies.',
         'Score Breakdown': 'Score Breakdown',
         'Chart Unavailable': 'Chart unavailable at this time.',
@@ -81,17 +81,17 @@ translations = {
         'Enroll Now': 'Enroll Now',
         'Quick Financial Tips': 'Quick Financial Tips',
         'Invest': 'Invest',
-        'Invest Wisely': 'Allocate surplus cash to low-risk investments like treasuryresearcher.com (https://www.researcher.com) treasury bonds to grow wealth.',
+        'Invest Wisely': 'Allocate surplus cash to low-risk investments like treasury bills or treasury bonds to grow your wealth.',
         'Scale': 'Scale',
         'Scale Smart': 'Reinvest profits into your business to expand operations sustainably.',
         'Build': 'Build',
         'Build Savings': 'Save 10% of your income monthly to create an emergency fund.',
         'Cut': 'Cut',
-        'Cut Costs': 'Review expenses and reduce non-essential spending to boost cash flow.',
+        'Cut Costs': 'Review needs and wants - check expenses and reduce non-essential spending to boost cash flow.',
         'Reduce': 'Reduce',
         'Reduce Debt': 'Prioritize paying off high-interest loans to ease financial strain.',
         'Boost': 'Boost',
-        'Boost Income': 'Explore side hustles or new revenue streams to improve cash flow.',
+        'Boost Income': 'Explore side hustles or new income streams to improve cash flow.',
         'How You Compare': 'How You Compare to Others',
         'Your Rank': 'Your rank of',
         'places you': 'places you',
@@ -105,7 +105,7 @@ translations = {
         'Provide Feedback': 'Provide Feedback',
         'Join Waitlist': 'Join Premium Waitlist',
         'Book Consultancy': 'Book Consultancy',
-        'Contact Us': 'Contact us at',
+        'Contact Us': 'Contact us at:',
         'for support': 'for support',
         'Ficore Africa Financial Health Score': 'Ficore Africa Financial Health Score',
         'Get Your Score': 'Get your financial health score and personalized insights instantly!',
@@ -187,137 +187,137 @@ translations = {
     'Hausa': {
         'Welcome': 'Barka da zuwa',
         'Email': 'Imel',
-        'Your Financial Health Summary': 'Takaitaccen Lafiyar Kuɗin Ku',
-        'Your Financial Health Score': 'Makiyon Lafiyar Kuɗin Ku',
-        'Ranked': 'An sanya daraja',
-        'out of': 'daga cikin',
-        'users': 'masu amfani',
-        'Strong Financial Health': 'Makiyon ku yana nuna ƙarfin lafiyar kuɗi. Mai da hankali kan saka hannun jari a cikin kuɗin da ya rage don haɓaka dukiya.',
-        'Stable Finances': 'Kuɗin ku suna da kwanciyar hankali amma suna iya inganta. Yi la’akari da adanawa ko rage kashe kuɗi.',
-        'Financial Strain': 'Makiyon ku yana nuna damuwar kuɗi. Fifita biyan bashi da sarrafa kashe kuɗi.',
-        'Urgent Attention Needed': 'Kuɗin ku suna buƙatar kulawa cikin gaggawa. Nemi shawarar ƙwararru kuma bincika dabarun farfadowa.',
+        'Your Financial Health Summary': 'Takaitaccen Bayanai Akan Lafiyar Kuɗin Ku',
+        'Your Financial Health Score': 'Maki Da Lafiyar Kuɗin Ku Ta Samu',
+        'Ranked': 'Darajar Lafiyar Kuɗin Ku',
+        'out of': 'Daga Cikin',
+        'users': 'Dukkan Masu Amfani Da Ficore Zuwa Yanzu',
+        'Strong Financial Health': 'Makin ku yana nuna ƙarfin lafiyar kuɗinku. Ku Mai da hankali kan zuba hannun jari daga cikin kuɗin da ya rage muku don haɓaka dukiyarku.',
+        'Stable Finances': 'Makin Kuɗin ku suna Nuni da kwanciyar hankali, amma zaku iya ingantashi duk da haka. Yi la’akari da adanawa ko rage wani bangare na kuɗin ta hanyar ajiya don gaba.',
+        'Financial Strain': 'Makin ku yana nuna Akwai damuwar kuɗi. Ku Fifita biyan bashi sannan ku sarrafa kashe kuɗinku dakyau.',
+        'Urgent Attention Needed': 'Makin Kuɗin ku suna Nuna buƙatar kulawa cikin gaggawa. Ku Nemi shawarar ƙwararru kuma Ku bincika dabarun farfadowa daga wannan yanayi.',
         'Score Breakdown': 'Rarraba Makiyo',
-        'Chart Unavailable': 'Chart ba ya samuwa a wannan lokacin.',
-        'Score Composition': 'Makiyon ku ya ƙunshi abubuwa uku',
-        'Cash Flow': 'Kwararar Kuɗi',
-        'Cash Flow Description': 'Yana nuna adadin kuɗin shiga da ya rage bayan kashe kuɗi. Maɗaukakin ƙima yana nuna mafi kyawun sassaucin kuɗi.',
-        'Debt-to-Income Ratio': 'Rabo na Bashi zuwa Kuɗin shiga',
-        'Debt-to-Income Description': 'Yana auna bashi dangane da kuɗin shiga. Ƙananan rabon yana nuna matakan bashi mai sauƙi.',
-        'Debt Interest Burden': 'Nauyin Riba na Bashi',
-        'Debt Interest Description': 'Yana nuna tasirin ƙimar riba a kan kuɗin ku. Ƙananan nauyi yana nufin ƙarancin damuwa daga bashi.',
-        'Balanced Components': 'Abubuwan da ke cikin ku suna nuna daidaitaccen lafiyar kuɗi. Ci gaba da kiyaye kwararar kuɗi mai ƙarfi da ƙarancin bashi.',
-        'Components Need Attention': 'Ɗaya ko fiye da abubuwan da ke ciki na iya buƙatar kulawa. Mai da hankali kan inganta kwararar kuɗi ko rage bashi.',
-        'Components Indicate Challenges': 'Abubuwan da ke cikin ku suna nuna ƙalubale. Yi aiki kan ƙara kuɗin shiga, yanke kashe kuɗi, ko rage ribar bashi.',
-        'Your Badges': 'Bajojin Ku',
-        'No Badges Yet': 'Ba a sami baji ba tukuna. Ci gaba da ƙaddamarwa don samun ƙari!',
-        'Recommended Learning': 'Koyan da Aka Shawarta',
-        'Recommended Course': 'Koyan da Aka Shawarta',
-        'Enroll in': 'Shiga cikin',
+        'Chart Unavailable': 'Zanen Lissafi ba ya samuwa a wannan lokacin saboda Netowrk.',
+        'Score Composition': 'Makin ku ya ƙunshi abubuwa uku',
+        'Cash Flow': 'Kuɗin da Kuke Samu',
+        'Cash Flow Description': 'Yana nuna adadin kuɗin da ya rage muku a hannu bayan Kun kashe kuɗi wajen biyan Bukatu. Maki mai ƙima yana nuna mafi kyawun alamar rike kuɗi.',
+        'Debt-to-Income Ratio': 'Rabiyar Bashi zuwa Kuɗin shiga',
+        'Debt-to-Income Description': 'Yana auna bashi dangane da kuɗin shiga. Ƙananan Makin rabiya yana nuna matakan bashi mai sauƙi.',
+        'Debt Interest Burden': 'Nauyin Interest akan Bashi',
+        'Debt Interest Description': 'Yana nuna tasirin ƙimar Interest a kan kuɗin ku. Ƙananan nauyi yana nufin ƙarancin damuwa daga Interest akan bashi.',
+        'Balanced Components': 'Abubuwan da ke ciki suna nuna daidaitaccen lafiyar kuɗi. Ci gaba da kiyaye kuɗi ta hanya mai kyau kuma da ƙarancin bashi.',
+        'Components Need Attention': 'Ɗaya ko fiye da abubuwan da ke ciki na iya buƙatar kulawa. Mai da hankali kan inganta samun kuɗi ko rage bashi.',
+        'Components Indicate Challenges': 'Abubuwan da ke ciki suna nuna ƙalubale. Yi aiki kan ƙara kuɗin shiga, rage kashe kuɗi, ko rage Interest da kake biya akan bashi.',
+        'Your Badges': 'Lambar Yabon Ku',
+        'No Badges Yet': 'Ba a sami Lambar Yabo ba tukuna. Ci gaba da Aiki da Ficore don samun Sabbin Lambobin Yabo!',
+        'Recommended Learning': 'Shawari aka Koyon Inganta Neman Kudi da Ajiya',
+        'Recommended Course': 'Darasi da Aka Shawarta Maka',
+        'Enroll in': 'Shiga ciki',
         'Enroll Now': 'Shiga Yanzu',
-        'Quick Financial Tips': 'Shawarwari na Kuɗi na Gaggawa',
+        'Quick Financial Tips': 'Shawarwari na Kuɗi na Masu Muhimmanci',
         'Invest': 'Saka hannun jari',
-        'Invest Wisely': 'Sanya kuɗin da ya rage a cikin saka hannun jari mai ƙarancin haɗari kamar takardun shaida don haɓaka dukiya.',
+        'Invest Wisely': 'Sanya kuɗin da ya rage maka a cikin hannayen jari masu ƙarancin haɗari kamar takardun shaida daga Gwamnati ko Manyan Kamfanuwa don haɓaka dukiyarku.',
         'Scale': 'Faɗaɗa',
-        'Scale Smart': 'Sake saka riba a cikin kasuwancin ku don faɗaɗa ayyuka cikin dorewa.',
+        'Scale Smart': 'Sake saka ribar kasuwancinku a cikin kasuwancin naku don faɗaɗa shi domin dorewa.',
         'Build': 'Gina',
-        'Build Savings': 'Ajiye 10% na kuɗin shigarka kowane wata don ƙirƙirar asusun gaggawa.',
+        'Build Savings': 'Ajiye 10% na kuɗin shigarka a kowane wata don Samar da Asusun gaggawa domin rashin Lafiya ko jarabawa.',
         'Cut': 'Yanke',
-        'Cut Costs': 'Duba kashe kuɗi kuma rage kashe kuɗin da ba dole ba don haɓaka kwararar kuɗi.',
+        'Cut Costs': 'Kula da kashe kuɗinku kuma ku rage kashe kuɗin da ba dole ba don haɓaka arzikinku.',
         'Reduce': 'Rage',
-        'Reduce Debt': 'Fifita biyan lamuni masu ƙimar riba don sauƙaƙe damuwar kuɗi.',
+        'Reduce Debt': 'Fifita biyan Bashi masu Interest don sauƙaƙe damuwar kuɗi.',
         'Boost': 'Ƙarfafa',
-        'Boost Income': 'Bincika ayyukan gefe ko sabbin hanyoyin samun kuɗin shiga don inganta kwararar kuɗi.',
-        'How You Compare': 'Yadda Kuke Kwatanta da Wasu',
-        'Your Rank': 'Matsayin ku na',
+        'Boost Income': 'Bincika ayyukan a gefe ko ka nemi sabbin hanyoyin samun kuɗi don inganta Arzikinka.',
+        'How You Compare': 'Yadda Kuke Kwatanta da Sauran Masu Amfani da Ficore',
+        'Your Rank': 'Matsayin ku',
         'places you': 'ya sanya ku',
-        'Top 10%': 'a cikin sama da 10% na masu amfani, yana nuna mafi kyawun lafiyar kuɗi idan aka kwatanta da takwarorinsu.',
-        'Top 30%': 'a cikin sama da 30%, yana nuna kwanciyar hankali na kuɗi sama da matsakaici.',
-        'Middle Range': 'a cikin kewayon tsakiya, yana nuna sarari don ingantawa don hawa matsayi.',
-        'Lower Range': 'a cikin kewayon ƙasa, yana nuna buƙatar tsara kuɗi mai dabara.',
-        'Regular Submissions': 'Ƙaddamarwa akai-akai na iya taimakawa wajen bin diddigin ci gaban ku da inganta matsayin ku.',
-        'Whats Next': 'Me ke Gaba? Buɗe Ƙarin Fahimta',
-        'Back to Home': 'Koma Gida',
-        'Provide Feedback': 'Bayar da Shawara',
-        'Join Waitlist': 'Shiga Jerin Jirage',
-        'Book Consultancy': 'Yi Alƙawarin Shawara',
+        'Top 10%': 'a cikin sama da kaso goma 10% na masu amfani da Ficore, yana nuna akwai kyawun lafiyar kuɗi idan aka kwatanta da Sauran Mutane.',
+        'Top 30%': 'a cikin sama da kaso talatin 30%, yana nuna akwai kwanciyar hankali na kuɗi sama da yawancin Mutane.',
+        'Middle Range': 'a cikin tsaka-tsaki, yana nuna akwai sarari don ingantawa samu domin hawa matsayi na gaba.',
+        'Lower Range': 'a cikin mataki na ƙasa, yana nuna akwai buƙatar ku tsara kuɗinku dakyau cikin dabara daga yanzu.',
+        'Regular Submissions': 'Amfani da Ficore akai-akai zai taimaka muku wajen bin diddigin ci gaban ku da kanku, don inganta matsayin Arzikinku.',
+        'Whats Next': 'Me ke Gaba? Ku Duba Wadannan',
+        'Back to Home': 'Koma Sahfin Farko',
+        'Provide Feedback': 'Danna Idan Kana da Shawara',
+        'Join Waitlist': 'Masu Jiran Ficore Premium',
+        'Book Consultancy': 'Jerin Masu Neman Shawara',
         'Contact Us': 'Tuntube mu a',
         'for support': 'don tallafi',
-        'Ficore Africa Financial Health Score': 'Makiyon Lafiyar Kuɗin Ficore Africa',
-        'Get Your Score': 'Sami makiyon lafiyar kuɗin ku da fahimta na keɓaɓɓu nan take!',
+        'Ficore Africa Financial Health Score': 'Makin Lafiyar KuɗinKu Daga Ficore Africa',
+        'Get Your Score': 'Sami makin lafiyar kuɗin ku don fahimtar keɓaɓɓun hanyoyin Ingantawa nan take!',
         'Personal Information': 'Bayanan Kai',
         'Enter your first name': 'Shigar da sunanka na farko',
         'First Name Required': 'Ana buƙatar sunan farko.',
         'Enter your last name (optional)': 'Shigar da sunanka na ƙarshe (na zaɓi)',
-        'Enter your email': 'Shigar da imel ɗinka',
-        'Invalid Email': 'Da fatan za a shigar da adireshin imel mai inganci.',
-        'Confirm your email': 'Tabbatar da imel ɗinka',
+        'Enter your email': 'Shigar da email ɗinka',
+        'Invalid Email': 'Da fatan za a shigar da adireshin email mai inganci.',
+        'Confirm your email': 'Sake Tabbatar da email ɗinka',
         'Enter phone number (optional)': 'Shigar da lambar waya (na zaɓi)',
-        'Language': 'Harshe',
-        'User Information': 'Bayanan Mai Amfani',
+        'Language': 'Zabi Yare',
+        'User Information': 'Bayanan Ka',
         'Enter your business name': 'Shigar da sunan kasuwancinka',
         'Business Name Required': 'Ana buƙatar sunan kasuwanci.',
-        'User Type': 'Nau’in Mai Amfani',
+        'User Type': 'Nau’in Mai Amfani da Ficore',
         'Financial Information': 'Bayanan Kuɗi',
-        'Enter monthly income/revenue': 'Shigar da kuɗin shiga/kudin shiga na wata-wata',
-        'Enter monthly expenses/costs': 'Shigar da kashe kuɗi/kudin wata-wata',
+        'Enter monthly income/revenue': 'Shigar da jimillar kuɗin shiga/kudin shigarku na wata-wata',
+        'Enter monthly expenses/costs': 'Shigar da jimillar kashe kuɗinku/kudin wata-wata',
         'Enter total debt/loan amount': 'Shigar da jimillar bashi/lamuni',
-        'Enter debt interest rate (%)': 'Shigar da ƙimar ribar bashi (%)',
-        'Invalid Number': 'Da fatan za a shigar da lamba mai inganci.',
-        'Submit': 'Sallama',
-        'Error saving data. Please try again.': 'Kuskure wajen adana bayanai. Da fatan za a sake gwadawa.',
-        'Error retrieving data. Please try again.': 'Kuskure wajen dawo da bayanai. Da fatan za a sake gwadawa.',
-        'Error retrieving user data. Please try again.': 'Kuskure wajen dawo da bayanan mai amfani. Da fatan za a sake gwadawa.',
+        'Enter debt interest rate (%)': 'Shigar da Interest na bashin (%)',
+        'Invalid Number': 'A shigar da lamba mai daidai.',
+        'Submit': 'Mika Sako',
+        'Error saving data. Please try again.': 'Anyi Kuskure wajen adana bayanai. Da fatan za a sake gwadawa.',
+        'Error retrieving data. Please try again.': 'Anyi Kuskure wajen dawo da bayanai. Da fatan za a sake gwadawa.',
+        'Error retrieving user data. Please try again.': 'Anyi Kuskure wajen dawo da bayanai masu amfani. Da fatan za a sake gwadawa.',
         'An unexpected error occurred. Please try again.': 'Wani kuskure wanda ba a zata ba ya faru. Da fatan za a sake gwadawa.',
-        'Top 10% Subject': '🔥 Kuna cikin Sama da 10%! Rahoton Makiyon Ficore Yana Jiran Ku!',
-        'Score Report Subject': '📊 Rahoton Makiyon Ficore Yana Shirye, {user_name}!',
+        'Top 10% Subject': '🔥 Kuna cikin Sama da kaso goma 10%! Rahoton Makin ku na Ficore Yana Jiran Ku!',
+        'Score Report Subject': '📊 Rahoton Makin ku na Ficore Yana Shirye, {user_name}!',
         'Email Body': '''
             <html>
             <body style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
                 <div style="background-color: #1E7F71; padding: 20px; border-radius: 10px; text-align: center; margin-bottom: 20px;">
-                    <h2 style="color: #FFFFFF; margin: 0;">Makiyon Lafiyar Kuɗin Ficore Africa</h2>
+                    <h2 style="color: #FFFFFF; margin: 0;">Makin Lafiyar Kuɗinku na Ficore Africa</h2>
                     <p style="font-style: italic; color: #E0F7FA; font-size: 0.9rem; margin: 5px 0 0 0;">
-                        Tikitin ci gaban kuɗi na Afirka
+                        Tikitin ci gaban arciki na yan Afirka
                     </p>
                 </div>
                 <p>Mai girma {user_name},</p>
-                <p>Mun ƙididdige Makiyon Lafiyar Kuɗin Ficore Africa bisa ƙaddamarwar ku na kwanan nan.</p>
+                <p>Mun ƙididdige Makin Lafiyar Kuɗinku ta hanyar amfani da Ficore Africa bisa bayan da kuka bayar.</p>
                 <ul>
                     <li><strong>Makiyo</strong>: {health_score}/100</li>
                     <li><strong>Shawara</strong>: {score_description}</li>
                     <li><strong>Matsayi</strong>: #{int(rank)} daga cikin {total_users} masu amfani</li>
                 </ul>
-                <p>Bi shawarar da ke sama don inganta lafiyar kuɗin ku. Muna nan don tallafa muku kowane mataki—ɗauki ƙaramin aiki a yau don ƙarfafa kuɗin ku don kasuwancinku, burinku, da makomarku!</p>
+                <p>Bi shawarar da ke sama don inganta arzikin ku. Muna nan don tallafa muku a kowane mataki— a fara aiki a yau don ƙarfafa arzikin ku domin kasuwancinku, burikanku, dakuma iyalanku!</p>
                 <p style="margin-bottom: 10px;">
-                    Kuna son ƙarin koyo? Duba wannan kwas: 
+                    Kuna son ƙarin ilimi akan wannan? Duba wannan Darasi: 
                     <a href="{course_url}" style="display: inline-block; padding: 10px 20px; background-color: #FBC02D; color: #333; text-decoration: none; border-radius: 5px; font-size: 0.9rem;">{course_title}</a>
                 </p>
                 <p style="margin-bottom: 10px;">
-                    Da fatan za a ba da shawara kan kwarewarku: 
+                    Da fatan za a ba da shawara ko ra,ayi akan Ficore: 
                     <a href="{FEEDBACK_FORM_URL}" style="display: inline-block; padding: 10px 20px; background-color: #2E7D32; color: white; text-decoration: none; border-radius: 5px; font-size: 0.9rem;">Fom ɗin Shawara</a>
                 </p>
                 <p style="margin-bottom: 10px;">
-                    Kuna son Fahimta Mai Hankali? Shiga jerin jiran Ficore Premium: 
+                    Kuna son Shawarar daga Kwararru? Shiga jerin jiran Ficore Premium: 
                     <a href="{WAITLIST_FORM_URL}" style="display: inline-block; padding: 10px 20px; background-color: #1976D2; color: white; text-decoration: none; border-radius: 5px; font-size: 0.9rem;">Shiga Jerin Jirage</a>
                 </p>
                 <p style="margin-bottom: 10px;">
-                    Kuna buƙatar shawara ta keɓaɓɓu? 
-                    <a href="{CONSULTANCY_FORM_URL}" style="display: inline-block; padding: 10px 20px; background-color: #388E3C; color: white; text-decoration: none; border-radius: 5px; font-size: 0.9rem;">Yi Alƙawarin Shawara</a>
+                    Kuna buƙatar shawarwari keɓaɓɓu? 
+                    <a href="{CONSULTANCY_FORM_URL}" style="display: inline-block; padding: 10px 20px; background-color: #388E3C; color: white; text-decoration: none; border-radius: 5px; font-size: 0.9rem;">Shiga Jerin Masu So</a>
                 </p>
                 <p style="margin-bottom: 10px;">
-                    Idan ba ku ga wannan imel a cikin akwatin saƙonninku ba, da fatan za a duba foldar spam ko junk ɗinku.
+                    Idan ba ku ga wannan email a cikin akwatin saƙonninku ba, ku duba foldar mai suna Spam ko Junk a email ɗinku.
                 </p>
                 <style>
                     a:hover { background-color: #1B5E20 !important; }
                     a[href="{WAITLIST_FORM_URL}"]:hover { background-color: #0D47A1 !important; }
                     a[href="{course_url}"]:hover { background-color: #F9A825 !important; }
                 </style>
-                <p>Gaisuwa mafi kyau,<br>Ƙungiyar Ficore Africa</p>
+                <p>Gaisuwa,<br>Daga Ƙungiyar Ficore Africa</p>
             </body>
             </html>
         ''',
-        'First Health Score Completed!': 'Makiyon Lafiya na Farko An Kammala!',
-        'Financial Stability Achieved!': 'An Sami Kwanciyar Hankali na Kuɗi!',
-        'Debt Slayer!': 'Mai Kashe Bashi!'
+        'First Health Score Completed!': 'Makin Lafiyar Arziki na Farko An Kammala!',
+        'Financial Stability Achieved!': 'Akwai Kwanciyar Hankali na Kuɗi!',
+        'Debt Slayer!': 'Mai Ragargaza Bashi!'
     }
 }
 
@@ -605,31 +605,31 @@ def calculate_health_score(df):
             debt_interest = row['DebtInterestBurden']
             
             if score >= 75:
-                return ('Stable; invest excess now',
+                return ('Stable Income; invest excess now',
                         'Ficore Simplified Investing Course: How to Invest in 2025 for Better Gains',
                         INVESTING_COURSE_URL)
             elif score >= 50:
                 if cash_flow < 0.3 or debt_interest > 0.5:
-                    return ('At Risk; manage expense',
+                    return ('At Risk; manage your expense!',
                             'Ficore Debt and Expense Management: Regain Control in 2025',
                             DEBT_COURSE_URL)
-                return ('Moderate; save monthly',
+                return ('Moderate; save something monthly!',
                         'Ficore Savings Mastery: Building a Financial Safety Net in 2025',
                         SAVINGS_COURSE_URL)
             elif score >= 25:
                 if debt_to_income > 0.5 or debt_interest > 0.5:
-                    return ('At Risk; pay off debt, manage expense',
+                    return ('At Risk; pay off debt, manage your expense!',
                             'Ficore Debt and Expense Management: Regain Control in 2025',
                             DEBT_COURSE_URL)
-                return ('At Risk; manage expense',
+                return ('At Risk; manage your expense!',
                         'Ficore Debt and Expense Management: Regain Control in 2025',
                         DEBT_COURSE_URL)
             else:
                 if debt_to_income > 0.5 or cash_flow < 0.3:
-                    return ('Critical; add source of income, pay off debt, manage expense',
+                    return ('Critical; add source of income! pay off debt! manage your expense!',
                             'Ficore Financial Recovery: First Steps to Stability in 2025',
                             RECOVERY_COURSE_URL)
-                return ('Critical; seek financial help',
+                return ('Critical; seek financial help and advice!',
                         'Ficore Financial Recovery: First Steps to Stability in 2025',
                         RECOVERY_COURSE_URL)
 
@@ -879,7 +879,25 @@ def submit():
         rank = all_users_df[all_users_df['Email'] == form.email.data].index[0] + 1
         total_users = len(all_users_df)
         
-        # Generate dashboard plots
+        # Prepare user_data for the chart
+        logger.info("Preparing user_data for dashboard")
+        user_data = {
+            'income': float(re.sub(r'[,]', '', form.income_revenue.data)) if form.income_revenue.data else 0.0,
+            'expenses': float(re.sub(r'[,]', '', form.expenses_costs.data)) if form.expenses_costs.data else 0.0,
+            'debt': float(re.sub(r'[,]', '', form.debt_loan.data)) if form.debt_loan.data else 0.0
+        }
+        
+        # Use the health_score from the most recent submission
+        health_score = most_recent_row['HealthScore']
+        
+        # Prepare peer_data (average health score of all users)
+        logger.info("Preparing peer_data for dashboard")
+        average_score = all_users_df['HealthScore'].mean() if not all_users_df.empty else 50.0
+        peer_data = {
+            'averageScore': round(average_score, 2)
+        }
+        
+        # Generate dashboard plots (your existing Plotly plots)
         logger.info("Generating dashboard plots")
         breakdown_plot = generate_breakdown_plot(user_df)
         comparison_plot = generate_comparison_plot(user_df, all_users_df)
@@ -889,7 +907,7 @@ def submit():
         send_email(
             to_email=form.email.data,
             user_name=form.first_name.data,
-            health_score=most_recent_row['HealthScore'],
+            health_score=health_score,
             score_description=most_recent_row['ScoreDescription'],
             rank=rank,
             total_users=total_users,
@@ -898,7 +916,7 @@ def submit():
             language=form.language.data
         )
         
-        # Render dashboard with user data
+        # Render dashboard with user data, including the new variables
         logger.info("Rendering dashboard")
         return render_template(
             'dashboard.html',
@@ -907,7 +925,9 @@ def submit():
             first_name=form.first_name.data,
             last_name=form.last_name.data or '',
             email=form.email.data,
-            health_score=most_recent_row['HealthScore'],
+            user_data=user_data,  # Added for chart
+            health_score=health_score,  # Added for chart
+            peer_data=peer_data,  # Added for chart
             rank=rank,
             total_users=total_users,
             badges=badges,
