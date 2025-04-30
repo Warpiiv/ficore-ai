@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ language }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -15,108 +15,134 @@
             font-family: 'Open Sans', sans-serif;
             background: linear-gradient(135deg, #E3F2FD, #F5F7FA);
             margin: 0;
-            padding: 20px;
+            padding: 10px;
             box-sizing: border-box;
         }
         .container {
-            max-width: 900px;
+            max-width: 600px;
             margin: auto;
         }
         header {
             background: #fff;
-            padding: 2rem;
-            border-radius: 12px;
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
-            margin-bottom: 2rem;
+            padding: 1rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            margin-bottom: 1rem;
             text-align: center;
         }
         .logo-container {
-            margin-bottom: 1rem;
+            margin-bottom: 0.5rem;
         }
         .logo-container img {
-            max-width: 200px;
+            max-width: 150px;
         }
         .form-card {
             background: #fff;
-            padding: 2rem;
-            border-radius: 12px;
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
             transition: transform 0.3s ease;
         }
         .form-card:hover {
             transform: translateY(-5px);
         }
+        h1 {
+            font-size: 1.5rem;
+            margin: 0;
+        }
+        .lead {
+            font-size: 0.9rem;
+            margin: 5px 0;
+        }
         h3 {
             color: #2E7D32;
             font-weight: 600;
-            margin-bottom: 1.5rem;
+            font-size: 1.2rem;
+            margin-bottom: 1rem;
         }
         .form-label {
             color: #0288D1;
             font-weight: 500;
+            font-size: 0.9rem;
         }
         .form-control, .form-select {
             border: 2px solid #0288D1;
-            border-radius: 8px;
-            padding: 10px;
+            border-radius: 6px;
+            padding: 8px;
+            font-size: 0.9rem;
             transition: border-color 0.3s ease, box-shadow 0.3s ease;
         }
         .form-control:focus, .form-select:focus {
             border-color: #2E7D32;
-            box-shadow: 0 0 8px rgba(46, 125, 50, 0.3);
+            box-shadow: 0 0 6px rgba(46, 125, 50, 0.3);
             outline: none;
         }
         .btn-primary {
             background: linear-gradient(135deg, #2E7D32, #0288D1);
             border: none;
-            padding: 12px 24px;
+            padding: 10px 20px;
             font-weight: 600;
-            border-radius: 8px;
-            font-size: 1.1rem;
+            border-radius: 6px;
+            font-size: 1rem;
             color: white;
             transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.3s ease;
-            position: relative;
-            overflow: hidden;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2);
         }
         .btn-primary:hover {
             transform: scale(1.05);
             background: linear-gradient(135deg, #1B5E20, #01579B);
-            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
             border: 1px solid #4CAF50;
         }
         .btn-secondary {
             background: linear-gradient(135deg, #1DA1F2, #0d47a1);
             border: none;
-            padding: 10px;
+            padding: 8px 16px;
             font-weight: 500;
-            border-radius: 8px;
+            border-radius: 6px;
+            font-size: 0.9rem;
             transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
         .btn-secondary:hover {
             transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2);
         }
         .alert {
-            border-radius: 8px;
+            border-radius: 6px;
             font-weight: 500;
+            font-size: 0.9rem;
+            padding: 8px;
+            margin-bottom: 0.5rem;
+        }
+        .alert-container {
+            margin: 0.5rem 0;
+        }
+        .mb-3 {
+            margin-bottom: 0.75rem !important;
         }
         .number-input::placeholder {
             color: #6c757d;
+            font-size: 0.9rem;
+        }
+        .text-center {
+            margin: 1rem 0;
+        }
+        .text-center p, .text-center a {
+            font-size: 0.9rem;
         }
         @media (max-width: 600px) {
             .form-card {
-                padding: 1.5rem;
+                padding: 1rem;
             }
             h3 {
-                font-size: 1.5rem;
+                font-size: 1rem;
             }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <header class="my-4">
+        <header>
             <div class="logo-container">
                 <img src="{{ url_for('static', filename='img/ficore_logo.png') }}" alt="Ficore Africa Logo" class="img-fluid">
             </div>
@@ -127,7 +153,7 @@
         <!-- Flash Messages -->
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
-                <div class="alert-container my-3">
+                <div class="alert-container">
                     {% for category, message in messages %}
                         <div class="alert alert-{{ 'danger' if category == 'error' else 'success' }} alert-dismissible fade show" role="alert">
                             {{ message }}
@@ -143,17 +169,13 @@
             <div class="col-md-10">
                 <div class="form-card">
                     <form id="submission-form" method="POST" action="{{ url_for('submit') }}">
-                        {{ form.hidden_tag() }} <!-- Ensure CSRF token is included -->
+                        {{ form.hidden_tag() }}
 
-                        <!-- Personal Information -->
+                        <!-- Personal and User Information (Merged) -->
                         <h3>{{ translations[language]['Personal Information'] }}</h3>
                         <div class="mb-3">
-                            {{ form.first_name.label(class="form-label", **{'for': 'first_name'}) }}
-                            {{ form.first_name(class="form-control", placeholder=translations[language]['Enter your first name'], required=True, **{'data-error': translations[language]['First Name Required']}) }}
-                        </div>
-                        <div class="mb-3">
-                            {{ form.last_name.label(class="form-label", **{'for': 'last_name'}) }}
-                            {{ form.last_name(class="form-control", placeholder=translations[language]['Enter your last name (optional)']) }}
+                            <label class="form-label" for="first_name">{{ translations[language]['What\'s your name'] }}</label>
+                            {{ form.first_name(class="form-control", placeholder=translations[language]['What's your name'], required=True, **{'data-error': translations[language]['First Name Required']}) }}
                         </div>
                         <div class="mb-3">
                             {{ form.email.label(class="form-label", **{'for': 'email'}) }}
@@ -164,23 +186,16 @@
                             {{ form.auto_email(class="form-control", placeholder=translations[language]['Confirm your email'], type="email", required=True, pattern="[^@]+@[^@]+\.[^@]+", **{'data-error': translations[language]['Invalid Email']}) }}
                         </div>
                         <div class="mb-3">
-                            {{ form.phone_number.label(class="form-label", **{'for': 'phone_number'}) }}
-                            {{ form.phone_number(class="form-control", placeholder=translations[language]['Enter phone number (optional)'], type="tel") }}
-                        </div>
-                        <div class="mb-3">
-                            {{ form.language.label(class="form-label", **{'for': 'language'}) }}
-                            {{ form.language(class="form-select", required=True) }}
-                        </div>
-
-                        <!-- User Information -->
-                        <h3>{{ translations[language]['User Information'] }}</h3>
-                        <div class="mb-3">
                             {{ form.business_name.label(class="form-label", **{'for': 'business_name'}) }}
                             {{ form.business_name(class="form-control", placeholder=translations[language]['Enter your business name'], required=True, **{'data-error': translations[language]['Business Name Required']}) }}
                         </div>
                         <div class="mb-3">
                             {{ form.user_type.label(class="form-label", **{'for': 'user_type'}) }}
                             {{ form.user_type(class="form-select", required=True) }}
+                        </div>
+                        <div class="mb-3">
+                            {{ form.language.label(class="form-label", **{'for': 'language'}) }}
+                            {{ form.language(class="form-select", required=True) }}
                         </div>
 
                         <!-- Financial Information -->
@@ -204,7 +219,7 @@
 
                         <!-- Submit Button -->
                         <div class="d-grid">
-                            {{ form.submit(class="btn btn-primary btn-lg", value=translations[language]['Submit']) }}
+                            {{ form.submit(class="btn btn-primary", value=translations[language]['Submit']) }}
                         </div>
                     </form>
                 </div>
@@ -212,12 +227,12 @@
         </div>
 
         <!-- Contact Information -->
-        <div class="text-center my-4">
+        <div class="text-center">
             <p>{{ translations[language]['Contact Us'] }} <a href="mailto:Ficoreafrica@outlook.com">Ficoreafrica@outlook.com</a> {{ translations[language]['for support'] }}.</p>
         </div>
 
         <!-- Feedback Link -->
-        <div class="text-center my-4">
+        <div class="text-center">
             <a href="{{ FEEDBACK_FORM_URL }}" class="btn btn-secondary">{{ translations[language]['Provide Feedback'] }}</a>
         </div>
     </div>
@@ -265,7 +280,7 @@
             });
         });
 
-        // Clean number inputs before form submission and debug submission method
+        // Clean number inputs before form submission
         document.getElementById('submission-form').addEventListener('submit', function(e) {
             try {
                 console.log('Form submission triggered. Method:', document.getElementById('submission-form').getAttribute('method'));
@@ -283,4 +298,4 @@
         });
     </script>
 </body>
-</html>
+    </html>
