@@ -1,12 +1,12 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ language }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Track your financial health with Ficore AI. See your score, earn badges, and get smart insights.">
     <meta name="keywords" content="ficore ai, financial health, dashboard, Africa SME finance, smart insights">
     <meta name="author" content="Ficore AI">
-    <title>Ficore AI - Your Financial Health Dashboard</title>
+    <title>Ficore AI - {{ translations[language]['Your Financial Health Dashboard'] }}</title>
     <link href="{{ url_for('static', filename='css/bootstrap.min.css') }}" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
@@ -43,7 +43,6 @@
             font-weight: 600;
             font-size: 1.75rem;
             white-space: nowrap;
-            sanc
             border: 2px solid #1565C0;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
             margin-bottom: 0.5rem;
@@ -230,6 +229,8 @@
             font-size: 0.85rem;
             color: #666;
             margin-top: 5px;
+            font-weight: bold;
+            font-style: italic;
         }
         #score-breakdown-chart, #compare-others-chart {
             width: 100%;
@@ -275,7 +276,8 @@
          style="display: none;" 
          data-user='{{ user_data | tojson | safe }}' 
          data-health-score='{{ health_score | tojson | safe }}' 
-         data-peer='{{ peer_data | tojson | safe }}'>
+         data-peer='{{ peer_data | tojson | safe }}'
+         data-language='{{ language }}'>
     </div>
 
     <div class="container">
@@ -304,7 +306,7 @@
                     <div class="card-body">
                         <div class="success-message">
                             <span class="tick-icon"></span>
-                            Your information is submitted successfully! Check your dashboard below 👇
+                            {{ translations[language]['Submission Success'] }}
                         </div>
                         <div class="header-subsection">
                             <p>{{ translations[language]['Email'] }}: {{ email }}</p>
@@ -328,7 +330,7 @@
                                 {% endif %}
                             </p>
                         </div>
-                        <p class="note-text">Please check your inbox or junk folders if email doesn’t arrive in a few minutes.</p>
+                        <p class="note-text">{{ translations[language]['Check Inbox'] }}</p>
                     </div>
                 </div>
 
@@ -470,12 +472,13 @@
     <script>
         // Retrieve data from hidden div
         const chartDataElement = document.getElementById('chart-data');
-        let userData, healthScore, peerData;
+        let userData, healthScore, peerData, language;
 
         // Log raw data attributes for debugging
         console.log('Raw user data:', chartDataElement.dataset.user);
         console.log('Raw health score:', chartDataElement.dataset.healthScore);
         console.log('Raw peer data:', chartDataElement.dataset.peer);
+        console.log('Language:', chartDataElement.dataset.language);
 
         // Function to check if a string is valid JSON
         function isValidJSON(str) {
@@ -530,6 +533,9 @@
             peerData = { averageScore: 50 };
         }
 
+        // Parse language
+        language = chartDataElement.dataset.language || 'English';
+
         // Fallback values to ensure data integrity
         userData = {
             income: userData && userData.income || 0,
@@ -546,6 +552,31 @@
         console.log('Parsed Health Score:', healthScore);
         console.log('Parsed Peer Data:', peerData);
 
+        // Define translations for chart labels
+        const chartTranslations = {
+            'English': {
+                'Income': 'Income',
+                'Expenses': 'Expenses',
+                'Debt': 'Debt',
+                'Amount': 'Amount (₦)',
+                'Your Score': 'Your Score',
+                'Average Peer Score': 'Average Peer Score',
+                'Financial Health Score': 'Financial Health Score'
+            },
+            'Hausa': {
+                'Income': 'Kuɗin Shiga',
+                'Expenses': 'Kashe Kuɗi',
+                'Debt': 'Bashi',
+                'Amount': 'Adadin (₦)',
+                'Your Score': 'Makin Ku',
+                'Average Peer Score': 'Matsakaicin Makin Sauran Mutane',
+                'Financial Health Score': 'Makin Lafiyar Kuɗi'
+            }
+        };
+
+        // Select translations based on language
+        const labels = chartTranslations[language] || chartTranslations['English'];
+
         // Score Breakdown Chart
         const scoreBreakdownData = [{
             x: [
@@ -553,7 +584,7 @@
                 userData.expenses,
                 userData.debt
             ],
-            y: ['Income', 'Expenses', 'Debt'],
+            y: [labels['Income'], labels['Expenses'], labels['Debt']],
             type: 'bar',
             orientation: 'h',
             marker: { color: ['#28A745', '#FF9800', '#DC3545'] }
@@ -561,7 +592,7 @@
 
         const scoreBreakdownLayout = {
             title: '',
-            xaxis: { title: 'Amount (₦)' },
+            xaxis: { title: labels['Amount'] },
             yaxis: { title: '' },
             height: 300,
             margin: { l: 100, r: 20, t: 20, b: 50 },
@@ -573,7 +604,7 @@
 
         // How You Compare to Others Chart
         const compareOthersData = [{
-            x: ['Your Score', 'Average Peer Score'],
+            x: [labels['Your Score'], labels['Average Peer Score']],
             y: [healthScore, peerData.averageScore],
             type: 'bar',
             marker: { color: ['#28A745', '#6C757D'] }
@@ -582,7 +613,7 @@
         const compareOthersLayout = {
             title: '',
             xaxis: { title: '' },
-            yaxis: { title: 'Financial Health Score', range: [0, 100] },
+            yaxis: { title: labels['Financial Health Score'], range: [0, 100] },
             height: 300,
             margin: { l: 50, r: 20, t: 20, b: 50 },
             plot_bgcolor: 'rgba(0,0,0,0)',
