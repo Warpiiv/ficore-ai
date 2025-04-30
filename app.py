@@ -217,7 +217,7 @@ translations = {
         'Recommended Course': 'Darasi da Aka Shawarta Maka',
         'Enroll in': 'Shiga ciki',
         'Enroll Now': 'Shiga Yanzu',
-        'Quick Financial Tips': 'Shawarwarin Yanzu',
+        'Quick Financial Tips': 'Shawarwari',
         'Invest': 'Saka hannun jari',
         'Invest Wisely': 'Sanya kuɗin da ya rage maka a cikin hannayen jari masu ƙarancin haɗari kamar takardun shaida daga Gwamnati ko Manyan Kamfanuwa don haɓaka dukiyarku.',
         'Scale': 'Faɗaɗa',
