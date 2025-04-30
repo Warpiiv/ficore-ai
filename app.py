@@ -1,7 +1,7 @@
 # Ficore Africa Financial Health Score Application
 # File: app.py
 # Purpose: Flask app to calculate financial health scores, store data in Google Sheets, and render user dashboards
-# Version: Updated April 30, 2025, to fix Object of type Undefined is not JSON serializable error
+# Version: Updated April 30, 2025, to fix email-sending error ('int(rank)') and enhance robustness
 # Repository: https://github.com/Warpiiv/ficore-ai
 
 # Import required libraries
@@ -149,7 +149,7 @@ translations = {
                 <ul>
                     <li><strong>Score</strong>: {health_score}/100</li>
                     <li><strong>Advice</strong>: {score_description}</li>
-                    <li><strong>Rank</strong>: #{int(rank)} out of {total_users} users</li>
+                    <li><strong>Rank</strong>: #{rank} out of {total_users} users</li>
                 </ul>
                 <p>Follow the advice above to improve your financial health. We’re here to support you every step of the way—take one small action today to grow stronger financially for your business, your goals, and your future!</p>
                 <p style="margin-bottom: 10px;">
@@ -283,11 +283,11 @@ translations = {
                     </p>
                 </div>
                 <p>Mai girma {user_name},</p>
-                <p>Mun ƙididdige Makin Lafiyar Kuɗinku ta hanyar amfani da Ficore Africa bisa bayan da kuka bayar.</p>
+                <p>Mun ƙididdige Makin Lafiyar Kuɗinku ta hanyar amfani da Ficore Africa bisa bayanan da kuka bayar.</p>
                 <ul>
                     <li><strong>Maki</strong>: {health_score}/100</li>
                     <li><strong>Shawara</strong>: {score_description}</li>
-                    <li><strong>Matsayi</strong>: #{int(rank)} daga cikin {total_users} masu amfani</li>
+                    <li><strong>Matsayi</strong>: #{rank} daga cikin {total_users} masu amfani</li>
                 </ul>
                 <p>Bi shawarar da ke sama don inganta arzikin ku. Muna nan don tallafa muku a kowane mataki— a fara aiki a yau don ƙarfafa arzikin ku domin kasuwancinku, burikanku, dakuma iyalanku!</p>
                 <p style="margin-bottom: 10px;">
@@ -370,25 +370,33 @@ class SubmissionForm(FlaskForm):
     # Validate numeric fields
     def validate_income_revenue(self, income_revenue):
         try:
-            float(re.sub(r'[,]', '', income_revenue.data))
+            value = float(re.sub(r'[,]', '', income_revenue.data))
+            if value < 0:
+                raise ValidationError('Income/Revenue must be a non-negative number.')
         except ValueError:
             raise ValidationError('Income/Revenue must be a valid number.')
 
     def validate_expenses_costs(self, expenses_costs):
         try:
-            float(re.sub(r'[,]', '', expenses_costs.data))
+            value = float(re.sub(r'[,]', '', expenses_costs.data))
+            if value < 0:
+                raise ValidationError('Expenses/Costs must be a non-negative number.')
         except ValueError:
             raise ValidationError('Expenses/Costs must be a valid number.')
 
     def validate_debt_loan(self, debt_loan):
         try:
-            float(re.sub(r'[,]', '', debt_loan.data))
+            value = float(re.sub(r'[,]', '', debt_loan.data))
+            if value < 0:
+                raise ValidationError('Debt/Loan must be a non-negative number.')
         except ValueError:
             raise ValidationError('Debt/Loan must be a valid number.')
 
     def validate_debt_interest_rate(self, debt_interest_rate):
         try:
-            float(re.sub(r'[,]', '', debt_interest_rate.data))
+            value = float(re.sub(r'[,]', '', debt_interest_rate.data))
+            if value < 0:
+                raise ValidationError('Debt Interest Rate must be a non-negative number.')
         except ValueError:
             raise ValidationError('Debt Interest Rate must be a valid number.')
 
@@ -690,6 +698,8 @@ def assign_badges(user_df, all_users_df):
 # Send email with score report to user
 def send_email(to_email, user_name, health_score, score_description, rank, total_users, course_title, course_url, language):
     try:
+        # Ensure rank is an integer
+        rank = int(rank)
         smtp_server = os.environ.get('SMTP_SERVER')
         smtp_port = int(os.environ.get('SMTP_PORT', 587))
         smtp_user = os.environ.get('SMTP_USER')
@@ -726,6 +736,9 @@ def send_email(to_email, user_name, health_score, score_description, rank, total
         
         logger.info(f"Email sent to {to_email}")
         return True
+    except ValueError as e:
+        logger.error(f"Error converting rank to integer: {e}")
+        return False
     except Exception as e:
         logger.error(f"Error sending email to {to_email}: {e}")
         return False
@@ -882,8 +895,16 @@ def submit():
         # Calculate user rank
         logger.info("Calculating user rank")
         all_users_df = all_users_df.sort_values('HealthScore', ascending=False).reset_index(drop=True)
-        rank = all_users_df[all_users_df['Email'] == form.email.data].index[0] + 1
-        total_users = len(all_users_df)
+        user_rows = all_users_df[all_users_df['Email'] == form.email.data]
+        if user_rows.empty:
+            logger.error(f"User {form.email.data} not found in all_users_df after submission.")
+            flash(translations[language]['Error retrieving user data. Please try again.'], 'error')
+            return redirect(url_for('home', language=language))
+        # Use the most recent submission for ranking
+        user_rows = user_rows.sort_values('Timestamp', ascending=False)
+        user_index = all_users_df.index[all_users_df['Email'] == form.email.data].tolist()[0]
+        rank = user_index + 1
+        total_users = len(all_users_df.drop_duplicates(subset=['Email']))
         
         # Prepare user_data for the chart
         logger.info("Preparing user_data for dashboard")
@@ -910,7 +931,7 @@ def submit():
         
         # Send score report email
         logger.info("Sending score report email")
-        send_email(
+        email_sent = send_email(
             to_email=form.email.data,
             user_name=form.first_name.data,
             health_score=health_score,
@@ -921,6 +942,8 @@ def submit():
             course_url=most_recent_row['CourseURL'],
             language=form.language.data
         )
+        if not email_sent:
+            logger.warning(f"Failed to send email to {form.email.data}, but proceeding to render dashboard.")
         
         # Render dashboard with user data, including the new variables
         logger.info("Rendering dashboard")
