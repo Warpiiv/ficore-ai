@@ -1,4 +1,43 @@
-<!DOCTYPE html>
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script><!DOCTYPE html>
 <html lang="{{ language }}">
 <head>
     <meta charset="UTF-8">
@@ -101,7 +140,7 @@
             padding: 10px 20px;
             font-weight: 500;
             border-radius: 8px;
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            transition: transform 0.2s ease, box-shadow 0.3s ease;
         }
         .btn-primary:hover {
             transform: translateY(-2px);
@@ -113,7 +152,7 @@
             padding: 10px 20px;
             font-weight: 500;
             border-radius: 8px;
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            transition: transform 0.2s ease, box-shadow 0.3s ease;
         }
         .btn-secondary:hover {
             transform: translateY(-2px);
@@ -459,7 +498,7 @@
                                 <a href="{{ WAITLIST_FORM_URL }}" class="btn btn-secondary">{{ translations[language]['Join Waitlist'] }}</a>
                                 <a href="{{ CONSULTANCY_FORM_URL }}" class="btn btn-secondary">{{ translations[language]['Book Consultancy'] }}</a>
                             </div>
-                            <p class="text-center">{{ translations[language]['Contact Us'] }} <a href="mailto:Ficoreai@outlook.com">Ficoreai@outlook.com</a> {{ translations[language]['for support'] }}</p>
+                            <p class="text-center">{{ translations[language]['Contact Us'] }} <a href="mailto:Ficoreai@outlook.com">Ficoreai@outlook.com</a> {{ translations[language]['for support'] }}.</p>
                         </div>
                     </div>
                 </div>
@@ -468,159 +507,176 @@
     </div>
 
     <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
-    <!-- Plotly Chart Rendering -->
     <script>
-        // Retrieve data from hidden div
-        const chartDataElement = document.getElementById('chart-data');
-        let userData, healthScore, peerData, language;
+        document.addEventListener('DOMContentLoaded', function() {
+            const chartDataDiv = document.getElementById('chart-data');
 
-        // Log raw data attributes for debugging
-        console.log('Raw user data:', chartDataElement.dataset.user);
-        console.log('Raw health score:', chartDataElement.dataset.healthScore);
-        console.log('Raw peer data:', chartDataElement.dataset.peer);
-        console.log('Language:', chartDataElement.dataset.language);
+            // Log raw data for debugging
+            console.log('Raw user data:', chartDataDiv.dataset.user);
+            console.log('Raw health score:', chartDataDiv.dataset.healthScore);
+            console.log('Raw peer data:', chartDataDiv.dataset.peer);
+            console.log('Raw language:', chartDataDiv.dataset.language);
 
-        // Function to check if a string is valid JSON
-        function isValidJSON(str) {
-            if (typeof str !== 'string' || str.trim() === '') return false;
-            try {
-                JSON.parse(str);
-                return true;
-            } catch (e) {
-                return false;
+            // Function to safely parse JSON with error handling
+            function safeParseJSON(data, defaultValue, label) {
+                if (!data || data.trim() === '') {
+                    console.warn(`${label} is empty or undefined`);
+                    return defaultValue;
+                }
+                try {
+                    return JSON.parse(data);
+                } catch (e) {
+                    console.error(`Error parsing ${label}:`, e.message, 'Raw data:', data);
+                    return defaultValue;
+                }
             }
-        }
 
-        // Parse userData
-        const rawUserData = chartDataElement.dataset.user;
-        if (isValidJSON(rawUserData)) {
-            try {
-                userData = JSON.parse(rawUserData);
-            } catch (e) {
-                console.error('Error parsing userData:', e.message, 'Raw data:', rawUserData);
-                userData = { income: 0, expenses: 0, debt: 0 };
+            // Parse data with fallbacks
+            const userData = safeParseJSON(chartDataDiv.dataset.user, { cash_flow_score: 0, debt_to_income_score: 0, debt_interest_burden: 0 }, 'userData');
+            const healthScore = safeParseJSON(chartDataDiv.dataset.healthScore, 0, 'healthScore');
+            const peerData = safeParseJSON(chartDataDiv.dataset.peer, { average_score: 50 }, 'peerData');
+            
+            // Normalize language and provide a fallback
+            let language = chartDataDiv.dataset.language || 'English';
+            language = language.charAt(0).toUpperCase() + language.slice(1).toLowerCase(); // e.g., 'english' -> 'English'
+            if (!['English', 'Hausa'].includes(language)) {
+                console.warn(`Invalid language "${language}" detected, falling back to English`);
+                language = 'English';
             }
-        } else {
-            console.warn('userData is not valid JSON:', rawUserData);
-            userData = { income: 0, expenses: 0, debt: 0 };
-        }
+            console.log('Normalized language:', language);
 
-        // Parse healthScore
-        const rawHealthScore = chartDataElement.dataset.healthScore;
-        if (isValidJSON(rawHealthScore)) {
-            try {
-                healthScore = JSON.parse(rawHealthScore);
-            } catch (e) {
-                console.error('Error parsing healthScore:', e.message, 'Raw data:', rawHealthScore);
-                healthScore = 0;
+            const translations = {
+                'English': {
+                    'Cash Flow': 'Cash Flow',
+                    'Debt-to-Income Ratio': 'Debt-to-Income Ratio',
+                    'Debt Interest Burden': 'Debt Interest Burden',
+                    'Chart Unavailable': 'Chart unavailable at this time.',
+                    'Your Score': 'Your Score',
+                    'Average Score': 'Average Score'
+                },
+                'Hausa': {
+                    'Cash Flow': 'Kuɗin da Kuke Samu',
+                    'Debt-to-Income Ratio': 'Rabiyar Bashi zuwa Kuɗin shiga',
+                    'Debt Interest Burden': 'Nauyin Interest akan Bashi',
+                    'Chart Unavailable': 'Zanen Lissafi ba ya samuwa a wannan lokacin saboda Netowrk.',
+                    'Your Score': 'Makin ku',
+                    'Average Score': 'Matsakaicin Maki'
+                }
+            };
+
+            // Log the translations object to ensure it exists
+            console.log('Translations for language:', translations[language]);
+
+            // Score Breakdown Chart
+            if (userData && userData.cash_flow_score !== undefined && userData.debt_to_income_score !== undefined && userData.debt_interest_burden !== undefined) {
+                const labels = [
+                    translations[language]['Cash Flow'],
+                    translations[language]['Debt-to-Income Ratio'],
+                    translations[language]['Debt Interest Burden']
+                ];
+                const data = [
+                    userData.cash_flow_score,
+                    userData.debt_to_income_score,
+                    userData.debt_interest_burden
+                ];
+
+                const trace = {
+                    x: labels,
+                    y: data,
+                    type: 'bar',
+                    marker: {
+                        color: ['#28A745', '#1E88E5', '#FF9800'],
+                        line: {
+                            color: '#1565C0',
+                            width: 1
+                        }
+                    },
+                    text: data.map(val => val.toFixed(1)),
+                    textposition: 'auto',
+                    hoverinfo: 'y+text'
+                };
+
+                const layout = {
+                    height: 300,
+                    margin: { t: 30, b: 100, l: 40, r: 40 },
+                    paper_bgcolor: 'rgba(0,0,0,0)',
+                    plot_bgcolor: 'rgba(0,0,0,0)',
+                    font: { family: 'Noto Sans', size: 12, color: '#333' },
+                    xaxis: {
+                        tickangle: -45,
+                        automargin: true
+                    },
+                    yaxis: {
+                        range: [0, 100],
+                        title: {
+                            text: 'Score',
+                            font: { size: 12 }
+                        }
+                    },
+                    bargap: 0.2
+                };
+
+                Plotly.newPlot('score-breakdown-chart', [trace], layout, { responsive: true });
+            } else {
+                document.getElementById('score-breakdown-chart').innerHTML = `
+                    <div class="chart-empty-state">
+                        ${translations[language]['Chart Unavailable']}
+                    </div>
+                `;
             }
-        } else {
-            console.warn('healthScore is not valid JSON:', rawHealthScore);
-            healthScore = 0;
-        }
 
-        // Parse peerData
-        const rawPeerData = chartDataElement.dataset.peer;
-        if (isValidJSON(rawPeerData)) {
-            try {
-                peerData = JSON.parse(rawPeerData);
-            } catch (e) {
-                console.error('Error parsing peerData:', e.message, 'Raw data:', rawPeerData);
-                peerData = { averageScore: 50 };
+            // Compare to Others Chart
+            if (peerData && peerData.average_score !== undefined) {
+                const labels = [
+                    translations[language]['Your Score'],
+                    translations[language]['Average Score']
+                ];
+                const data = [
+                    healthScore,
+                    peerData.average_score
+                ];
+
+                const trace = {
+                    x: labels,
+                    y: data,
+                    type: 'bar',
+                    marker: {
+                        color: ['#28A745', '#B0BEC5'],
+                        line: {
+                            color: '#1565C0',
+                            width: 1
+                        }
+                    },
+                    text: data.map(val => val.toFixed(1)),
+                    textposition: 'auto',
+                    hoverinfo: 'y+text'
+                };
+
+                const layout = {
+                    height: 300,
+                    margin: { t: 30, b: 50, l: 40, r: 40 },
+                    paper_bgcolor: 'rgba(0,0,0,0)',
+                    plot_bgcolor: 'rgba(0,0,0,0)',
+                    font: { family: 'Noto Sans', size: 12, color: '#333' },
+                    yaxis: {
+                        range: [0, 100],
+                        title: {
+                            text: 'Score',
+                            font: { size: 12 }
+                        }
+                    },
+                    bargap: 0.2
+                };
+
+                Plotly.newPlot('compare-others-chart', [trace], layout, { responsive: true });
+            } else {
+                document.getElementById('compare-others-chart').innerHTML = `
+                    <div class="chart-empty-state">
+                        ${translations[language]['Chart Unavailable']}
+                    </div>
+                `;
             }
-        } else {
-            console.warn('peerData is not valid JSON:', rawPeerData);
-            peerData = { averageScore: 50 };
-        }
-
-        // Parse language
-        language = chartDataElement.dataset.language || 'English';
-
-        // Fallback values to ensure data integrity
-        userData = {
-            income: userData && userData.income || 0,
-            expenses: userData && userData.expenses || 0,
-            debt: userData && userData.debt || 0
-        };
-        healthScore = typeof healthScore === 'number' ? healthScore : 0;
-        peerData = {
-            averageScore: peerData && peerData.averageScore || 50
-        };
-
-        // Debug: Log parsed data to console
-        console.log('Parsed User Data:', userData);
-        console.log('Parsed Health Score:', healthScore);
-        console.log('Parsed Peer Data:', peerData);
-
-        // Define translations for chart labels
-        const chartTranslations = {
-            'English': {
-                'Income': 'Income',
-                'Expenses': 'Expenses',
-                'Debt': 'Debt',
-                'Amount': 'Amount (₦)',
-                'Your Score': 'Your Score',
-                'Average Peer Score': 'Average Peer Score',
-                'Financial Health Score': 'Financial Health Score'
-            },
-            'Hausa': {
-                'Income': 'Kuɗin Shiga',
-                'Expenses': 'Kashe Kuɗi',
-                'Debt': 'Bashi',
-                'Amount': 'Adadin (₦)',
-                'Your Score': 'Makin Ku',
-                'Average Peer Score': 'Matsakaicin Makin Sauran Mutane',
-                'Financial Health Score': 'Makin Lafiyar Kuɗi'
-            }
-        };
-
-        // Select translations based on language
-        const labels = chartTranslations[language] || chartTranslations['English'];
-
-        // Score Breakdown Chart
-        const scoreBreakdownData = [{
-            x: [
-                userData.income,
-                userData.expenses,
-                userData.debt
-            ],
-            y: [labels['Income'], labels['Expenses'], labels['Debt']],
-            type: 'bar',
-            orientation: 'h',
-            marker: { color: ['#28A745', '#FF9800', '#DC3545'] }
-        }];
-
-        const scoreBreakdownLayout = {
-            title: '',
-            xaxis: { title: labels['Amount'] },
-            yaxis: { title: '' },
-            height: 300,
-            margin: { l: 100, r: 20, t: 20, b: 50 },
-            plot_bgcolor: 'rgba(0,0,0,0)',
-            paper_bgcolor: 'rgba(0,0,0,0)'
-        };
-
-        Plotly.newPlot('score-breakdown-chart', scoreBreakdownData, scoreBreakdownLayout);
-
-        // How You Compare to Others Chart
-        const compareOthersData = [{
-            x: [labels['Your Score'], labels['Average Peer Score']],
-            y: [healthScore, peerData.averageScore],
-            type: 'bar',
-            marker: { color: ['#28A745', '#6C757D'] }
-        }];
-
-        const compareOthersLayout = {
-            title: '',
-            xaxis: { title: '' },
-            yaxis: { title: labels['Financial Health Score'], range: [0, 100] },
-            height: 300,
-            margin: { l: 50, r: 20, t: 20, b: 50 },
-            plot_bgcolor: 'rgba(0,0,0,0)',
-            paper_bgcolor: 'rgba(0,0,0,0)'
-        };
-
-        Plotly.newPlot('compare-others-chart', compareOthersData, compareOthersLayout);
+        });
     </script>
 </body>
 </html>
