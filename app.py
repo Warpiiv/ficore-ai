@@ -1,7 +1,7 @@
 # Ficore Africa Financial Health Score Application
 # File: app.py
 # Purpose: Flask app to calculate financial health scores, store data in Google Sheets, and render user dashboards
-# Version: Updated April 30, 2025, to fix email-sending error ('int(rank)') and enhance robustness
+# Version: Updated April 30, 2025, to fix CSRF token expiration issue
 # Repository: https://github.com/Warpiiv/ficore-ai
 
 # Import required libraries
@@ -43,6 +43,9 @@ app.secret_key = os.environ.get('FLASK_SECRET_KEY')
 if not app.secret_key:
     logger.error("FLASK_SECRET_KEY environment variable not set. CSRF protection and sessions will fail.")
     raise Exception("FLASK_SECRET_KEY environment variable not set.")
+
+# Set CSRF token expiration to 24 hours (86400 seconds)
+app.config['WTF_CSRF_TIME_LIMIT'] = 86400
 
 # Configure Flask-Caching for memoizing Google Sheets data
 cache = Cache(app, config={'CACHE_TYPE': 'simple'})
@@ -133,6 +136,7 @@ translations = {
         'Error retrieving data. Please try again.': 'Error retrieving data. Please try again.',
         'Error retrieving user data. Please try again.': 'Error retrieving user data. Please try again.',
         'An unexpected error occurred. Please try again.': 'An unexpected error occurred. Please try again.',
+        'Session Expired': 'Your session has expired. Please refresh the page and try again.',
         'Top 10% Subject': '🔥 You\'re Top 10%! Your Ficore Score Report Awaits!',
         'Score Report Subject': '📊 Your Ficore Score Report is Ready, {user_name}!',
         'Email Body': '''
@@ -210,7 +214,7 @@ translations = {
         'Debt Interest Description': 'Yana nuna tasirin ƙimar Interest a kan kuɗin ku. Ƙananan nauyi yana nufin ƙarancin damuwa daga Interest akan bashi.',
         'Balanced Components': 'Abubuwan da ke ciki suna nuna daidaitaccen lafiyar kuɗi. Ci gaba da kiyaye kuɗi ta hanya mai kyau kuma da ƙarancin bashi.',
         'Components Need Attention': 'Ɗaya ko fiye da abubuwan da ke ciki na iya buƙatar kulawa. Mai da hankali kan inganta samun kuɗi ko rage bashi.',
-        'Components Indicate Challenges': 'Abubuwan da ke ciki suna nuna ƙalubale. Yi aiki kan ƙara kuɗin shiga, rage kashe kuɗi, ko rage Interest da kake biya akan bashi.',
+        'Components Indicate Challenges': 'Abubuwan da ke ciki suna nuna ƙalubale. Yi aiki kan ƙara kuɗin shiga, rage kashe kuɗin, ko rage Interest da kake biya akan bashi.',
         'Your Badges': 'Lambar Yabon',
         'No Badges Yet': 'Ba a sami Lambar Yabo ba tukuna. Ci gaba da Aiki da Ficore don samun Sabbin Lambobin Yabo!',
         'Recommended Learning': 'Shawari aka Koyon Inganta Neman Kudi da Ajiya.',
@@ -271,6 +275,7 @@ translations = {
         'Error retrieving data. Please try again.': 'Anyi Kuskure wajen dawo da bayanai. Da fatan za a sake gwadawa.',
         'Error retrieving user data. Please try again.': 'Anyi Kuskure wajen dawo da bayanai masu amfani. Da fatan za a sake gwadawa.',
         'An unexpected error occurred. Please try again.': 'Wani kuskure wanda ba a zata ba ya faru. Da fatan za a sake gwadawa.',
+        'Session Expired': 'Lokacin aikin ku ya ƙare. Da fatan za a sake shigar da shafin kuma a gwada sake.',
         'Top 10% Subject': '🔥 Kuna cikin Sama da kaso goma 10%! Rahoton Makin ku na Ficore Yana Jiran Ku!',
         'Score Report Subject': '📊 Rahoton Makin ku na Ficore Yana Shirye, {user_name}!',
         'Email Body': '''
@@ -816,7 +821,11 @@ def submit():
             logger.warning(f"Form validation failed: {form.errors}")
             for field, errors in form.errors.items():
                 for error in errors:
-                    flash(error, 'error')
+                    # Check if the error is related to CSRF token expiration
+                    if 'csrf_token' in field and 'expired' in error.lower():
+                        flash(translations[language]['Session Expired'], 'error')
+                    else:
+                        flash(error, 'error')
             return redirect(url_for('home', language=language))
         
         logger.info("Form validated successfully")
