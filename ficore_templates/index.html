@@ -97,6 +97,18 @@
             transform: translateY(-2px);
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
         }
+        .btn-email {
+            background: linear-gradient(135deg, #FF5722, #D81B60);
+            border: none;
+            padding: 10px;
+            font-weight: 500;
+            border-radius: 8px;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .btn-email:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
         .btn-guide {
             background: linear-gradient(135deg, #FFC107, #FF9800);
             border: none;
@@ -295,7 +307,7 @@
 
         <!-- Contact Information -->
         <div class="text-center my-4">
-            <p>{{ translations[language]['Contact Us'] }} <a href="/cdn-cgi/l/email-protection#a7e1cec4c8d5c2c6c1d5cec4c6e7c8d2d3cbc8c8cc89c4c8ca"><span class="__cf_email__" data-cfemail="b2b49b919d80979394809b9193b29d87869e9d9d99dc919d9f">[email protected]</span></a> {{ translations[language]['for support'] }}.</p>
+            <p>{{ translations[language]['Contact Us'] }} <a href="mailto:ficore.ai.africa@gmail.com" class="btn btn-email">{{ translations[language]['Click to Email'] }}</a> {{ translations[language]['for support'] }}.</p>
         </div>
 
         <!-- Feedback Link -->
