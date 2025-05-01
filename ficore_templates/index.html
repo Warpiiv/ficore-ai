@@ -109,19 +109,6 @@
             transform: translateY(-2px);
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
         }
-        .btn-guide {
-            background: linear-gradient(135deg, #FFC107, #FF9800);
-            border: none;
-            padding: 10px 20px;
-            font-weight: 500;
-            border-radius: 8px;
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
-            margin-bottom: 1rem;
-        }
-        .btn-guide:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-        }
         .alert {
             border-radius: 8px;
             font-weight: 500;
@@ -163,6 +150,66 @@
             color: #666;
             margin-bottom: 0.5rem;
         }
+        /* Fallback Tooltip Styles */
+        .tooltip-fallback {
+            display: none;
+            background: #E3F2FD;
+            border: 1px solid #0288D1;
+            border-radius: 4px;
+            padding: 8px;
+            margin-top: 4px;
+            font-size: 0.9rem;
+            color: #333;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        .tooltip-fallback.active {
+            display: block;
+        }
+        /* Stylish Blue Book Styles */
+        .book-toggle {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            margin-bottom: 1rem;
+            width: fit-content;
+        }
+        .book-icon {
+            position: relative;
+            width: 40px;
+            height: 30px;
+            background: #0288D1;
+            border-radius: 4px 8px 8px 4px;
+            margin-right: 10px;
+            transition: transform 0.3s ease;
+        }
+        .book-icon::before {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            right: 2px;
+            bottom: 2px;
+            background: #E3F2FD;
+            border-radius: 2px 6px 6px 2px;
+        }
+        .book-icon::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: #01579B;
+            border-radius: 4px 0 0 4px;
+        }
+        .book-icon.open {
+            transform: rotateY(-30deg);
+        }
+        .book-label {
+            font-weight: 500;
+            color: #0288D1;
+            font-size: 1rem;
+        }
         @media (max-width: 600px) {
             .form-card {
                 padding: 1.5rem;
@@ -172,6 +219,13 @@
             }
             .info-icon {
                 font-size: 0.9rem;
+            }
+            .book-label {
+                font-size: 0.9rem;
+            }
+            .book-icon {
+                width: 30px;
+                height: 22px;
             }
         }
     </style>
@@ -204,14 +258,15 @@
         <div class="row justify-content-center">
             <div class="col-md-10">
                 <div class="form-card">
-                    <!-- New to Finances Toggle -->
-                    <button type="button" class="btn btn-guide" id="guide-toggle">
-                        🔰 {{ translations[language]['New to finances? Click here to get guided tips on how to fill this form.'] }}
-                    </button>
+                    <!-- New to Finances Toggle with Stylish Blue Book -->
+                    <div class="book-toggle" id="guide-toggle">
+                        <div class="book-icon" id="book-icon"></div>
+                        <span class="book-label">{{ translations[language]['New to finances? Click here to get guided tips on how to fill this form.'] }}</span>
+                    </div>
                     <div class="guide-section" id="guide-content">
                         <h4>{{ translations[language]['Getting Started with Ficore Africa'] }}</h4>
                         <ul>
-                            <li><strong>{{ translations[language]['Personal Information'] }}</strong>: Fill in your name, email, and phone number (if you have one). Choose your language—English or Hausa.</li>
+                            <li><strong>{{ translations[language]['Personal Information'] }}</strong>: Fill in your name, email, and phone number. Choose your language—English or Hausa.</li>
                             <li><strong>{{ translations[language]['User Information'] }}</strong>: Enter your business name, or your personal name if you don’t have a business. Select if you’re an individual or a business.</li>
                             <li><strong>{{ translations[language]['Financial Information'] }}</strong>: Add your monthly money details. Hover or tap the ℹ️ icons for help on what to enter.</li>
                             <li><strong>{{ translations[language]['Submit'] }}</strong>: Double-check your details, then click Submit to get your financial health score!</li>
@@ -267,33 +322,37 @@
                             <div class="field-container">
                                 <span class="visual-icon">💰</span>
                                 {{ form.income_revenue.label(class="form-label", **{'for': 'income_revenue'}) }}
-                                <span class="info-icon" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-trigger="hover focus" title="{{ translations[language]['Total money you receive regularly, like salary, business sales, gifts, grants, incentives, or side hustles.'] }}">ℹ️</span>
+                                <span class="info-icon" data-tooltip-target="income-tooltip" title="{{ translations[language]['Total money you receive regularly, like salary, business sales, gifts, grants, incentives, or side hustles.'] }}">ℹ️</span>
                             </div>
                             {{ form.income_revenue(class="form-control number-input", placeholder="e.g. 150,000", type="text", required=True, pattern="^[0-9,]+(\.[0-9]{1,2})?$", **{'data-error': translations[language]['Invalid Number']}) }}
+                            <div class="tooltip-fallback" id="income-tooltip"></div>
                         </div>
                         <div class="mb-3">
                             <div class="field-container">
-                                <span class="visual-icon"></span>
+                                <span class="visual-icon">💸</span>
                                 {{ form.expenses_costs.label(class="form-label", **{'for': 'expenses_costs'}) }}
-                                <span class="info-icon" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-trigger="hover focus" title="{{ translations[language]['All the money you spend, such as on rent, food, transport, electricity bill, gas and utilities, fine and penalties, levies, taxes, etc.'] }}">ℹ️</span>
+                                <span class="info-icon" data-tooltip-target="expenses-tooltip" title="{{ translations[language]['All the money you spend, such as on rent, food, transport, electricity bill, gas and utilities, fine and penalties, levies, taxes, etc.'] }}">ℹ️</span>
                             </div>
                             {{ form.expenses_costs(class="form-control number-input", placeholder="e.g. 60,000", type="text", required=True, pattern="^[0-9,]+(\.[0-9]{1,2})?$", **{'data-error': translations[language]['Invalid Number']}) }}
+                            <div class="tooltip-fallback" id="expenses-tooltip"></div>
                         </div>
                         <div class="mb-3">
                             <div class="field-container">
-                                <span class="visual-icon"></span>
+                                <span class="visual-icon">🏦</span>
                                 {{ form.debt_loan.label(class="form-label", **{'for': 'debt_loan'}) }}
-                                <span class="info-icon" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-trigger="hover focus" title="{{ translations[language]['Money you owe, like loans, IOUs, borrowings, or funds lent to you.'] }}">ℹ️</span>
+                                <span class="info-icon" data-tooltip-target="debt-tooltip" title="{{ translations[language]['Money you owe, like loans, IOUs, borrowings, or funds lent to you.'] }}">ℹ️</span>
                             </div>
                             {{ form.debt_loan(class="form-control number-input", placeholder="e.g. 25,000", type="text", required=True, pattern="^[0-9,]+(\.[0-9]{1,2})?$", **{'data-error': translations[language]['Invalid Number']}) }}
+                            <div class="tooltip-fallback" id="debt-tooltip"></div>
                         </div>
                         <div class="mb-3">
                             <div class="field-container">
                                 <span class="visual-icon">📈</span>
                                 {{ form.debt_interest_rate.label(class="form-label", **{'for': 'debt_interest_rate'}) }}
-                                <span class="info-icon" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-trigger="hover focus" title="{{ translations[language]['Extra percentage you pay on a loan, usually per year or month. It’s usually something like 12% or 7%.'] }}">ℹ️</span>
+                                <span class="info-icon" data-tooltip-target="interest-tooltip" title="{{ translations[language]['Extra percentage you pay on a loan, usually per year or month. It’s usually something like 12% or 7%.'] }}">ℹ️</span>
                             </div>
                             {{ form.debt_interest_rate(class="form-control number-input", placeholder="e.g. 10%", type="text", required=True, pattern="^[0-9,]+(\.[0-9]{1,2})?$", **{'data-error': translations[language]['Invalid Number']}) }}
+                            <div class="tooltip-fallback" id="interest-tooltip"></div>
                         </div>
 
                         <!-- Submit Button -->
@@ -361,15 +420,33 @@
 
         // Run initialization on DOM load
         document.addEventListener('DOMContentLoaded', function () {
-            initializeTooltips();
+            // Attempt to initialize Bootstrap tooltips
+            const bootstrapTooltipsSuccess = initializeTooltips();
 
-            // Toggle guide section visibility
+            // Fallback for tooltips: Toggle visibility of fallback div on click
+            document.querySelectorAll('.info-icon').forEach(icon => {
+                icon.addEventListener('click', function () {
+                    const targetId = icon.getAttribute('data-tooltip-target');
+                    const targetDiv = document.getElementById(targetId);
+                    if (targetDiv) {
+                        // Populate the fallback div with the translated tooltip text
+                        targetDiv.textContent = icon.getAttribute('title');
+                        // Toggle visibility
+                        targetDiv.classList.toggle('active');
+                    }
+                });
+            });
+
+            // Toggle guide section visibility with book animation
             try {
                 const guideToggle = document.getElementById('guide-toggle');
+                const bookIcon = document.getElementById('book-icon');
                 const guideContent = document.getElementById('guide-content');
-                if (guideToggle && guideContent) {
+                if (guideToggle && bookIcon && guideContent) {
                     guideToggle.addEventListener('click', function () {
-                        guideContent.style.display = guideContent.style.display === 'block' ? 'none' : 'block';
+                        const isOpen = guideContent.style.display === 'block';
+                        guideContent.style.display = isOpen ? 'none' : 'block';
+                        bookIcon.classList.toggle('open', !isOpen);
                     });
                 } else {
                     console.warn('Guide toggle elements not found in the DOM.');
