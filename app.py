@@ -1,7 +1,7 @@
 # Ficore Africa Financial Health Score Application
 # File: app.py
 # Purpose: Flask app to calculate financial health scores, store data in Google Sheets, and render user dashboards
-# Version: Updated April 30, 2025, to fix email sending issue by removing unsupported CSS
+# Version: Updated May 1st, 2025, supports the "Click to Email" button in index.html with proper translations for both languages
 # Repository: https://github.com/Warpiiv/ficore-ai
 
 # Import required libraries
@@ -110,6 +110,7 @@ translations = {
         'Book Consultancy': 'Book Consultancy',
         'Contact Us': 'Contact us at:',
         'for support': 'for support',
+        'Click to Email': 'Click to Email',  # Added for the new email button
         'Ficore Africa Financial Health Score': 'Ficore Africa Financial Health Score',
         'Get Your Score': 'Get your financial health score and personalized insights instantly!',
         'Personal Information': 'Personal Information',
@@ -188,7 +189,7 @@ translations = {
     },
     'Hausa': {
         'Welcome': 'Barka da zuwa',
-        'Email': 'Imel',
+        'Email': 'Email',
         'Your Financial Health Summary': 'Takaitaccen Bayanai Akan Lafiyar Kuɗin Ku!',
         'Your Financial Health Score': 'Maki Da Lafiyar Kuɗin Ku Ta Samu:',
         'Ranked': 'Darajar Lafiyar Kuɗin Ku',
@@ -242,8 +243,9 @@ translations = {
         'Provide Feedback': 'Danna Idan Kana da Shawara',
         'Join Waitlist': 'Masu Jiran Ficore Premium',
         'Book Consultancy': 'Jerin Masu Neman Shawara',
-        'Contact Us': 'Tuntube mu a',
-        'for support': 'don tallafi',
+        'Contact Us': 'Tuntube Mu a',
+        'for support': 'Don Tura Sako',
+        'Click to Email': 'Danna Don Tura Sako',  # Added for the new email button
         'Ficore Africa Financial Health Score': 'Makin Lafiyar KuɗinKu Daga Ficore Africa',
         'Get Your Score': 'Sami makin lafiyar kuɗin ku don fahimtar keɓaɓɓun hanyoyin Ingantawa nan take!',
         'Personal Information': 'Bayanan Kai',
