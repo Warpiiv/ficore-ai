@@ -273,7 +273,7 @@
                         </div>
                         <div class="mb-3">
                             <div class="field-container">
-                                <span class="visual-icon">👛</span>
+                                <span class="visual-icon"></span>
                                 {{ form.expenses_costs.label(class="form-label", **{'for': 'expenses_costs'}) }}
                                 <span class="info-icon" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-trigger="hover focus" title="{{ translations[language]['All the money you spend, such as on rent, food, transport, electricity bill, gas and utilities, fine and penalties, levies, taxes, etc.'] }}">ℹ️</span>
                             </div>
@@ -281,7 +281,7 @@
                         </div>
                         <div class="mb-3">
                             <div class="field-container">
-                                <span class="visual-icon">💸</span>
+                                <span class="visual-icon"></span>
                                 {{ form.debt_loan.label(class="form-label", **{'for': 'debt_loan'}) }}
                                 <span class="info-icon" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-trigger="hover focus" title="{{ translations[language]['Money you owe, like loans, IOUs, borrowings, or funds lent to you.'] }}">ℹ️</span>
                             </div>
@@ -319,23 +319,64 @@
     <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script>
     <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}" onerror="console.error('Failed to load bootstrap.bundle.min.js. Please ensure the file exists in static/js/ and Flask is serving static files correctly.');"></script>
     <script>
-        // Initialize Bootstrap tooltips with error handling
-        document.addEventListener('DOMContentLoaded', function () {
-            if (typeof bootstrap === 'undefined') {
-                console.error('Bootstrap is not loaded. Please ensure bootstrap.bundle.min.js is correctly included and the path is valid.');
-                return;
-            }
+        // Initialize Bootstrap tooltips with enhanced error handling and reinitialization
+        function initializeTooltips() {
+            try {
+                if (typeof bootstrap === 'undefined') {
+                    console.error('Bootstrap is not loaded. Please ensure bootstrap.bundle.min.js is correctly included and the path is valid.');
+                    return false;
+                }
 
-            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-                return new bootstrap.Tooltip(tooltipTriggerEl);
-            });
+                // Dispose of existing tooltips to prevent duplicates
+                const existingTooltips = document.querySelectorAll('.tooltip');
+                existingTooltips.forEach(tooltip => tooltip.remove());
+
+                const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+                if (tooltipTriggerList.length === 0) {
+                    console.warn('No elements with data-bs-toggle="tooltip" found in the DOM.');
+                    return false;
+                }
+
+                const tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                    try {
+                        const tooltip = new bootstrap.Tooltip(tooltipTriggerEl, {
+                            trigger: 'hover focus',
+                            placement: 'top',
+                            customClass: 'custom-tooltip'
+                        });
+                        return tooltip;
+                    } catch (error) {
+                        console.error('Failed to initialize tooltip for element:', tooltipTriggerEl, error);
+                        return null;
+                    }
+                }).filter(tooltip => tooltip !== null);
+
+                console.log('Tooltips initialized successfully:', tooltipList.length, 'tooltips active.');
+                return true;
+            } catch (error) {
+                console.error('Error initializing tooltips:', error);
+                return false;
+            }
+        }
+
+        // Run initialization on DOM load
+        document.addEventListener('DOMContentLoaded', function () {
+            initializeTooltips();
 
             // Toggle guide section visibility
-            document.getElementById('guide-toggle').addEventListener('click', function () {
-                var guideContent = document.getElementById('guide-content');
-                guideContent.style.display = guideContent.style.display === 'block' ? 'none' : 'block';
-            });
+            try {
+                const guideToggle = document.getElementById('guide-toggle');
+                const guideContent = document.getElementById('guide-content');
+                if (guideToggle && guideContent) {
+                    guideToggle.addEventListener('click', function () {
+                        guideContent.style.display = guideContent.style.display === 'block' ? 'none' : 'block';
+                    });
+                } else {
+                    console.warn('Guide toggle elements not found in the DOM.');
+                }
+            } catch (error) {
+                console.error('Error setting up guide toggle:', error);
+            }
         });
 
         // Format number inputs with thousands separators
