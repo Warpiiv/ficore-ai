@@ -1,5 +1,4 @@
-from flask import Flask, render_template, request, flash, session, redirect, url_for
-from werkzeug.security import generate_password_hash, check_password_hash
+from flask import Flask, render_template, request, redirect, url_for, flash, session
 import plotly.graph_objs as go
 from plotly.utils import PlotlyJSONEncoder
 import json
@@ -10,7 +9,9 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import logging
 import os
-from translations import translations  # Importing translations from separate file
+import re
+from datetime import datetime
+from translations import translations
 
 app = Flask(__name__, template_folder='ficore_templates', static_folder='static')
 app.secret_key = os.getenv('FLASK_SECRET_KEY')
@@ -88,7 +89,6 @@ def setup_sheets():
                 spreadsheet.add_worksheet(title=sheet_name, rows=100, cols=len(PREDETERMINED_HEADERS[feature]))
                 logger.info(f"Created sheet: {sheet_name}")
             worksheet = spreadsheet.worksheet(sheet_name)
-            # Set headers if sheet is empty or headers don't match
             current_headers = worksheet.row_values(1)
             if not current_headers or current_headers != PREDETERMINED_HEADERS[feature]:
                 worksheet.clear()
@@ -98,10 +98,24 @@ def setup_sheets():
         logger.error(f"Error setting up sheets: {str(e)}")
         raise
 
-# Run sheet setup on app startup
 setup_sheets()
 
 # Forms
+class SubmissionForm:
+    def __init__(self):
+        self.business_name = ''
+        self.income_revenue = ''
+        self.expenses_costs = ''
+        self.debt_loan = ''
+        self.debt_interest_rate = ''
+        self.auto_email = ''
+        self.phone_number = ''
+        self.first_name = ''
+        self.last_name = ''
+        self.user_type = 'Business'
+        self.email = ''
+        self.language = 'English'
+
 class NetWorthForm:
     def __init__(self):
         self.first_name = ''
@@ -141,14 +155,13 @@ class BudgetForm:
         self.other_expenses = 0
 
 # Helper functions
-def send_email(to_email, subject, body):
+def send_email(to_email, subject, body, language):
     try:
         msg = MIMEMultipart()
         msg['From'] = EMAIL_ADDRESS
         msg['To'] = to_email
         msg['Subject'] = subject
-        msg.attach(MIMEText(body, 'plain'))
-
+        msg.attach(MIMEText(body, 'html'))
         with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as server:
             server.starttls()
             server.login(EMAIL_ADDRESS, EMAIL_PASSWORD)
@@ -169,39 +182,62 @@ def generate_chart(data, title):
         logger.error(f"Error generating chart: {str(e)}")
         return None
 
-def get_advice(score_or_balance, language):
+def calculate_health_score(df):
     try:
-        if score_or_balance > 0:
-            return translations[language]['Strong Financial Health']
-        return translations[language]['Financial Strain']
-    except Exception as e:
-        logger.error(f"Error generating advice: {str(e)}")
-        return translations[language].get('Error retrieving advice', 'Unable to generate advice at this time.')
+        if df.empty:
+            return df
+        df['IncomeRevenueSafe'] = df['IncomeRevenue'].apply(lambda x: float(re.sub(r'[,]', '', str(x))) if str(x).replace(',', '').strip() else 1e-10)
+        df['ExpensesCosts'] = df['ExpensesCosts'].apply(lambda x: float(re.sub(r'[,]', '', str(x))) if str(x).replace(',', '').strip() else 0.0)
+        df['DebtLoan'] = df['DebtLoan'].apply(lambda x: float(re.sub(r'[,]', '', str(x))) if str(x).replace(',', '').strip() else 0.0)
+        df['DebtInterestRate'] = df['DebtInterestRate'].apply(lambda x: float(re.sub(r'[,]', '', str(x))) if str(x).replace(',', '').strip() else 0.0)
+        df['CashFlowRatio'] = (df['IncomeRevenueSafe'] - df['ExpensesCosts']) / df['IncomeRevenueSafe']
+        df['DebtToIncomeRatio'] = df['DebtLoan'] / df['IncomeRevenueSafe']
+        df['DebtInterestBurden'] = df['DebtInterestRate'].clip(lower=0) / 20
+        df['DebtInterestBurden'] = df['DebtInterestBurden'].clip(upper=1)
+        df['NormCashFlow'] = df['CashFlowRatio'].clip(0, 1)
+        df['NormDebtToIncome'] = 1 - df['DebtToIncomeRatio'].clip(0, 1)
+        df['NormDebtInterest'] = 1 - df['DebtInterestBurden']
+        df['HealthScore'] = (df['NormCashFlow'] * 0.333 + df['NormDebtToIncome'] * 0.333 + df['NormDebtInterest'] * 0.333) * 100
+        df['HealthScore'] = df['HealthScore'].round(2)
 
-def get_badges(score_or_balance, language):
-    try:
-        badges = []
-        if score_or_balance > 0:
-            badges.append(translations[language]['Financial Stability Achieved!'])
-        if score_or_balance >= 100000:
-            badges.append(translations[language]['Debt Slayer!'])
+        def score_description_and_course(row):
+            score = row['HealthScore']
+            cash_flow = row['CashFlowRatio']
+            debt_to_income = row['DebtToIncomeRatio']
+            debt_interest = row['DebtInterestBurden']
+            if score >= 75:
+                return ('Stable Income; invest excess now', INVESTING_COURSE_URL)
+            elif score >= 50:
+                if cash_flow < 0.3 or debt_interest > 0.5:
+                    return ('At Risk; manage your expense!', DEBT_COURSE_URL)
+                return ('Moderate; save something monthly!', SAVINGS_COURSE_URL)
+            elif score >= 25:
+                if debt_to_income > 0.5 or debt_interest > 0.5:
+                    return ('At Risk; pay off debt, manage your expense!', DEBT_COURSE_URL)
+                return ('At Risk; manage your expense!', DEBT_COURSE_URL)
+            else:
+                if debt_to_income > 0.5 or cash_flow < 0.3:
+                    return ('Critical; add source of income! pay off debt! manage your expense!', RECOVERY_COURSE_URL)
+                return ('Critical; seek financial help and advice!', RECOVERY_COURSE_URL)
+
+        df[['ScoreDescription', 'CourseURL']] = [score_description_and_course(row) for _, row in df.iterrows()]
+        return df
+    except Exception as e:
+        logger.error(f"Error calculating health score: {str(e)}")
+        raise
+
+def assign_badges(user_df, all_users_df, language):
+    badges = []
+    if user_df.empty:
         return badges
-    except Exception as e:
-        logger.error(f"Error generating badges: {str(e)}")
-        return []
-
-def get_tips(language):
-    return [
-        translations[language]['Build Savings'],
-        translations[language]['Cut Costs'],
-        translations[language]['Reduce Debt']
-    ]
-
-def get_courses(language):
-    return [
-        {"title": translations[language]['Recommended Course'], "link": SAVINGS_COURSE_URL},
-        {"title": translations[language]['Recommended Course'], "link": DEBT_COURSE_URL}
-    ]
+    user_row = user_df.iloc[0]
+    if len(user_df) == 1:
+        badges.append(translations[language]['First Health Score Completed!'])
+    if user_row['HealthScore'] >= 50:
+        badges.append(translations[language]['Financial Stability Achieved!'])
+    if user_row['DebtToIncomeRatio'] < 0.3:
+        badges.append(translations[language]['Debt Slayer!'])
+    return badges
 
 def save_to_google_sheets(feature, data):
     try:
@@ -226,13 +262,181 @@ def get_rank_from_db(feature, value, column_name):
         return 50
 
 # Routes
-@app.route('/')
-def landing():
+@app.route('/', methods=['GET', 'POST'])
+def home():
+    form = SubmissionForm()
     language = session.get('language', 'English')
     if language not in translations:
         language = 'English'
         session['language'] = language
-    return render_template('index.html', translations=translations[language])
+    if request.method == 'POST':
+        form.business_name = request.form.get('business_name', '').strip()
+        form.income_revenue = request.form.get('income_revenue', '').strip()
+        form.expenses_costs = request.form.get('expenses_costs', '').strip()
+        form.debt_loan = request.form.get('debt_loan', '').strip()
+        form.debt_interest_rate = request.form.get('debt_interest_rate', '').strip()
+        form.auto_email = request.form.get('auto_email', '').strip()
+        form.phone_number = request.form.get('phone_number', '').strip()
+        form.first_name = request.form.get('first_name', '').strip()
+        form.last_name = request.form.get('last_name', '').strip()
+        form.user_type = request.form.get('user_type', 'Business')
+        form.email = request.form.get('email', '').strip()
+        form.language = request.form.get('language', 'English')
+
+        if not all([form.first_name, form.business_name, form.income_revenue, form.expenses_costs, form.debt_loan, form.debt_interest_rate, form.email, form.auto_email]):
+            flash(translations[language]['First Name Required'] if not form.first_name else translations[language]['Business Name Required'] if not form.business_name else translations[language]['Invalid Number'], 'error')
+            return render_template('index.html', form=form, translations=translations[language])
+
+        if form.email != form.auto_email:
+            flash(translations[language]['Emails Do Not Match'], 'error')
+            return render_template('index.html', form=form, translations=translations[language])
+
+        try:
+            for field in ['income_revenue', 'expenses_costs', 'debt_loan', 'debt_interest_rate']:
+                value = float(re.sub(r'[,]', '', getattr(form, field)))
+                if value < 0:
+                    flash(translations[language]['Invalid Number'], 'error')
+                    return render_template('index.html', form=form, translations=translations[language])
+        except ValueError:
+            flash(translations[language]['Invalid Number'], 'error')
+            return render_template('index.html', form=form, translations=translations[language])
+
+        return redirect(url_for('submit'))
+    return render_template('index.html', form=form, translations=translations[language])
+
+@app.route('/submit', methods=['POST'])
+def submit():
+    form = SubmissionForm()
+    language = session.get('language', 'English')
+    if language not in translations:
+        language = 'English'
+        session['language'] = language
+
+    try:
+        form.business_name = request.form.get('business_name', '').strip()
+        form.income_revenue = request.form.get('income_revenue', '').strip()
+        form.expenses_costs = request.form.get('expenses_costs', '').strip()
+        form.debt_loan = request.form.get('debt_loan', '').strip()
+        form.debt_interest_rate = request.form.get('debt_interest_rate', '').strip()
+        form.auto_email = request.form.get('auto_email', '').strip()
+        form.phone_number = request.form.get('phone_number', '').strip()
+        form.first_name = request.form.get('first_name', '').strip()
+        form.last_name = request.form.get('last_name', '').strip()
+        form.user_type = request.form.get('user_type', 'Business')
+        form.email = request.form.get('email', '').strip()
+        form.language = request.form.get('language', 'English')
+
+        if not all([form.first_name, form.business_name, form.income_revenue, form.expenses_costs, form.debt_loan, form.debt_interest_rate, form.email, form.auto_email]):
+            flash(translations[language]['First Name Required'] if not form.first_name else translations[language]['Business Name Required'] if not form.business_name else translations[language]['Invalid Number'], 'error')
+            return redirect(url_for('home', language=language))
+
+        if form.email != form.auto_email:
+            flash(translations[language]['Emails Do Not Match'], 'error')
+            return redirect(url_for('home', language=language))
+
+        try:
+            income_revenue = float(re.sub(r'[,]', '', form.income_revenue))
+            expenses_costs = float(re.sub(r'[,]', '', form.expenses_costs))
+            debt_loan = float(re.sub(r'[,]', '', form.debt_loan))
+            debt_interest_rate = float(re.sub(r'[,]', '', form.debt_interest_rate))
+            if any(v < 0 for v in [income_revenue, expenses_costs, debt_loan, debt_interest_rate]):
+                flash(translations[language]['Invalid Number'], 'error')
+                return redirect(url_for('home', language=language))
+        except ValueError:
+            flash(translations[language]['Invalid Number'], 'error')
+            return redirect(url_for('home', language=language))
+
+        timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        data = [
+            timestamp, form.business_name, form.income_revenue, form.expenses_costs, form.debt_loan,
+            form.debt_interest_rate, form.auto_email, form.phone_number, form.first_name, form.last_name,
+            form.user_type, form.email, '', form.language, ''
+        ]
+        save_to_google_sheets('index', data)
+
+        worksheet = spreadsheet.worksheet(SHEET_NAMES['index'])
+        all_data = worksheet.get_all_records()
+        df = calculate_health_score(pd.DataFrame(all_data))
+        user_df = df[df['Email'] == form.email].copy()
+        if user_df.empty:
+            user_df = pd.DataFrame([data], columns=PREDETERMINED_HEADERS['index'])
+            user_df = calculate_health_score(user_df)
+        all_users_df = df.copy()
+
+        badges = assign_badges(user_df, all_users_df, language)
+        user_df.at[user_df.index[0], 'Badges'] = ','.join(badges)
+        worksheet.update_cell(len(all_data) + 2, 13, ','.join(badges))  # Update Badges column
+
+        all_users_df = all_users_df.sort_values('HealthScore', ascending=False).reset_index(drop=True)
+        user_index = all_users_df.index[all_users_df['Email'] == form.email].tolist()[0]
+        rank = user_index + 1
+        total_users = len(all_users_df.drop_duplicates(subset=['Email']))
+
+        health_score = user_df['HealthScore'].iloc[0]
+        score_description = user_df['ScoreDescription'].iloc[0]
+        course_url = user_df['CourseURL'].iloc[0]
+
+        user_data = {
+            'income': income_revenue,
+            'expenses': expenses_costs,
+            'debt': debt_loan
+        }
+        peer_data = {'averageScore': all_users_df['HealthScore'].mean() if not all_users_df.empty else 50.0}
+
+        breakdown_data = {
+            'Cash Flow': user_df['NormCashFlow'].iloc[0] * 100 / 3,
+            'Debt-to-Income': user_df['NormDebtToIncome'].iloc[0] * 100 / 3,
+            'Debt Interest': user_df['NormDebtInterest'].iloc[0] * 100 / 3
+        }
+        breakdown_chart = generate_chart(breakdown_data, translations[language]['Score Breakdown'])
+        comparison_chart = generate_chart({'You': health_score, 'Peers': peer_data['averageScore']}, translations[language]['Comparison to Peers'])
+
+        email_body = translations[language]['Email Body'].format(
+            user_name=form.first_name,
+            health_score=health_score,
+            score_description=score_description,
+            rank=rank,
+            total_users=total_users,
+            course_url=course_url,
+            course_title=translations[language]['Recommended Course'],
+            FEEDBACK_FORM_URL=FEEDBACK_FORM_URL,
+            WAITLIST_FORM_URL=WAITLIST_FORM_URL,
+            CONSULTANCY_FORM_URL=CONSULTANCY_FORM_URL
+        )
+        if send_email(form.email, translations[language]['Score Report Subject'].format(user_name=form.first_name), email_body, language):
+            flash(translations[language]['Email sent successfully'], 'success')
+        else:
+            flash(translations[language]['Failed to send email'], 'error')
+
+        session['language'] = form.language
+        session['full_name'] = form.first_name
+
+        flash(translations[language]['Submission Success'], 'success')
+        return render_template(
+            'dashboard.html',
+            first_name=form.first_name,
+            last_name=form.last_name or '',
+            email=form.email,
+            user_data=user_data,
+            health_score=health_score,
+            peer_data=peer_data,
+            rank=rank,
+            total_users=total_users,
+            badges=badges,
+            course_title=translations[language]['Recommended Course'],
+            course_url=course_url,
+            breakdown_chart=breakdown_chart,
+            comparison_chart=comparison_chart,
+            personalized_message=score_description,
+            FEEDBACK_FORM_URL=FEEDBACK_FORM_URL,
+            WAITLIST_FORM_URL=WAITLIST_FORM_URL,
+            CONSULTANCY_FORM_URL=CONSULTANCY_FORM_URL,
+            translations=translations[language]
+        )
+    except Exception as e:
+        logger.error(f"Error processing submission: {str(e)}")
+        flash(translations[language]['Error processing form'], 'error')
+        return redirect(url_for('home', language=language))
 
 @app.route('/net_worth', methods=['GET', 'POST'])
 def net_worth():
@@ -272,7 +476,7 @@ def net_worth():
                 return render_template('net_worth_form.html', form=form, translations=translations[form.language])
 
             data = {
-                'Timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                'Timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:S'),
                 'FirstName': form.first_name,
                 'Email': form.email,
                 'Language': form.language,
@@ -287,14 +491,14 @@ def net_worth():
                 health_score=net_worth,
                 score_description=advice,
                 rank=rank,
-                total_users=100,  # Mock total users
+                total_users=100,
                 course_url=courses[0]['link'],
                 course_title=courses[0]['title'],
                 FEEDBACK_FORM_URL=FEEDBACK_FORM_URL,
                 WAITLIST_FORM_URL=WAITLIST_FORM_URL,
                 CONSULTANCY_FORM_URL=CONSULTANCY_FORM_URL
             )
-            if send_email(form.email, translations[form.language]['Score Report Subject'].format(user_name=form.first_name), email_body):
+            if send_email(form.email, translations[form.language]['Score Report Subject'].format(user_name=form.first_name), email_body, form.language):
                 flash(translations[form.language]['Email sent successfully'], 'success')
             else:
                 flash(translations[form.language]['Failed to send email'], 'error')
@@ -346,7 +550,7 @@ def emergency_fund():
                 return render_template('emergency_fund_form.html', form=form, translations=translations[form.language])
 
             data = {
-                'Timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                'Timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:S'),
                 'FirstName': form.first_name,
                 'Email': form.email,
                 'Language': form.language,
@@ -367,7 +571,7 @@ def emergency_fund():
                 WAITLIST_FORM_URL=WAITLIST_FORM_URL,
                 CONSULTANCY_FORM_URL=CONSULTANCY_FORM_URL
             )
-            if send_email(form.email, translations[form.language]['Score Report Subject'].format(user_name=form.first_name), email_body):
+            if send_email(form.email, translations[form.language]['Score Report Subject'].format(user_name=form.first_name), email_body, form.language):
                 flash(translations[form.language]['Email sent successfully'], 'success')
             else:
                 flash(translations[form.language]['Failed to send email'], 'error')
@@ -422,7 +626,7 @@ def quiz():
                 return render_template('quiz_form.html', form=form, translations=translations[form.language])
 
             data = {
-                'Timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                'Timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:S'),
                 'FirstName': form.first_name,
                 'Email': form.email,
                 'Language': form.language,
@@ -447,7 +651,7 @@ def quiz():
                 WAITLIST_FORM_URL=WAITLIST_FORM_URL,
                 CONSULTANCY_FORM_URL=CONSULTANCY_FORM_URL
             )
-            if send_email(form.email, translations[form.language]['Score Report Subject'].format(user_name=form.first_name), email_body):
+            if send_email(form.email, translations[form.language]['Score Report Subject'].format(user_name=form.first_name), email_body, form.language):
                 flash(translations[form.language]['Email sent successfully'], 'success')
             else:
                 flash(translations[form.language]['Failed to send email'], 'error')
@@ -518,7 +722,7 @@ def budget():
                 return render_template('budget_form.html', form=form, translations=translations[form.language])
 
             data = {
-                'Timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                'Timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:S'),
                 'FirstName': form.first_name,
                 'Email': form.email,
                 'AutoEmail': form.auto_email,
@@ -545,7 +749,7 @@ def budget():
                 WAITLIST_FORM_URL=WAITLIST_FORM_URL,
                 CONSULTANCY_FORM_URL=CONSULTANCY_FORM_URL
             )
-            if send_email(form.email, translations[form.language]['Score Report Subject'].format(user_name=form.first_name), email_body):
+            if send_email(form.email, translations[form.language]['Score Report Subject'].format(user_name=form.first_name), email_body, form.language):
                 flash(translations[form.language]['Email sent successfully'], 'success')
             else:
                 flash(translations[form.language]['Failed to send email'], 'error')
