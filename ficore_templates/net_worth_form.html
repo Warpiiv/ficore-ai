@@ -1,11 +1,13 @@
 <script type="text/javascript">
-        var gk_isXlsx = false;
-        var gk_xlsxFileLookup = {};
-        var gk_fileData = {};
-        function filledCell(cell) {
-          return cell !== '' && cell != null;
-        }
-        function loadFileData(filename) {
+    var gk_isXlsx = false;
+    var gk_xlsxFileLookup = {};
+    var gk_fileData = {};
+
+    function filledCell(cell) {
+        return cell !== '' && cell != null;
+    }
+
+    function loadFileData(filename) {
         if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
             try {
                 var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
@@ -14,20 +16,18 @@
 
                 // Convert sheet to JSON to filter blank rows
                 var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
-                // Filter out blank rows (rows where all cells are empty, null, or undefined)
                 var filteredData = jsonData.filter(row => row.some(filledCell));
 
-                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                // Heuristic to find the header row
                 var headerRowIndex = filteredData.findIndex((row, index) =>
-                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                    row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
                 );
-                // Fallback
                 if (headerRowIndex === -1 || headerRowIndex > 25) {
-                  headerRowIndex = 0;
+                    headerRowIndex = 0;
                 }
 
                 // Convert filtered JSON back to CSV
-                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex));
                 csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
                 return csv;
             } catch (e) {
@@ -36,8 +36,55 @@
             }
         }
         return gk_fileData[filename] || "";
-        }
-        </script><!DOCTYPE html>
+    }
+
+    // Handle file upload and populate form
+    function handleFileUpload(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const data = e.target.result;
+            gk_fileData[file.name] = data.split(',')[1]; // Base64 data
+            gk_xlsxFileLookup[file.name] = true;
+            gk_isXlsx = file.name.toLowerCase().endsWith('.xlsx');
+
+            const csvData = loadFileData(file.name);
+            if (csvData) {
+                const rows = csvData.split('\n').map(row => row.split(','));
+                const headers = rows[0].map(header => header.trim().toLowerCase());
+                const dataRows = rows.slice(1);
+
+                // Map headers to form fields (heuristic mapping)
+                const fieldMappings = {
+                    'cash': 'cash_assets',
+                    'property': 'property_assets',
+                    'loan': 'loan_liabilities',
+                    'debt': 'other_debts'
+                };
+
+                dataRows.forEach(row => {
+                    row.forEach((value, index) => {
+                        const header = headers[index];
+                        const fieldId = Object.keys(fieldMappings).find(key => header.includes(key));
+                        if (fieldId && document.getElementById(fieldMappings[fieldId])) {
+                            const cleanValue = value.replace(/[^0-9.]/g, '');
+                            if (!isNaN(parseFloat(cleanValue)) && parseFloat(cleanValue) >= 0) {
+                                document.getElementById(fieldMappings[fieldId]).value = parseFloat(cleanValue).toLocaleString('en-US', {
+                                    minimumFractionDigits: 2,
+                                    maximumFractionDigits: 2
+                                });
+                            }
+                        }
+                    });
+                });
+            }
+        };
+        reader.readAsDataURL(file);
+    }
+</script>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -105,6 +152,10 @@
             box-shadow: 0 0 8px rgba(46, 125, 50, 0.3);
             outline: none;
         }
+        .form-control:invalid {
+            border-color: #dc3545;
+            box-shadow: 0 0 8px rgba(220, 53, 69, 0.3);
+        }
         .btn-primary {
             background: linear-gradient(135deg, #2E7D32, #0288D1);
             border: none;
@@ -148,9 +199,10 @@
             transform: translateY(-2px);
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
         }
-        .alert {
+        .flash-message {
             border-radius: 8px;
             font-weight: 500;
+            margin-bottom: 1rem;
         }
         .number-input::placeholder {
             color: #6c757d;
@@ -199,9 +251,20 @@
             font-size: 0.9rem;
             color: #333;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            position: relative;
         }
         .tooltip-fallback.active {
             display: block;
+        }
+        .tooltip-fallback .close-btn {
+            position: absolute;
+            top: 2px;
+            right: 5px;
+            font-size: 1rem;
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #dc3545;
         }
         .book-toggle {
             display: flex;
@@ -282,7 +345,7 @@
             {% if messages %}
                 <div class="alert-container my-3">
                     {% for category, message in messages %}
-                        <div class="alert alert-{{ 'danger' if category == 'error' else 'success' }} alert-dismissible fade show" role="alert">
+                        <div class="flash-message alert alert-{{ 'danger' if category == 'error' else 'success' }} alert-dismissible fade show" role="alert">
                             {{ message }}
                             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                         </div>
@@ -306,12 +369,20 @@
                             <li><strong>{{ translations[language]['Personal Information'] }}</strong>: Fill in your name, email, and phone number. Choose your language—English or Hausa.</li>
                             <li><strong>{{ translations[language]['Asset Information'] }}</strong>: Enter the value of your assets, like cash, property, or savings. Hover or tap the ℹ️ icons for help.</li>
                             <li><strong>{{ translations[language]['Liability Information'] }}</strong>: Add your liabilities, such as loans or debts. Use the ℹ️ icons for guidance.</li>
+                            <li><strong>{{ translations[language]['Upload File'] }}</strong>: Optionally upload an XLSX or CSV file with your financial data. Ensure columns match 'cash', 'property', 'loan', or 'debt'.</li>
                             <li><strong>{{ translations[language]['Submit'] }}</strong>: Double-check your details, then click Submit to calculate your net worth!</li>
                         </ul>
                     </div>
 
-                    <form id="submission-form" method="POST" action="{{ url_for('net_worth_submit') }}">
+                    <form id="submission-form" method="POST" action="{{ url_for('net_worth_submit') }}" enctype="multipart/form-data">
                         {{ form.hidden_tag() }}
+
+                        <!-- File Upload -->
+                        <div class="mb-3">
+                            {{ form.upload_file.label(class="form-label", **{'for': 'upload_file'}) }}
+                            {{ form.upload_file(class="form-control", type="file", accept=".xlsx,.csv", **{'data-error': translations[language]['Invalid File Type']}) }}
+                            <p class="note-text">{{ translations[language]['Upload an XLSX or CSV file with financial data'] }}</p>
+                        </div>
 
                         <!-- Personal Information -->
                         <h3>{{ translations[language]['Personal Information'] }}</h3>
@@ -329,7 +400,7 @@
                         </div>
                         <div class="mb-3">
                             {{ form.auto_email.label(class="form-label", **{'for': 'auto_email'}) }}
-                            {{ form.auto_email(class="form-control", placeholder=translations[language]['Confirm your email'], type="email", required=True, pattern="[^@]+@[^@]+\.[^@]+", **{'data-error': translations[language]['Invalid Email']}) }}
+                            {{ form.auto_email(class="form-control", placeholder=translations[language]['Confirm your email'], type="email", required=True, pattern="[^@]+@[^@]+\.[^@]+", **{'data-error': translations[language]['Emails Do Not Match']}) }}
                         </div>
                         <div class="mb-3">
                             {{ form.phone_number.label(class="form-label", **{'for': 'phone_number'}) }}
@@ -347,19 +418,25 @@
                             <div class="field-container">
                                 <span class="visual-icon">💵</span>
                                 {{ form.cash_assets.label(class="form-label", **{'for': 'cash_assets'}) }}
-                                <span class="info-icon" data-tooltip-target="cash-tooltip" title="{{ translations[language]['Value of cash, savings, or liquid assets you own.'] }}">ℹ️</span>
+                                <span class="info-icon" data-tooltip-target="cash-tooltip" title="{{ translations[language]['Value of cash, savings, or liquid assets you own.'] }}" aria-label="More info">ℹ️</span>
                             </div>
-                            {{ form.cash_assets(class="form-control number-input", placeholder="e.g. 150,000", type="text", required=True, pattern="^[0-9,]+(\.[0-9]{1,2})?$", **{'data-error': translations[language]['Invalid Number']}) }}
-                            <div class="tooltip-fallback" id="cash-tooltip"></div>
+                            {{ form.cash_assets(class="form-control number-input", placeholder=translations[language]['e.g. 150,000'], type="number", min="0", step="0.01", required=True, pattern="^[0-9]+(\.[0-9]{1,2})?$", **{'data-error': translations[language]['Invalid Number']}) }}
+                            <div class="tooltip-fallback" id="cash-tooltip">
+                                <button class="close-btn" aria-label="Close tooltip">×</button>
+                                <span></span>
+                            </div>
                         </div>
                         <div class="mb-3">
                             <div class="field-container">
                                 <span class="visual-icon">🏠</span>
                                 {{ form.property_assets.label(class="form-label", **{'for': 'property_assets'}) }}
-                                <span class="info-icon" data-tooltip-target="property-tooltip" title="{{ translations[language]['Estimated value of your property, land, or real estate.'] }}">ℹ️</span>
+                                <span class="info-icon" data-tooltip-target="property-tooltip" title="{{ translations[language]['Estimated value of your property, land, or real estate.'] }}" aria-label="More info">ℹ️</span>
                             </div>
-                            {{ form.property_assets(class="form-control number-input", placeholder="e.g. 500,000", type="text", required=True, pattern="^[0-9,]+(\.[0-9]{1,2})?$", **{'data-error': translations[language]['Invalid Number']}) }}
-                            <div class="tooltip-fallback" id="property-tooltip"></div>
+                            {{ form.property_assets(class="form-control number-input", placeholder=translations[language]['e.g. 500,000'], type="number", min="0", step="0.01", required=True, pattern="^[0-9]+(\.[0-9]{1,2})?$", **{'data-error': translations[language]['Invalid Number']}) }}
+                            <div class="tooltip-fallback" id="property-tooltip">
+                                <button class="close-btn" aria-label="Close tooltip">×</button>
+                                <span></span>
+                            </div>
                         </div>
 
                         <!-- Liability Information -->
@@ -368,19 +445,25 @@
                             <div class="field-container">
                                 <span class="visual-icon">💸</span>
                                 {{ form.loan_liabilities.label(class="form-label", **{'for': 'loan_liabilities'}) }}
-                                <span class="info-icon" data-tooltip-target="loan-tooltip" title="{{ translations[language]['Total amount of loans or borrowings you owe.'] }}">ℹ️</span>
+                                <span class="info-icon" data-tooltip-target="loan-tooltip" title="{{ translations[language]['Total amount of loans or borrowings you owe.'] }}" aria-label="More info">ℹ️</span>
                             </div>
-                            {{ form.loan_liabilities(class="form-control number-input", placeholder="e.g. 200,000", type="text", required=True, pattern="^[0-9,]+(\.[0-9]{1,2})?$", **{'data-error': translations[language]['Invalid Number']}) }}
-                            <div class="tooltip-fallback" id="loan-tooltip"></div>
+                            {{ form.loan_liabilities(class="form-control number-input", placeholder=translations[language]['e.g. 200,000'], type="number", min="0", step="0.01", required=True, pattern="^[0-9]+(\.[0-9]{1,2})?$", **{'data-error': translations[language]['Invalid Number']}) }}
+                            <div class="tooltip-fallback" id="loan-tooltip">
+                                <button class="close-btn" aria-label="Close tooltip">×</button>
+                                <span></span>
+                            </div>
                         </div>
                         <div class="mb-3">
                             <div class="field-container">
                                 <span class="visual-icon">📋</span>
                                 {{ form.other_debts.label(class="form-label", **{'for': 'other_debts'}) }}
-                                <span class="info-icon" data-tooltip-target="debt-tooltip" title="{{ translations[language]['Other debts like credit card balances or personal loans.'] }}">ℹ️</span>
+                                <span class="info-icon" data-tooltip-target="debt-tooltip" title="{{ translations[language]['Other debts like credit card balances or personal loans.'] }}" aria-label="More info">ℹ️</span>
                             </div>
-                            {{ form.other_debts(class="form-control number-input", placeholder="e.g. 50,000", type="text", required=True, pattern="^[0-9,]+(\.[0-9]{1,2})?$", **{'data-error': translations[language]['Invalid Number']}) }}
-                            <div class="tooltip-fallback" id="debt-tooltip"></div>
+                            {{ form.other_debts(class="form-control number-input", placeholder=translations[language]['e.g. 50,000'], type="number", min="0", step="0.01", required=True, pattern="^[0-9]+(\.[0-9]{1,2})?$", **{'data-error': translations[language]['Invalid Number']}) }}
+                            <div class="tooltip-fallback" id="debt-tooltip">
+                                <button class="close-btn" aria-label="Close tooltip">×</button>
+                                <span></span>
+                            </div>
                         </div>
 
                         <!-- Submit Button -->
@@ -404,6 +487,7 @@
     </div>
 
     <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}" onerror="console.error('Failed to load bootstrap.bundle.min.js.');"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script>
         // Initialize Bootstrap tooltips with enhanced error handling
         function initializeTooltips() {
@@ -434,16 +518,24 @@
         document.addEventListener('DOMContentLoaded', function () {
             initializeTooltips();
 
-            // Fallback for tooltips
+            // Fallback for tooltips with close button
             document.querySelectorAll('.info-icon').forEach(icon => {
-                icon.addEventListener('click', function () {
-                    const targetId = icon.getAttribute('data-tooltip-target');
-                    const targetDiv = document.getElementById(targetId);
-                    if (targetDiv) {
-                        targetDiv.textContent = icon.getAttribute('title');
-                        targetDiv.classList.toggle('active');
+                const targetId = icon.getAttribute('data-tooltip-target');
+                const targetDiv = document.getElementById(targetId);
+                if (targetDiv) {
+                    icon.addEventListener('click', function () {
+                        targetDiv.querySelector('span').textContent = icon.getAttribute('title');
+                        targetDiv.classList.add('active');
+                    });
+
+                    const closeBtn = targetDiv.querySelector('.close-btn');
+                    if (closeBtn) {
+                        closeBtn.addEventListener('click', function (e) {
+                            e.stopPropagation();
+                            targetDiv.classList.remove('active');
+                        });
                     }
-                });
+                }
             });
 
             // Toggle guide section with book animation
@@ -458,57 +550,114 @@
                 });
             }
 
-            // Format number inputs
+            // Format and validate number inputs
             document.querySelectorAll('.number-input').forEach(input => {
                 input.addEventListener('input', function(e) {
                     let value = e.target.value.replace(/[^0-9.]/g, '');
-                    if (value === '') {
+                    if (value.split('.').length > 2) value = value.replace(/\.+$/, '');
+                    if (value === '' || value === '.') {
                         e.target.value = '';
                         return;
                     }
                     let parts = value.split('.');
-                    let integerPart = parts[0];
-                    let decimalPart = parts[1] ? '.' + parts[1].slice(0, 2) : '';
+                    let integerPart = parts[0].replace(/^0+/, '') || '0';
+                    let decimalPart = parts[1] ? '.' + parts[1].slice(0, 2).padEnd(2, '0') : '.00';
                     integerPart = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
                     e.target.value = integerPart + decimalPart;
-                });
-                input.addEventListener('blur', function(e) {
-                    let cleanValue = e.target.value.replace(/,/g, '');
-                    if (cleanValue === '' || isNaN(parseFloat(cleanValue))) {
-                        e.target.value = '';
+
+                    const cleanValue = parseFloat(value.replace(/,/g, ''));
+                    if (cleanValue < 0) {
+                        e.target.setCustomValidity(translations[language]['Negative values are not allowed']);
                     } else {
-                        e.target.value = parseFloat(cleanValue).toLocaleString('en-US', {
-                            minimumFractionDigits: 0,
-                            maximumFractionDigits: 2
-                        });
+                        e.target.setCustomValidity('');
                     }
                 });
+
+                input.addEventListener('blur', function(e) {
+                    let cleanValue = e.target.value.replace(/,/g, '');
+                    if (cleanValue === '' || cleanValue === '.' || isNaN(parseFloat(cleanValue))) {
+                        e.target.value = '0.00';
+                    } else {
+                        const numValue = parseFloat(cleanValue);
+                        if (numValue < 0) {
+                            e.target.value = '0.00';
+                            e.target.setCustomValidity(translations[language]['Negative values are not allowed']);
+                        } else {
+                            e.target.value = numValue.toLocaleString('en-US', {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2
+                            });
+                            e.target.setCustomValidity('');
+                        }
+                    }
+                });
+
                 input.addEventListener('focus', function(e) {
                     let value = e.target.value.replace(/,/g, '');
-                    e.target.value = value;
+                    e.target.value = value === '0.00' ? '' : value;
                 });
             });
 
             // Custom validation
             document.querySelectorAll('.form-control, .form-select').forEach(input => {
                 input.addEventListener('invalid', function(e) {
-                    e.target.setCustomValidity(e.target.dataset.error);
+                    e.target.setCustomValidity(e.target.dataset.error || translations[language]['Please fill out this field correctly']);
                 });
                 input.addEventListener('input', function(e) {
                     e.target.setCustomValidity('');
                 });
             });
 
-            // Clean numbers before submission
+            // Handle file upload
+            const fileInput = document.getElementById('upload_file');
+            if (fileInput) {
+                fileInput.addEventListener('change', handleFileUpload);
+            }
+
+            // Enhanced form submission with validation and confirmation
             document.getElementById('submission-form').addEventListener('submit', function(e) {
-                document.querySelectorAll('.number-input').forEach(input => {
-                    let cleanValue = input.value.replace(/,/g, '');
-                    if (cleanValue === '' || isNaN(parseFloat(cleanValue))) {
-                        input.value = '';
+                try {
+                    console.log('Form submission triggered. Method:', document.getElementById('submission-form').getAttribute('method'));
+                    const numberInputs = document.querySelectorAll('.number-input');
+                    let isValid = true;
+
+                    numberInputs.forEach(input => {
+                        let cleanValue = input.value.replace(/,/g, '');
+                        const numValue = parseFloat(cleanValue);
+                        if (isNaN(numValue) || numValue < 0) {
+                            input.setCustomValidity(translations[language]['Negative values are not allowed or invalid number']);
+                            isValid = false;
+                        } else {
+                            input.value = numValue.toString();
+                            input.setCustomValidity('');
+                        }
+                    });
+
+                    // Email matching validation
+                    const email = document.getElementById('email');
+                    const autoEmail = document.getElementById('auto_email');
+                    if (email.value !== autoEmail.value) {
+                        autoEmail.setCustomValidity(translations[language]['Emails Do Not Match']);
+                        isValid = false;
                     } else {
-                        input.value = parseFloat(cleanValue).toString();
+                        autoEmail.setCustomValidity('');
                     }
-                });
+
+                    if (!isValid) {
+                        e.preventDefault();
+                        alert(translations[language]['Please correct the errors before submitting']);
+                        return;
+                    }
+
+                    if (!confirm(translations[language]['Are you sure you want to submit this form?'])) {
+                        e.preventDefault();
+                        return;
+                    }
+                } catch (error) {
+                    console.error('Error during form submission preprocessing:', error);
+                    alert(translations[language]['An error occurred. Please try again.']);
+                    e.preventDefault();
+                }
             });
         });
     </script>
