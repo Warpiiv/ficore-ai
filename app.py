@@ -142,17 +142,17 @@ class QuizForm(FlaskForm):
     first_name = StringField('First Name', validators=[DataRequired()])
     email = EmailField('Email', validators=[DataRequired(), Email()])
     language = SelectField('Language', choices=[('English', 'English'), ('Hausa', 'Hausa')], default='English')
-    q1 = StringField('Question 1')
-    q2 = StringField('Question 2')
-    q3 = StringField('Question 3')
-    q4 = StringField('Question 4')
-    q5 = StringField('Question 5')
+    q1 = SelectField('Question 1', choices=[('', 'Select'), ('Yes', 'Yes'), ('No', 'No')], validators=[DataRequired()])
+    q2 = SelectField('Question 2', choices=[('', 'Select'), ('Yes', 'Yes'), ('No', 'No')], validators=[DataRequired()])
+    q3 = SelectField('Question 3', choices=[('', 'Select'), ('Yes', 'Yes'), ('No', 'No')], validators=[DataRequired()])
+    q4 = SelectField('Question 4', choices=[('', 'Select'), ('Yes', 'Yes'), ('No', 'No')], validators=[DataRequired()])
+    q5 = SelectField('Question 5', choices=[('', 'Select'), ('Yes', 'Yes'), ('No', 'No')], validators=[DataRequired()])
     submit = SubmitField('Submit')
 
 class BudgetForm(FlaskForm):
     first_name = StringField('First Name', validators=[DataRequired()])
     email = EmailField('Email', validators=[DataRequired(), Email()])
-    auto_email = EmailField('Confirm Email', validators=[DataRequired(), Email(), EqualTo('email')])
+    auto_email = EmailField('Receive Budgeting Tips via Email (Optional)')
     language = SelectField('Language', choices=[('English', 'English'), ('Hausa', 'Hausa')], default='English')
     monthly_income = StringField('Monthly Income', validators=[DataRequired()])
     housing_expenses = StringField('Housing Expenses', validators=[DataRequired()])
@@ -703,9 +703,7 @@ def quiz():
                 language=language
             )
         else:
-            for field, errors in form.errors.items():
-                for error in errors:
-                    flash(f"{field}: {error}", 'error')
+            flash(translations[language]['Please answer all questions before submitting!'], 'error')
             return render_template('quiz_form.html', form=form, translations=translations, language=language, FEEDBACK_FORM_URL=FEEDBACK_FORM_URL)
 
     return render_template('quiz_form.html', form=form, translations=translations, language=language, FEEDBACK_FORM_URL=FEEDBACK_FORM_URL)
@@ -742,7 +740,7 @@ def budget():
                 'Timestamp': timestamp,
                 'FirstName': form.first_name.data,
                 'Email': form.email.data,
-                'AutoEmail': form.auto_email.data,
+                'AutoEmail': form.auto_email.data or '',
                 'Language': form.language.data,
                 'MonthlyIncome': form.monthly_income.data,
                 'HousingExpenses': form.housing_expenses.data,
