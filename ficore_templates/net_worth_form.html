@@ -1,98 +1,12 @@
-<script type="text/javascript">
-    var gk_isXlsx = false;
-    var gk_xlsxFileLookup = {};
-    var gk_fileData = {};
-
-    function filledCell(cell) {
-        return cell !== '' && cell != null;
-    }
-
-    function loadFileData(filename) {
-        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
-            try {
-                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
-                var firstSheetName = workbook.SheetNames[0];
-                var worksheet = workbook.Sheets[firstSheetName];
-
-                // Convert sheet to JSON to filter blank rows
-                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
-                var filteredData = jsonData.filter(row => row.some(filledCell));
-
-                // Heuristic to find the header row
-                var headerRowIndex = filteredData.findIndex((row, index) =>
-                    row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
-                );
-                if (headerRowIndex === -1 || headerRowIndex > 25) {
-                    headerRowIndex = 0;
-                }
-
-                // Convert filtered JSON back to CSV
-                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex));
-                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
-                return csv;
-            } catch (e) {
-                console.error(e);
-                return "";
-            }
-        }
-        return gk_fileData[filename] || "";
-    }
-
-    // Handle file upload and populate form
-    function handleFileUpload(event) {
-        const file = event.target.files[0];
-        if (!file) return;
-
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            const data = e.target.result;
-            gk_fileData[file.name] = data.split(',')[1]; // Base64 data
-            gk_xlsxFileLookup[file.name] = true;
-            gk_isXlsx = file.name.toLowerCase().endsWith('.xlsx');
-
-            const csvData = loadFileData(file.name);
-            if (csvData) {
-                const rows = csvData.split('\n').map(row => row.split(','));
-                const headers = rows[0].map(header => header.trim().toLowerCase());
-                const dataRows = rows.slice(1);
-
-                // Map headers to form fields (heuristic mapping)
-                const fieldMappings = {
-                    'cash': 'cash_assets',
-                    'property': 'property_assets',
-                    'loan': 'loan_liabilities',
-                    'debt': 'other_debts'
-                };
-
-                dataRows.forEach(row => {
-                    row.forEach((value, index) => {
-                        const header = headers[index];
-                        const fieldId = Object.keys(fieldMappings).find(key => header.includes(key));
-                        if (fieldId && document.getElementById(fieldMappings[fieldId])) {
-                            const cleanValue = value.replace(/[^0-9.]/g, '');
-                            if (!isNaN(parseFloat(cleanValue)) && parseFloat(cleanValue) >= 0) {
-                                document.getElementById(fieldMappings[fieldId]).value = parseFloat(cleanValue).toLocaleString('en-US', {
-                                    minimumFractionDigits: 2,
-                                    maximumFractionDigits: 2
-                                });
-                            }
-                        }
-                    });
-                });
-            }
-        };
-        reader.readAsDataURL(file);
-    }
-</script>
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ language }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Calculate your net worth with Ficore Africa by entering your assets and liabilities.">
     <meta name="keywords" content="ficore africa, net worth calculator, assets, liabilities, Africa SME finance">
     <meta name="author" content="Ficore Africa">
-    <title>Ficore Africa - Net Worth Calculator</title>
+    <title>Ficore Africa - {{ translations[language]['Net Worth Calculator'] }}</title>
     <link href="{{ url_for('static', filename='css/bootstrap.min.css') }}" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;600&display=swap" rel="stylesheet">
     <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
@@ -127,10 +41,23 @@
             padding: 2rem;
             border-radius: 12px;
             box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
-            transition: transform 0.3s ease;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
         .form-card:hover {
             transform: translateY(-5px);
+            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.15);
+        }
+        .card-header {
+            background: linear-gradient(135deg, #28A745, #1E88E5);
+            color: white;
+            padding: 1rem;
+            border-radius: 12px 12px 0 0;
+            text-align: center;
+            font-weight: 600;
+            font-size: 1.35rem;
+            margin-bottom: 1rem;
+            border: 2px solid #1565C0;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         }
         h3 {
             color: #2E7D32;
@@ -165,20 +92,38 @@
             font-size: 1.1rem;
             color: white;
             transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.3s ease;
-            position: relative;
-            overflow: hidden;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
         }
         .btn-primary:hover {
             transform: scale(1.05);
-            background: linear-gradient(135deg, #1B5E20, #01579B);
+            background: linear-gradient(135deg, #1E88E5, #0288D1);
             box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
             border: 1px solid #4CAF50;
         }
+        .btn-primary.loading::after {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #fff;
+            border-top: 3px solid #0288D1;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+        .btn-primary.loading span {
+            visibility: hidden;
+        }
+        @keyframes spin {
+            0% { transform: translate(-50%, -50%) rotate(0deg); }
+            100% { transform: translate(-50%, -50%) rotate(360deg); }
+        }
         .btn-secondary {
-            background: linear-gradient(135deg, #1DA1F2, #0d47a1);
+            background: linear-gradient(135deg, #F57C00, #FF9800);
             border: none;
-            padding: 10px;
+            padding: 10px 20px;
             font-weight: 500;
             border-radius: 8px;
             transition: transform 0.2s ease, box-shadow 0.2s ease;
@@ -190,7 +135,7 @@
         .btn-email {
             background: linear-gradient(135deg, #FF5722, #D81B60);
             border: none;
-            padding: 10px;
+            padding: 10px 20px;
             font-weight: 500;
             border-radius: 8px;
             transition: transform 0.2s ease, box-shadow 0.2s ease;
@@ -212,7 +157,6 @@
             padding: 1rem;
             border-radius: 8px;
             margin-bottom: 1rem;
-            display: none;
         }
         .guide-section ul {
             list-style-type: disc;
@@ -241,29 +185,20 @@
             color: #666;
             margin-bottom: 0.5rem;
         }
-        .tooltip-fallback {
-            display: none;
-            background: #E3F2FD;
-            border: 1px solid #0288D1;
-            border-radius: 4px;
-            padding: 8px;
-            margin-top: 4px;
+        .error-message {
+            color: #dc3545;
             font-size: 0.9rem;
-            color: #333;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-            position: relative;
+            margin-top: 0.5rem;
+            display: none;
         }
-        .tooltip-fallback.active {
-            display: block;
+        .file-feedback {
+            margin-top: 0.5rem;
+            font-size: 0.9rem;
         }
-        .tooltip-fallback .close-btn {
-            position: absolute;
-            top: 2px;
-            right: 5px;
-            font-size: 1rem;
-            background: none;
-            border: none;
-            cursor: pointer;
+        .file-feedback.success {
+            color: #2E7D32;
+        }
+        .file-feedback.error {
             color: #dc3545;
         }
         .book-toggle {
@@ -359,8 +294,8 @@
             <div class="col-md-10">
                 <div class="form-card">
                     <!-- New to Finances Toggle with Stylish Blue Book -->
-                    <div class="book-toggle" id="guide-toggle">
-                        <div class="book-icon" id="book-icon"></div>
+                    <div class="book-toggle" id="guide-toggle" aria-label="{{ translations[language]['Toggle guide'] }}" role="button">
+                        <div class="book-icon open" id="book-icon" aria-hidden="true"></div>
                         <span class="book-label">{{ translations[language]['New to finances? Click here to get guided tips on how to fill this form.'] }}</span>
                     </div>
                     <div class="guide-section" id="guide-content">
@@ -372,20 +307,24 @@
                             <li><strong>{{ translations[language]['Upload File'] }}</strong>: Optionally upload an XLSX or CSV file with your financial data. Ensure columns match 'cash', 'property', 'loan', or 'debt'.</li>
                             <li><strong>{{ translations[language]['Submit'] }}</strong>: Double-check your details, then click Submit to calculate your net worth!</li>
                         </ul>
+                        <button class="btn btn-secondary mt-2" id="hide-guide">{{ translations[language]['Hide Guide'] }}</button>
                     </div>
 
-                    <form id="submission-form" method="POST" action="{{ url_for('net_worth_submit') }}" enctype="multipart/form-data">
+                    <form id="submission-form" method="POST" action="{{ url_for('net_worth') }}" enctype="multipart/form-data">
                         {{ form.hidden_tag() }}
 
                         <!-- File Upload -->
                         <div class="mb-3">
                             {{ form.upload_file.label(class="form-label", **{'for': 'upload_file'}) }}
-                            {{ form.upload_file(class="form-control", type="file", accept=".xlsx,.csv", **{'data-error': translations[language]['Invalid File Type']}) }}
-                            <p class="note-text">{{ translations[language]['Upload an XLSX or CSV file with financial data'] }}</p>
+                            {{ form.upload_file(class="form-control", type="file", accept=".xlsx,.csv", **{'data-error': translations[language]['Invalid File Type']}, **{'aria-describedby': 'file-help'}) }}
+                            <p class="note-text" id="file-help">{{ translations[language]['Upload an XLSX or CSV file with columns labeled cash, property, loan, or debt'] }}</p>
+                            <div class="file-feedback d-none" id="file-feedback" role="alert" aria-live="polite"></div>
                         </div>
 
                         <!-- Personal Information -->
-                        <h3>{{ translations[language]['Personal Information'] }}</h3>
+                        <div class="card-header">
+                            <span class="emoji">👤</span> {{ translations[language]['Personal Information'] }}
+                        </div>
                         <div class="mb-3">
                             {{ form.first_name.label(class="form-label", **{'for': 'first_name'}) }}
                             {{ form.first_name(class="form-control", placeholder=translations[language]['Enter your first name'], required=True, **{'data-error': translations[language]['First Name Required']}) }}
@@ -413,62 +352,57 @@
                         </div>
 
                         <!-- Asset Information -->
-                        <h3>{{ translations[language]['Asset Information'] }}</h3>
+                        <div class="card-header">
+                            <span class="emoji">💰</span> {{ translations[language]['Asset Information'] }}
+                        </div>
                         <div class="mb-3">
                             <div class="field-container">
                                 <span class="visual-icon">💵</span>
                                 {{ form.cash_assets.label(class="form-label", **{'for': 'cash_assets'}) }}
-                                <span class="info-icon" data-tooltip-target="cash-tooltip" title="{{ translations[language]['Value of cash, savings, or liquid assets you own.'] }}" aria-label="More info">ℹ️</span>
+                                <span class="info-icon" data-bs-toggle="tooltip" data-bs-title="{{ translations[language]['Value of cash, savings, or liquid assets you own.'] }}" aria-label="{{ translations[language]['More info on cash assets'] }}">ℹ️</span>
                             </div>
-                            {{ form.cash_assets(class="form-control number-input", placeholder=translations[language]['e.g. 150,000'], type="number", min="0", step="0.01", required=True, pattern="^[0-9]+(\.[0-9]{1,2})?$", **{'data-error': translations[language]['Invalid Number']}) }}
-                            <div class="tooltip-fallback" id="cash-tooltip">
-                                <button class="close-btn" aria-label="Close tooltip">×</button>
-                                <span></span>
-                            </div>
+                            {{ form.cash_assets(class="form-control number-input", placeholder=translations[language]['e.g. 150,000'], type="number", min="0", step="0.01", required=True, pattern="^[0-9]+(\.[0-9]{1,2})?$", **{'data-error': translations[language]['Invalid Number']}, **{'aria-describedby': 'cash-help'}) }}
+                            <p class="note-text" id="cash-help">{{ translations[language]['Numbers will be auto-formatted to two decimal places'] }}</p>
                         </div>
                         <div class="mb-3">
                             <div class="field-container">
                                 <span class="visual-icon">🏠</span>
                                 {{ form.property_assets.label(class="form-label", **{'for': 'property_assets'}) }}
-                                <span class="info-icon" data-tooltip-target="property-tooltip" title="{{ translations[language]['Estimated value of your property, land, or real estate.'] }}" aria-label="More info">ℹ️</span>
+                                <span class="info-icon" data-bs-toggle="tooltip" data-bs-title="{{ translations[language]['Estimated value of your property, land, or real estate.'] }}" aria-label="{{ translations[language]['More info on property assets'] }}">ℹ️</span>
                             </div>
-                            {{ form.property_assets(class="form-control number-input", placeholder=translations[language]['e.g. 500,000'], type="number", min="0", step="0.01", required=True, pattern="^[0-9]+(\.[0-9]{1,2})?$", **{'data-error': translations[language]['Invalid Number']}) }}
-                            <div class="tooltip-fallback" id="property-tooltip">
-                                <button class="close-btn" aria-label="Close tooltip">×</button>
-                                <span></span>
-                            </div>
+                            {{ form.property_assets(class="form-control number-input", placeholder=translations[language]['e.g. 500,000'], type="number", min="0", step="0.01", required=True, pattern="^[0-9]+(\.[0-9]{1,2})?$", **{'data-error': translations[language]['Invalid Number']}, **{'aria-describedby': 'property-help'}) }}
+                            <p class="note-text" id="property-help">{{ translations[language]['Numbers will be auto-formatted to two decimal places'] }}</p>
                         </div>
 
                         <!-- Liability Information -->
-                        <h3>{{ translations[language]['Liability Information'] }}</h3>
+                        <div class="card-header">
+                            <span class="emoji">📉</span> {{ translations[language]['Liability Information'] }}
+                        </div>
                         <div class="mb-3">
                             <div class="field-container">
                                 <span class="visual-icon">💸</span>
                                 {{ form.loan_liabilities.label(class="form-label", **{'for': 'loan_liabilities'}) }}
-                                <span class="info-icon" data-tooltip-target="loan-tooltip" title="{{ translations[language]['Total amount of loans or borrowings you owe.'] }}" aria-label="More info">ℹ️</span>
+                                <span class="info-icon" data-bs-toggle="tooltip" data-bs-title="{{ translations[language]['Total amount of loans or borrowings you owe.'] }}" aria-label="{{ translations[language]['More info on loans'] }}">ℹ️</span>
                             </div>
-                            {{ form.loan_liabilities(class="form-control number-input", placeholder=translations[language]['e.g. 200,000'], type="number", min="0", step="0.01", required=True, pattern="^[0-9]+(\.[0-9]{1,2})?$", **{'data-error': translations[language]['Invalid Number']}) }}
-                            <div class="tooltip-fallback" id="loan-tooltip">
-                                <button class="close-btn" aria-label="Close tooltip">×</button>
-                                <span></span>
-                            </div>
+                            {{ form.loan_liabilities(class="form-control number-input", placeholder=translations[language]['e.g. 200,000'], type="number", min="0", step="0.01", required=True, pattern="^[0-9]+(\.[0-9]{1,2})?$", **{'data-error': translations[language]['Invalid Number']}, **{'aria-describedby': 'loan-help'}) }}
+                            <p class="note-text" id="loan-help">{{ translations[language]['Numbers will be auto-formatted to two decimal places'] }}</p>
                         </div>
                         <div class="mb-3">
                             <div class="field-container">
                                 <span class="visual-icon">📋</span>
                                 {{ form.other_debts.label(class="form-label", **{'for': 'other_debts'}) }}
-                                <span class="info-icon" data-tooltip-target="debt-tooltip" title="{{ translations[language]['Other debts like credit card balances or personal loans.'] }}" aria-label="More info">ℹ️</span>
+                                <span class="info-icon" data-bs-toggle="tooltip" data-bs-title="{{ translations[language]['Other debts like credit card balances or personal loans.'] }}" aria-label="{{ translations[language]['More info on debts'] }}">ℹ️</span>
                             </div>
-                            {{ form.other_debts(class="form-control number-input", placeholder=translations[language]['e.g. 50,000'], type="number", min="0", step="0.01", required=True, pattern="^[0-9]+(\.[0-9]{1,2})?$", **{'data-error': translations[language]['Invalid Number']}) }}
-                            <div class="tooltip-fallback" id="debt-tooltip">
-                                <button class="close-btn" aria-label="Close tooltip">×</button>
-                                <span></span>
-                            </div>
+                            {{ form.other_debts(class="form-control number-input", placeholder=translations[language]['e.g. 50,000'], type="number", min="0", step="0.01", required=True, pattern="^[0-9]+(\.[0-9]{1,2})?$", **{'data-error': translations[language]['Invalid Number']}, **{'aria-describedby': 'debt-help'}) }}
+                            <p class="note-text" id="debt-help">{{ translations[language]['Numbers will be auto-formatted to two decimal places'] }}</p>
                         </div>
 
                         <!-- Submit Button -->
                         <div class="d-grid">
-                            {{ form.submit(class="btn btn-primary btn-lg", value=translations[language]['Submit']) }}
+                            <button type="submit" class="btn btn-primary btn-lg" id="submit-btn">
+                                <span>{{ translations[language]['Submit'] }}</span>
+                            </button>
+                            <div class="error-message mt-2" id="error-message" role="alert" aria-live="polite">{{ translations[language]['Please correct the errors before submitting'] }}</div>
                         </div>
                     </form>
                 </div>
@@ -477,76 +411,117 @@
 
         <!-- Contact Information -->
         <div class="text-center my-4">
-            <p>{{ translations[language]['Contact Us'] }} <a href="mailto:ficore.ai.africa@gmail.com" class="btn btn-email">{{ translations[language]['Click to Email'] }}</a> {{ translations[language]['for support'] }}.</p>
+            <p>{{ translations[language]['Contact Us'] }} <a href="mailto:ficore.ai.africa@gmail.com" class="btn btn-email" aria-label="{{ translations[language]['Email Ficore Africa Support'] }}">{{ translations[language]['Click to Email'] }}</a> {{ translations[language]['for support'] }}.</p>
         </div>
 
         <!-- Feedback Link -->
         <div class="text-center my-4">
-            <a href="{{ FEEDBACK_FORM_URL }}" class="btn btn-secondary">{{ translations[language]['Provide Feedback'] }}</a>
+            <a href="{{ FEEDBACK_FORM_URL }}" class="btn btn-secondary" target="_blank" aria-label="{{ translations[language]['Provide Feedback'] }}">{{ translations[language]['Provide Feedback'] }}</a>
         </div>
     </div>
 
     <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}" onerror="console.error('Failed to load bootstrap.bundle.min.js.');"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script>
-        // Initialize Bootstrap tooltips with enhanced error handling
-        function initializeTooltips() {
-            try {
-                if (typeof bootstrap === 'undefined') {
-                    console.error('Bootstrap is not loaded.');
-                    return false;
-                }
-                const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-                if (tooltipTriggerList.length === 0) {
-                    console.warn('No elements with data-bs-toggle="tooltip" found.');
-                    return false;
-                }
-                tooltipTriggerList.map(function (tooltipTriggerEl) {
-                    return new bootstrap.Tooltip(tooltipTriggerEl, {
-                        trigger: 'hover focus',
-                        placement: 'top',
-                        customClass: 'custom-tooltip'
-                    });
-                });
-                return true;
-            } catch (error) {
-                console.error('Error initializing tooltips:', error);
-                return false;
+        // File upload handling with validation
+        function handleFileUpload(event) {
+            const file = event.target.files[0];
+            const feedback = document.getElementById('file-feedback');
+            if (!file) {
+                feedback.classList.add('d-none');
+                return;
             }
+
+            feedback.classList.remove('d-none');
+            feedback.classList.remove('success', 'error');
+            feedback.textContent = translations[language]['Processing file...'];
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = e.target.result;
+                    const isXlsx = file.name.toLowerCase().endsWith('.xlsx');
+                    const workbook = XLSX.read(data.split(',')[1], { type: 'base64' });
+                    const firstSheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[firstSheetName];
+
+                    const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                    const filteredData = jsonData.filter(row => row.some(cell => cell !== '' && cell != null));
+
+                    const headers = filteredData[0].map(header => header.trim().toLowerCase());
+                    const dataRows = filteredData.slice(1);
+
+                    const fieldMappings = {
+                        'cash': 'cash_assets',
+                        'property': 'property_assets',
+                        'loan': 'loan_liabilities',
+                        'debt': 'other_debts'
+                    };
+
+                    let hasValidData = false;
+                    dataRows.forEach(row => {
+                        row.forEach((value, index) => {
+                            const header = headers[index];
+                            const fieldId = Object.keys(fieldMappings).find(key => header.includes(key));
+                            if (fieldId && document.getElementById(fieldMappings[fieldId])) {
+                                const cleanValue = value.toString().replace(/[^0-9.]/g, '');
+                                const numValue = parseFloat(cleanValue);
+                                if (!isNaN(numValue) && numValue >= 0) {
+                                    document.getElementById(fieldMappings[fieldId]).value = numValue.toLocaleString('en-US', {
+                                        minimumFractionDigits: 2,
+                                        maximumFractionDigits: 2
+                                    });
+                                    hasValidData = true;
+                                }
+                            }
+                        });
+                    });
+
+                    if (hasValidData) {
+                        feedback.classList.add('success');
+                        feedback.textContent = translations[language]['File processed successfully'];
+                    } else {
+                        feedback.classList.add('error');
+                        feedback.textContent = translations[language]['No valid data found in file'];
+                    }
+                } catch (e) {
+                    console.error(e);
+                    feedback.classList.add('error');
+                    feedback.textContent = translations[language]['Error processing file'];
+                }
+            };
+            reader.onerror = function() {
+                feedback.classList.add('error');
+                feedback.textContent = translations[language]['Error reading file'];
+            };
+            reader.readAsDataURL(file);
         }
 
         document.addEventListener('DOMContentLoaded', function () {
-            initializeTooltips();
-
-            // Fallback for tooltips with close button
-            document.querySelectorAll('.info-icon').forEach(icon => {
-                const targetId = icon.getAttribute('data-tooltip-target');
-                const targetDiv = document.getElementById(targetId);
-                if (targetDiv) {
-                    icon.addEventListener('click', function () {
-                        targetDiv.querySelector('span').textContent = icon.getAttribute('title');
-                        targetDiv.classList.add('active');
-                    });
-
-                    const closeBtn = targetDiv.querySelector('.close-btn');
-                    if (closeBtn) {
-                        closeBtn.addEventListener('click', function (e) {
-                            e.stopPropagation();
-                            targetDiv.classList.remove('active');
-                        });
-                    }
-                }
+            // Initialize Bootstrap tooltips
+            const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+            tooltipTriggerList.forEach(tooltipTriggerEl => {
+                new bootstrap.Tooltip(tooltipTriggerEl, {
+                    trigger: 'hover focus',
+                    placement: 'top'
+                });
             });
 
             // Toggle guide section with book animation
             const guideToggle = document.getElementById('guide-toggle');
             const bookIcon = document.getElementById('book-icon');
             const guideContent = document.getElementById('guide-content');
-            if (guideToggle && bookIcon && guideContent) {
+            const hideGuideBtn = document.getElementById('hide-guide');
+            if (guideToggle && bookIcon && guideContent && hideGuideBtn) {
+                guideContent.style.display = 'block'; // Show by default
                 guideToggle.addEventListener('click', function () {
                     const isOpen = guideContent.style.display === 'block';
                     guideContent.style.display = isOpen ? 'none' : 'block';
                     bookIcon.classList.toggle('open', !isOpen);
+                });
+                hideGuideBtn.addEventListener('click', function () {
+                    guideContent.style.display = 'none';
+                    bookIcon.classList.remove('open');
                 });
             }
 
@@ -571,6 +546,7 @@
                     } else {
                         e.target.setCustomValidity('');
                     }
+                    input.setAttribute('aria-label', `${translations[language][input.previousElementSibling.textContent]}: ${e.target.value}`);
                 });
 
                 input.addEventListener('blur', function(e) {
@@ -590,6 +566,7 @@
                             e.target.setCustomValidity('');
                         }
                     }
+                    input.setAttribute('aria-label', `${translations[language][input.previousElementSibling.textContent]}: ${e.target.value}`);
                 });
 
                 input.addEventListener('focus', function(e) {
@@ -598,15 +575,20 @@
                 });
             });
 
-            // Custom validation
-            document.querySelectorAll('.form-control, .form-select').forEach(input => {
-                input.addEventListener('invalid', function(e) {
-                    e.target.setCustomValidity(e.target.dataset.error || translations[language]['Please fill out this field correctly']);
+            // Email confirmation validation
+            const emailInput = document.getElementById('email');
+            const autoEmailInput = document.getElementById('auto_email');
+            if (emailInput && autoEmailInput) {
+                [emailInput, autoEmailInput].forEach(input => {
+                    input.addEventListener('input', function() {
+                        if (emailInput.value !== autoEmailInput.value) {
+                            autoEmailInput.setCustomValidity(translations[language]['Emails Do Not Match']);
+                        } else {
+                            autoEmailInput.setCustomValidity('');
+                        }
+                    });
                 });
-                input.addEventListener('input', function(e) {
-                    e.target.setCustomValidity('');
-                });
-            });
+            }
 
             // Handle file upload
             const fileInput = document.getElementById('upload_file');
@@ -614,10 +596,12 @@
                 fileInput.addEventListener('change', handleFileUpload);
             }
 
-            // Enhanced form submission with validation and confirmation
-            document.getElementById('submission-form').addEventListener('submit', function(e) {
-                try {
-                    console.log('Form submission triggered. Method:', document.getElementById('submission-form').getAttribute('method'));
+            // Submit button loading state and validation
+            const submitBtn = document.getElementById('submit-btn');
+            const submissionForm = document.getElementById('submission-form');
+            const errorMessage = document.getElementById('error-message');
+            if (submitBtn && submissionForm && errorMessage) {
+                submissionForm.addEventListener('submit', function(e) {
                     const numberInputs = document.querySelectorAll('.number-input');
                     let isValid = true;
 
@@ -633,7 +617,6 @@
                         }
                     });
 
-                    // Email matching validation
                     const email = document.getElementById('email');
                     const autoEmail = document.getElementById('auto_email');
                     if (email.value !== autoEmail.value) {
@@ -645,20 +628,17 @@
 
                     if (!isValid) {
                         e.preventDefault();
-                        alert(translations[language]['Please correct the errors before submitting']);
-                        return;
+                        errorMessage.style.display = 'block';
+                    } else {
+                        submitBtn.classList.add('loading');
+                        errorMessage.style.display = 'none';
+                        if (!confirm(translations[language]['Are you sure you want to submit this form?'])) {
+                            e.preventDefault();
+                            submitBtn.classList.remove('loading');
+                        }
                     }
-
-                    if (!confirm(translations[language]['Are you sure you want to submit this form?'])) {
-                        e.preventDefault();
-                        return;
-                    }
-                } catch (error) {
-                    console.error('Error during form submission preprocessing:', error);
-                    alert(translations[language]['An error occurred. Please try again.']);
-                    e.preventDefault();
-                }
-            });
+                });
+            }
         });
     </script>
 </body>
