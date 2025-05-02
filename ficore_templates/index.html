@@ -113,6 +113,11 @@
             border-radius: 8px;
             font-weight: 500;
         }
+        .flash-message {
+            border-radius: 8px;
+            font-weight: 500;
+            margin-bottom: 1rem;
+        }
         .number-input::placeholder {
             color: #6c757d;
         }
@@ -243,14 +248,12 @@
         <!-- Flash Messages -->
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
-                <div class="alert-container my-3">
-                    {% for category, message in messages %}
-                        <div class="alert alert-{{ 'danger' if category == 'error' else 'success' }} alert-dismissible fade show" role="alert">
-                            {{ message }}
-                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                        </div>
-                    {% endfor %}
-                </div>
+                {% for category, message in messages %}
+                    <div class="flash-message alert alert-{{ 'danger' if category == 'error' else 'success' }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
             {% endif %}
         {% endwith %}
 
@@ -292,7 +295,7 @@
                         </div>
                         <div class="mb-3">
                             {{ form.auto_email.label(class="form-label", **{'for': 'auto_email'}) }}
-                            {{ form.auto_email(class="form-control", placeholder=translations[language]['Confirm your email'], type="email", required=True, pattern="[^@]+@[^@]+\.[^@]+", **{'data-error': translations[language]['Invalid Email']}) }}
+                            {{ form.auto_email(class="form-control", placeholder=translations[language]['Confirm your email'], type="email", required=True, pattern="[^@]+@[^@]+\.[^@]+", **{'data-error': translations[language]['Emails Do Not Match']}) }}
                         </div>
                         <div class="mb-3">
                             {{ form.phone_number.label(class="form-label", **{'for': 'phone_number'}) }}
@@ -308,7 +311,7 @@
                         <h3>{{ translations[language]['User Information'] }}</h3>
                         <div class="mb-3">
                             {{ form.business_name.label(class="form-label", **{'for': 'business_name'}) }}
-                            {{ form.business_name(class="form-control", placeholder="Type personal name if no business", required=True, **{'data-error': translations[language]['Business Name Required']}) }}
+                            {{ form.business_name(class="form-control", placeholder=translations[language]['Type personal name if no business'], required=True, **{'data-error': translations[language]['Business Name Required']}) }}
                         </div>
                         <div class="mb-3">
                             <p class="note-text">{{ translations[language]['User Type'] }}: Business or Individual</p>
@@ -324,7 +327,7 @@
                                 {{ form.income_revenue.label(class="form-label", **{'for': 'income_revenue'}) }}
                                 <span class="info-icon" data-tooltip-target="income-tooltip" title="{{ translations[language]['Total money you receive regularly, like salary, business sales, gifts, grants, incentives, or side hustles.'] }}">ℹ️</span>
                             </div>
-                            {{ form.income_revenue(class="form-control number-input", placeholder="e.g. 150,000", type="text", required=True, pattern="^[0-9,]+(\.[0-9]{1,2})?$", **{'data-error': translations[language]['Invalid Number']}) }}
+                            {{ form.income_revenue(class="form-control number-input", placeholder=translations[language]['e.g. 150,000'], type="text", required=True, pattern="^[0-9,]+(\.[0-9]{1,2})?$", **{'data-error': translations[language]['Invalid Number']}) }}
                             <div class="tooltip-fallback" id="income-tooltip"></div>
                         </div>
                         <div class="mb-3">
@@ -333,7 +336,7 @@
                                 {{ form.expenses_costs.label(class="form-label", **{'for': 'expenses_costs'}) }}
                                 <span class="info-icon" data-tooltip-target="expenses-tooltip" title="{{ translations[language]['All the money you spend, such as on rent, food, transport, electricity bill, gas and utilities, fine and penalties, levies, taxes, etc.'] }}">ℹ️</span>
                             </div>
-                            {{ form.expenses_costs(class="form-control number-input", placeholder="e.g. 60,000", type="text", required=True, pattern="^[0-9,]+(\.[0-9]{1,2})?$", **{'data-error': translations[language]['Invalid Number']}) }}
+                            {{ form.expenses_costs(class="form-control number-input", placeholder=translations[language]['e.g. 60,000'], type="text", required=True, pattern="^[0-9,]+(\.[0-9]{1,2})?$", **{'data-error': translations[language]['Invalid Number']}) }}
                             <div class="tooltip-fallback" id="expenses-tooltip"></div>
                         </div>
                         <div class="mb-3">
@@ -342,7 +345,7 @@
                                 {{ form.debt_loan.label(class="form-label", **{'for': 'debt_loan'}) }}
                                 <span class="info-icon" data-tooltip-target="debt-tooltip" title="{{ translations[language]['Money you owe, like loans, IOUs, borrowings, or funds lent to you.'] }}">ℹ️</span>
                             </div>
-                            {{ form.debt_loan(class="form-control number-input", placeholder="e.g. 25,000", type="text", required=True, pattern="^[0-9,]+(\.[0-9]{1,2})?$", **{'data-error': translations[language]['Invalid Number']}) }}
+                            {{ form.debt_loan(class="form-control number-input", placeholder=translations[language]['e.g. 25,000'], type="text", required=True, pattern="^[0-9,]+(\.[0-9]{1,2})?$", **{'data-error': translations[language]['Invalid Number']}) }}
                             <div class="tooltip-fallback" id="debt-tooltip"></div>
                         </div>
                         <div class="mb-3">
@@ -351,7 +354,7 @@
                                 {{ form.debt_interest_rate.label(class="form-label", **{'for': 'debt_interest_rate'}) }}
                                 <span class="info-icon" data-tooltip-target="interest-tooltip" title="{{ translations[language]['Extra percentage you pay on a loan, usually per year or month. It’s usually something like 12% or 7%.'] }}">ℹ️</span>
                             </div>
-                            {{ form.debt_interest_rate(class="form-control number-input", placeholder="e.g. 10%", type="text", required=True, pattern="^[0-9,]+(\.[0-9]{1,2})?$", **{'data-error': translations[language]['Invalid Number']}) }}
+                            {{ form.debt_interest_rate(class="form-control number-input", placeholder=translations[language]['e.g. 10%'], type="text", required=True, pattern="^[0-9,]+(\.[0-9]{1,2})?$", **{'data-error': translations[language]['Invalid Number']}) }}
                             <div class="tooltip-fallback" id="interest-tooltip"></div>
                         </div>
 
@@ -514,6 +517,8 @@
             }
         });
     </script>
+    <!-- Include the new JavaScript file -->
+    <script src="{{ url_for('static', filename='js/interactivity.js') }}" onerror="console.error('Failed to load interactivity.js. Please ensure the file exists in static/js/ and Flask is serving static files correctly.');"></script>
 <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'938eec46dc31b06f',t:'MTc0NjA5ODc3Ni4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script>
 </body>
 </html>
