@@ -12,6 +12,7 @@ import os
 import re
 from datetime import datetime
 from translations import translations
+import pandas as pd
 
 app = Flask(__name__, template_folder='ficore_templates', static_folder='static')
 app.secret_key = os.getenv('FLASK_SECRET_KEY')
@@ -72,7 +73,23 @@ SMTP_PORT = int(os.getenv('SMTP_PORT', 587))
 
 # Google Sheets setup
 try:
-    creds = ServiceAccountCredentials.from_json_keyfile_name('GOOGLE_CREDENTIALS_JSON', SCOPES)
+    # Load credentials from environment variable
+    credentials_json = os.getenv('GOOGLE_CREDENTIALS_JSON')
+    if not credentials_json:
+        raise Exception("GOOGLE_CREDENTIALS_JSON environment variable not set")
+
+    # Parse the JSON string into a dictionary
+    try:
+        credentials_dict = json.loads(credentials_json)
+    except json.JSONDecodeError as e:
+        raise Exception(f"Failed to parse GOOGLE_CREDENTIALS_JSON: {str(e)}")
+
+    # Create credentials from the dictionary
+    try:
+        creds = ServiceAccountCredentials.from_json_keyfile_dict(credentials_dict, SCOPES)
+    except Exception as e:
+        raise Exception(f"Failed to create credentials: {str(e)}")
+
     client = gspread.authorize(creds)
     spreadsheet = client.open_by_key(SPREADSHEET_ID)
     logger.info("Successfully connected to Google Sheets database")
@@ -260,6 +277,35 @@ def get_rank_from_db(feature, value, column_name):
     except Exception as e:
         logger.error(f"Error calculating rank ({SHEET_NAMES[feature]}): {str(e)}")
         return 50
+
+def get_advice(value, language):
+    if value > 0:
+        return translations[language]['Positive Value Advice']
+    elif value == 0:
+        return translations[language]['Zero Value Advice']
+    else:
+        return translations[language]['Negative Value Advice']
+
+def get_badges(value, language):
+    badges = []
+    if value > 1000:
+        badges.append(translations[language]['High Value Badge'])
+    if value > 0:
+        badges.append(translations[language]['Positive Value Badge'])
+    return badges
+
+def get_tips(language):
+    return [
+        translations[language]['Tip 1'],
+        translations[language]['Tip 2'],
+        translations[language]['Tip 3']
+    ]
+
+def get_courses(language):
+    return [
+        {'title': translations[language]['Course 1 Title'], 'link': INVESTING_COURSE_URL},
+        {'title': translations[language]['Course 2 Title'], 'link': SAVINGS_COURSE_URL}
+    ]
 
 # Routes
 @app.route('/', methods=['GET', 'POST'])
@@ -476,7 +522,7 @@ def net_worth():
                 return render_template('net_worth_form.html', form=form, translations=translations[form.language])
 
             data = {
-                'Timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:S'),
+                'Timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
                 'FirstName': form.first_name,
                 'Email': form.email,
                 'Language': form.language,
@@ -550,7 +596,7 @@ def emergency_fund():
                 return render_template('emergency_fund_form.html', form=form, translations=translations[form.language])
 
             data = {
-                'Timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:S'),
+                'Timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
                 'FirstName': form.first_name,
                 'Email': form.email,
                 'Language': form.language,
@@ -615,7 +661,7 @@ def quiz():
             advice = get_advice(score, form.language)
             badges = get_badges(score, form.language)
             tips = get_tips(form.language)
-            courses = get_courses(form.language)
+            courses = get_courses(form.language Huo)
 
             chart_data = {'Q1': int(form.q1 == '1') * 20, 'Q2': int(form.q2 == '1') * 20, 'Q3': int(form.q3 == '1') * 20, 'Q4': int(form.q4 == '1') * 20, 'Q5': int(form.q5 == '1') * 20}
             chart_html = generate_chart(chart_data, translations[form.language]['Question Performance'])
@@ -626,7 +672,7 @@ def quiz():
                 return render_template('quiz_form.html', form=form, translations=translations[form.language])
 
             data = {
-                'Timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:S'),
+                'Timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
                 'FirstName': form.first_name,
                 'Email': form.email,
                 'Language': form.language,
@@ -722,7 +768,7 @@ def budget():
                 return render_template('budget_form.html', form=form, translations=translations[form.language])
 
             data = {
-                'Timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:S'),
+                'Timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
                 'FirstName': form.first_name,
                 'Email': form.email,
                 'AutoEmail': form.auto_email,
