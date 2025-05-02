@@ -18,7 +18,7 @@ from translations import translations
 import pandas as pd
 
 app = Flask(__name__, template_folder='ficore_templates', static_folder='static')
-app.secret_key = os.getenv('FLASK_SECRET_KEY')
+app.secret_key = os.getenv('FLASK_SECRET_KEY', 'your-secret-key')  # Replace with secure key in production
 app.config['SESSION_TYPE'] = 'filesystem'
 
 # Setup logging
@@ -36,7 +36,7 @@ SAVINGS_COURSE_URL = "https://youtube.com/@ficore.africa?si=myoEpotNALfGK4eI"
 DEBT_COURSE_URL = "https://youtube.com/@ficore.africa?si=myoEpotNALfGK4eI"
 RECOVERY_COURSE_URL = "https://youtube.com/@ficore.africa?si=myoEpotNALfGK4eI"
 
-# Sheet names for each feature
+# Sheet names and headers
 SHEET_NAMES = {
     'index': 'IndexSheet',
     'net_worth': 'NetWorthSheet',
@@ -45,7 +45,6 @@ SHEET_NAMES = {
     'budget': 'BudgetSheet'
 }
 
-# Predefined headers for each feature
 PREDETERMINED_HEADERS = {
     'index': [
         'Timestamp', 'BusinessName', 'IncomeRevenue', 'ExpensesCosts', 'DebtLoan',
@@ -71,7 +70,7 @@ PREDETERMINED_HEADERS = {
 # Email configuration
 EMAIL_ADDRESS = os.getenv('SMTP_USER')
 EMAIL_PASSWORD = os.getenv('SMTP_PASSWORD')
-SMTP_SERVER = os.getenv('SMTP_SERVER')
+SMTP_SERVER = os.getenv('SMTP_SERVER', 'smtp.gmail.com')
 SMTP_PORT = int(os.getenv('SMTP_PORT', 587))
 
 # Google Sheets setup
@@ -240,13 +239,10 @@ def assign_badges(user_df, all_users_df, language):
         logger.warning("User DataFrame is empty, no badges assigned")
         return badges
     
-    # Log translations to debug missing keys
-    logger.debug(f"Language: {language}, Available translations: {list(translations.get(language, {}).keys())}")
-    
     user_row = user_df.iloc[0]
     if len(user_df) == 1:
         badge_key = 'First Health Score Completed!'
-        badge_text = translations.get(language, {}).get(badge_key, badge_key)  # Fallback to key if missing
+        badge_text = translations.get(language, {}).get(badge_key, badge_key)
         badges.append(badge_text)
         if badge_text == badge_key:
             logger.warning(f"Translation missing for '{badge_key}' in language '{language}'")
@@ -320,8 +316,34 @@ def get_courses(language):
     ]
 
 # Routes
-@app.route('/', methods=['GET', 'POST', 'HEAD'])
-def home():
+@app.route('/', methods=['GET', 'HEAD'])
+def landing():
+    language = session.get('language', 'English')
+    if language not in translations:
+        logger.warning(f"Invalid language in session: {language}. Defaulting to English.")
+        language = 'English'
+        session['language'] = language
+
+    logger.info(f"Rendering landing page with language: {language}")
+
+    if request.method == 'HEAD':
+        return '', 200
+
+    return render_template('landing.html', translations=translations, language=language, FEEDBACK_FORM_URL=FEEDBACK_FORM_URL)
+
+@app.route('/set_language', methods=['POST'])
+def set_language():
+    language = request.form.get('language', 'English')
+    if language in ['English', 'Hausa']:
+        session['language'] = language
+        logger.info(f"Language set to: {language}")
+    else:
+        logger.warning(f"Invalid language selected: {language}. Defaulting to English.")
+        session['language'] = 'English'
+    return redirect(url_for('landing'))
+
+@app.route('/financial_health', methods=['GET', 'POST', 'HEAD'])
+def financial_health():
     form = SubmissionForm()
     language = session.get('language', 'English')
     if language not in translations:
@@ -329,7 +351,7 @@ def home():
         language = 'English'
         session['language'] = language
 
-    logger.info(f"Rendering home with language: {language}")
+    logger.info(f"Rendering financial health form with language: {language}")
 
     if request.method == 'HEAD':
         return '', 200
@@ -373,10 +395,10 @@ def submit():
             debt_interest_rate = float(re.sub(r'[,]', '', form.debt_interest_rate.data))
             if any(v < 0 for v in [income_revenue, expenses_costs, debt_loan, debt_interest_rate]):
                 flash(translations[language]['Invalid Number'], 'error')
-                return redirect(url_for('home'))
+                return redirect(url_for('financial_health'))
         except ValueError:
             flash(translations[language]['Invalid Number'], 'error')
-            return redirect(url_for('home'))
+            return redirect(url_for('financial_health'))
 
         timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         data = {
@@ -482,185 +504,165 @@ def submit():
         for field, errors in form.errors.items():
             for error in errors:
                 flash(f"{field}: {error}", 'error')
-        return redirect(url_for('home'))
+        return redirect(url_for('financial_health'))
 
 @app.route('/net_worth', methods=['GET', 'POST'])
 def net_worth():
     form = NetWorthForm()
     language = session.get('language', 'English')
     if language not in translations:
+        logger.warning(f"Invalid language in session: {language}. Defaulting to English.")
         language = 'English'
         session['language'] = language
 
     if request.method == 'POST':
         if form.validate_on_submit():
             try:
-                assets = float(form.assets.data.replace(',', ''))
-                liabilities = float(form.liabilities.data.replace(',', ''))
+                assets = float(re.sub(r'[,]', '', form.assets.data))
+                liabilities = float(re.sub(r'[,]', '', form.liabilities.data))
+                if assets < 0 or liabilities < 0:
+                    flash(translations[language]['Invalid Number'], 'error')
+                    return render_template('net_worth_form.html', form=form, translations=translations, language=language, FEEDBACK_FORM_URL=FEEDBACK_FORM_URL)
             except ValueError:
                 flash(translations[language]['Invalid Number'], 'error')
-                return render_template('net_worth_form.html', form=form, translations=translations, language=language)
+                return render_template('net_worth_form.html', form=form, translations=translations, language=language, FEEDBACK_FORM_URL=FEEDBACK_FORM_URL)
 
+            timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
             net_worth = assets - liabilities
-            rank = get_rank_from_db('net_worth', net_worth, 'NetWorth')
+            data = {
+                'Timestamp': timestamp,
+                'FirstName': form.first_name.data,
+                'Email': form.email.data,
+                'Language': form.language.data,
+                'Assets': form.assets.data,
+                'Liabilities': form.liabilities.data,
+                'NetWorth': str(net_worth)
+            }
+            save_to_google_sheets('net_worth', data)
+
             advice = get_advice(net_worth, language)
             badges = get_badges(net_worth, language)
             tips = get_tips(language)
             courses = get_courses(language)
 
-            chart_data = {'Assets': assets, 'Liabilities': liabilities}
-            chart_html = generate_chart(chart_data, translations[language]['Asset-Liability Breakdown'])
-            comparison_chart_html = generate_chart({'You': net_worth, 'Peers': net_worth * 0.9}, translations[language]['Comparison to Peers'])
+            breakdown_data = {'Assets': assets, 'Liabilities': liabilities}
+            breakdown_chart = generate_chart(breakdown_data, translations[language].get('Asset-Liability Breakdown', 'Asset-Liability Breakdown'))
 
-            if not chart_html or not comparison_chart_html:
-                flash(translations[language]['Chart Unavailable'], 'error')
-                return render_template('net_worth_form.html', form=form, translations=translations, language=language)
-
-            data = {
-                'Timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-                'FirstName': form.first_name.data,
-                'Email': form.email.data,
-                'Language': form.language.data,
-                'Assets': assets,
-                'Liabilities': liabilities,
-                'NetWorth': net_worth
-            }
-            save_to_google_sheets('net_worth', data)
-
-            email_body = translations[language]['Email Body'].format(
-                user_name=form.first_name.data,
-                health_score=net_worth,
-                score_description=advice,
-                rank=rank,
-                total_users=100,
-                course_url=courses[0]['link'],
-                course_title=courses[0]['title'],
-                FEEDBACK_FORM_URL=FEEDBACK_FORM_URL,
-                WAITLIST_FORM_URL=WAITLIST_FORM_URL,
-                CONSULTANCY_FORM_URL=CONSULTANCY_FORM_URL
-            )
-            if send_email(form.email.data, translations[language]['Score Report Subject'].format(user_name=form.first_name.data), email_body, language):
-                flash(translations[language]['Email sent successfully'], 'success')
-            else:
-                flash(translations[language]['Failed to send email'], 'error')
+            rank = get_rank_from_db('net_worth', net_worth, 'NetWorth')
+            total_users = len(spreadsheet.worksheet(SHEET_NAMES['net_worth']).get_all_records())
 
             session['language'] = form.language.data
-            session['full_name'] = form.first_name.data
-
             flash(translations[language]['Submission Success'], 'success')
-            return render_template('net_worth_dashboard.html', net_worth=net_worth, rank=rank, advice=advice, badges=badges, tips=tips, courses=courses, chart_html=chart_html, comparison_chart_html=comparison_chart_html, full_name=form.first_name.data, translations=translations, language=language)
+            return render_template(
+                'net_worth_dashboard.html',
+                first_name=form.first_name.data,
+                email=form.email.data,
+                net_worth=net_worth,
+                advice=advice,
+                badges=badges,
+                tips=tips,
+                courses=courses,
+                breakdown_chart=breakdown_chart,
+                rank=rank,
+                total_users=total_users,
+                FEEDBACK_FORM_URL=FEEDBACK_FORM_URL,
+                translations=translations,
+                language=language
+            )
         else:
             for field, errors in form.errors.items():
                 for error in errors:
                     flash(f"{field}: {error}", 'error')
-            return render_template('net_worth_form.html', form=form, translations=translations, language=language)
+            return render_template('net_worth_form.html', form=form, translations=translations, language=language, FEEDBACK_FORM_URL=FEEDBACK_FORM_URL)
 
-    return render_template('net_worth_form.html', form=form, translations=translations, language=language)
+    return render_template('net_worth_form.html', form=form, translations=translations, language=language, FEEDBACK_FORM_URL=FEEDBACK_FORM_URL)
 
 @app.route('/emergency_fund', methods=['GET', 'POST'])
 def emergency_fund():
     form = EmergencyFundForm()
     language = session.get('language', 'English')
     if language not in translations:
+        logger.warning(f"Invalid language in session: {language}. Defaulting to English.")
         language = 'English'
         session['language'] = language
 
     if request.method == 'POST':
         if form.validate_on_submit():
             try:
-                monthly_expenses = float(form.monthly_expenses.data.replace(',', ''))
+                monthly_expenses = float(re.sub(r'[,]', '', form.monthly_expenses.data))
+                if monthly_expenses < 0:
+                    flash(translations[language]['Invalid Number'], 'error')
+                    return render_template('emergency_fund_form.html', form=form, translations=translations, language=language, FEEDBACK_FORM_URL=FEEDBACK_FORM_URL)
             except ValueError:
                 flash(translations[language]['Invalid Number'], 'error')
-                return render_template('emergency_fund_form.html', form=form, translations=translations, language=language)
+                return render_template('emergency_fund_form.html', form=form, translations=translations, language=language, FEEDBACK_FORM_URL=FEEDBACK_FORM_URL)
 
-            emergency_fund = monthly_expenses * 3
-            rank = get_rank_from_db('emergency_fund', emergency_fund, 'EmergencyFund')
-            advice = get_advice(emergency_fund, language)
-            badges = get_badges(emergency_fund, language)
-            tips = get_tips(language)
-            courses = get_courses(language)
-
-            chart_data = {'Monthly Expenses': monthly_expenses, 'Emergency Fund': emergency_fund}
-            chart_html = generate_chart(chart_data, translations[language]['Expense-Fund Breakdown'])
-            comparison_chart_html = generate_chart({'You': emergency_fund, 'Peers': emergency_fund * 0.9}, translations[language]['Comparison to Peers'])
-
-            if not chart_html or not comparison_chart_html:
-                flash(translations[language]['Chart Unavailable'], 'error')
-                return render_template('emergency_fund_form.html', form=form, translations=translations, language=language)
-
+            timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            emergency_fund = monthly_expenses * 6  # Assume 6 months for emergency fund
             data = {
-                'Timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                'Timestamp': timestamp,
                 'FirstName': form.first_name.data,
                 'Email': form.email.data,
                 'Language': form.language.data,
-                'MonthlyExpenses': monthly_expenses,
-                'EmergencyFund': emergency_fund
+                'MonthlyExpenses': form.monthly_expenses.data,
+                'EmergencyFund': str(emergency_fund)
             }
             save_to_google_sheets('emergency_fund', data)
 
-            email_body = translations[language]['Email Body'].format(
-                user_name=form.first_name.data,
-                health_score=emergency_fund,
-                score_description=advice,
-                rank=rank,
-                total_users=100,
-                course_url=courses[0]['link'],
-                course_title=courses[0]['title'],
-                FEEDBACK_FORM_URL=FEEDBACK_FORM_URL,
-                WAITLIST_FORM_URL=WAITLIST_FORM_URL,
-                CONSUL
-TANCY_FORM_URL=CONSULTANCY_FORM_URL
-            )
-            if send_email(form.email.data, translations[language]['Score Report Subject'].format(user_name=form.first_name.data), email_body, language):
-                flash(translations[language]['Email sent successfully'], 'success')
-            else:
-                flash(translations[language]['Failed to send email'], 'error')
+            advice = translations[language].get('Tip 2', 'Build an emergency fund to cover unexpected costs.')
+            tips = get_tips(language)
+            courses = get_courses(language)
+
+            breakdown_data = {'Monthly Expenses': monthly_expenses, 'Emergency Fund (6 months)': emergency_fund}
+            breakdown_chart = generate_chart(breakdown_data, translations[language].get('Expense-Fund Breakdown', 'Expense-Fund Breakdown'))
+
+            rank = get_rank_from_db('emergency_fund', emergency_fund, 'EmergencyFund')
+            total_users = len(spreadsheet.worksheet(SHEET_NAMES['emergency_fund']).get_all_records())
 
             session['language'] = form.language.data
-            session['full_name'] = form.first_name.data
-
             flash(translations[language]['Submission Success'], 'success')
-            return render_template('emergency_fund_dashboard.html', emergency_fund=emergency_fund, rank=rank, advice=advice, badges=badges, tips=tips, courses=courses, chart_html=chart_html, comparison_chart_html=comparison_chart_html, full_name=form.first_name.data, translations=translations, language=language)
+            return render_template(
+                'emergency_fund_dashboard.html',
+                first_name=form.first_name.data,
+                email=form.email.data,
+                emergency_fund=emergency_fund,
+                monthly_expenses=monthly_expenses,
+                advice=advice,
+                tips=tips,
+                courses=courses,
+                breakdown_chart=breakdown_chart,
+                rank=rank,
+                total_users=total_users,
+                FEEDBACK_FORM_URL=FEEDBACK_FORM_URL,
+                translations=translations,
+                language=language
+            )
         else:
             for field, errors in form.errors.items():
                 for error in errors:
                     flash(f"{field}: {error}", 'error')
-            return render_template('emergency_fund_form.html', form=form, translations=translations, language=language)
+            return render_template('emergency_fund_form.html', form=form, translations=translations, language=language, FEEDBACK_FORM_URL=FEEDBACK_FORM_URL)
 
-    return render_template('emergency_fund_form.html', form=form, translations=translations, language=language)
+    return render_template('emergency_fund_form.html', form=form, translations=translations, language=language, FEEDBACK_FORM_URL=FEEDBACK_FORM_URL)
 
 @app.route('/quiz', methods=['GET', 'POST'])
 def quiz():
     form = QuizForm()
     language = session.get('language', 'English')
     if language not in translations:
+        logger.warning(f"Invalid language in session: {language}. Defaulting to English.")
         language = 'English'
         session['language'] = language
 
     if request.method == 'POST':
         if form.validate_on_submit():
+            # Simple scoring: 20 points per correct answer (assuming correct answers are 'Yes')
             answers = [form.q1.data, form.q2.data, form.q3.data, form.q4.data, form.q5.data]
-            if None in answers:
-                flash(translations[language]['Please answer all questions before submitting!'], 'error')
-                return render_template('quiz_form.html', form=form, translations=translations, language=language)
+            quiz_score = sum(20 for answer in answers if answer.lower() == 'yes')
 
-            score = sum(1 for q in answers if q == '1') * 20
-            rank = get_rank_from_db('quiz', score, 'QuizScore')
-            advice = get_advice(score, language)
-            badges = get_badges(score, language)
-            tips = get_tips(language)
-            courses = get_courses(language)
-
-            chart_data = {'Q1': int(form.q1.data == '1') * 20, 'Q2': int(form.q2.data == '1') * 20, 'Q3': int(form.q3.data == '1') * 20, 'Q4': int(form.q4.data == '1') * 20, 'Q5': int(form.q5.data == '1') * 20}
-            chart_html = generate_chart(chart_data, translations[language]['Question Performance'])
-            comparison_chart_html = generate_chart({'You': score, 'Peers': score * 0.9}, translations[language]['Comparison to Peers'])
-
-            if not chart_html or not comparison_chart_html:
-                flash(translations[language]['Chart Unavailable'], 'error')
-                return render_template('quiz_form.html', form=form, translations=translations, language=language)
-
+            timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
             data = {
-                'Timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                'Timestamp': timestamp,
                 'FirstName': form.first_name.data,
                 'Email': form.email.data,
                 'Language': form.language.data,
@@ -669,126 +671,130 @@ def quiz():
                 'Q3': form.q3.data,
                 'Q4': form.q4.data,
                 'Q5': form.q5.data,
-                'QuizScore': score
+                'QuizScore': str(quiz_score)
             }
             save_to_google_sheets('quiz', data)
 
-            email_body = translations[language]['Email Body'].format(
-                user_name=form.first_name.data,
-                health_score=score,
-                score_description=advice,
-                rank=rank,
-                total_users=100,
-                course_url=courses[0]['link'],
-                course_title=courses[0]['title'],
-                FEEDBACK_FORM_URL=FEEDBACK_FORM_URL,
-                WAITLIST_FORM_URL=WAITLIST_FORM_URL,
-                CONSULTANCY_FORM_URL=CONSULTANCY_FORM_URL
-            )
-            if send_email(form.email.data, translations[language]['Score Report Subject'].format(user_name=form.first_name.data), email_body, language):
-                flash(translations[language]['Email sent successfully'], 'success')
-            else:
-                flash(translations[language]['Failed to send email'], 'error')
+            advice = translations[language].get('Test your financial knowledge and get personalized tips.', 'Test your financial knowledge.')
+            tips = get_tips(language)
+            courses = get_courses(language)
+
+            performance_data = {f'Question {i+1}': (20 if ans.lower() == 'yes' else 0) for i, ans in enumerate(answers)}
+            performance_chart = generate_chart(performance_data, translations[language].get('Question Performance', 'Question Performance'))
+
+            rank = get_rank_from_db('quiz', quiz_score, 'QuizScore')
+            total_users = len(spreadsheet.worksheet(SHEET_NAMES['quiz']).get_all_records())
 
             session['language'] = form.language.data
-            session['full_name'] = form.first_name.data
-
             flash(translations[language]['Submission Success'], 'success')
-            return render_template('quiz_dashboard.html', score=score, rank=rank, advice=advice, badges=badges, tips=tips, courses=courses, chart_html=chart_html, comparison_chart_html=comparison_chart_html, full_name=form.first_name.data, translations=translations, language=language)
+            return render_template(
+                'quiz_dashboard.html',
+                first_name=form.first_name.data,
+                email=form.email.data,
+                quiz_score=quiz_score,
+                advice=advice,
+                tips=tips,
+                courses=courses,
+                performance_chart=performance_chart,
+                rank=rank,
+                total_users=total_users,
+                FEEDBACK_FORM_URL=FEEDBACK_FORM_URL,
+                translations=translations,
+                language=language
+            )
         else:
             for field, errors in form.errors.items():
                 for error in errors:
                     flash(f"{field}: {error}", 'error')
-            return render_template('quiz_form.html', form=form, translations=translations, language=language)
+            return render_template('quiz_form.html', form=form, translations=translations, language=language, FEEDBACK_FORM_URL=FEEDBACK_FORM_URL)
 
-    return render_template('quiz_form.html', form=form, translations=translations, language=language)
+    return render_template('quiz_form.html', form=form, translations=translations, language=language, FEEDBACK_FORM_URL=FEEDBACK_FORM_URL)
 
 @app.route('/budget', methods=['GET', 'POST'])
 def budget():
     form = BudgetForm()
     language = session.get('language', 'English')
     if language not in translations:
+        logger.warning(f"Invalid language in session: {language}. Defaulting to English.")
         language = 'English'
         session['language'] = language
 
     if request.method == 'POST':
         if form.validate_on_submit():
             try:
-                monthly_income = float(form.monthly_income.data.replace(',', ''))
-                housing_expenses = float(form.housing_expenses.data.replace(',', ''))
-                food_expenses = float(form.food_expenses.data.replace(',', ''))
-                transport_expenses = float(form.transport_expenses.data.replace(',', ''))
-                other_expenses = float(form.other_expenses.data.replace(',', ''))
+                monthly_income = float(re.sub(r'[,]', '', form.monthly_income.data))
+                housing_expenses = float(re.sub(r'[,]', '', form.housing_expenses.data))
+                food_expenses = float(re.sub(r'[,]', '', form.food_expenses.data))
+                transport_expenses = float(re.sub(r'[,]', '', form.transport_expenses.data))
+                other_expenses = float(re.sub(r'[,]', '', form.other_expenses.data))
+                if any(v < 0 for v in [monthly_income, housing_expenses, food_expenses, transport_expenses, other_expenses]):
+                    flash(translations[language]['Invalid Number'], 'error')
+                    return render_template('budget_form.html', form=form, translations=translations, language=language, FEEDBACK_FORM_URL=FEEDBACK_FORM_URL)
             except ValueError:
                 flash(translations[language]['Invalid Number'], 'error')
-                return render_template('budget_form.html', form=form, translations=translations, language=language)
+                return render_template('budget_form.html', form=form, translations=translations, language=language, FEEDBACK_FORM_URL=FEEDBACK_FORM_URL)
 
             total_expenses = housing_expenses + food_expenses + transport_expenses + other_expenses
             surplus_deficit = monthly_income - total_expenses
-            rank = get_rank_from_db('budget', surplus_deficit, 'SurplusDeficit')
+
+            timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            data = {
+                'Timestamp': timestamp,
+                'FirstName': form.first_name.data,
+                'Email': form.email.data,
+                'AutoEmail': form.auto_email.data,
+                'Language': form.language.data,
+                'MonthlyIncome': form.monthly_income.data,
+                'HousingExpenses': form.housing_expenses.data,
+                'FoodExpenses': form.food_expenses.data,
+                'TransportExpenses': form.transport_expenses.data,
+                'OtherExpenses': form.other_expenses.data,
+                'TotalExpenses': str(total_expenses),
+                'SurplusDeficit': str(surplus_deficit)
+            }
+            save_to_google_sheets('budget', data)
+
             advice = get_advice(surplus_deficit, language)
-            badges = get_badges(surplus_deficit, language)
             tips = get_tips(language)
             courses = get_courses(language)
 
-            chart_data = {
+            breakdown_data = {
                 'Housing': housing_expenses,
                 'Food': food_expenses,
                 'Transport': transport_expenses,
                 'Other': other_expenses
             }
-            chart_html = generate_chart(chart_data, translations[language]['Expense Breakdown'])
-            comparison_chart_html = generate_chart({'You': surplus_deficit, 'Peers': surplus_deficit * 0.9}, translations[language]['Comparison to Peers'])
+            breakdown_chart = generate_chart(breakdown_data, translations[language].get('Expense Breakdown', 'Expense Breakdown'))
 
-            if not chart_html or not comparison_chart_html:
-                flash(translations[language]['Chart Unavailable'], 'error')
-                return render_template('budget_form.html', form=form, translations=translations, language=language)
-
-            data = {
-                'Timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-                'FirstName': form.first_name.data,
-                'Email': form.email.data,
-                'AutoEmail': form.auto_email.data,
-                'Language': form.language.data,
-                'MonthlyIncome': monthly_income,
-                'HousingExpenses': housing_expenses,
-                'FoodExpenses': food_expenses,
-                'TransportExpenses': transport_expenses,
-                'OtherExpenses': other_expenses,
-                'TotalExpenses': total_expenses,
-                'SurplusDeficit': surplus_deficit
-            }
-            save_to_google_sheets('budget', data)
-
-            email_body = translations[language]['Email Body'].format(
-                user_name=form.first_name.data,
-                health_score=surplus_deficit,
-                score_description=advice,
-                rank=rank,
-                total_users=100,
-                course_url=courses[0]['link'],
-                course_title=courses[0]['title'],
-                FEEDBACK_FORM_URL=FEEDBACK_FORM_URL,
-                WAITLIST_FORM_URL=WAITLIST_FORM_URL,
-                CONSULTANCY_FORM_URL=CONSULTANCY_FORM_URL
-            )
-            if send_email(form.email.data, translations[language]['Score Report Subject'].format(user_name=form.first_name.data), email_body, language):
-                flash(translations[language]['Email sent successfully'], 'success')
-            else:
-                flash(translations[language]['Failed to send email'], 'error')
+            rank = get_rank_from_db('budget', surplus_deficit, 'SurplusDeficit')
+            total_users = len(spreadsheet.worksheet(SHEET_NAMES['budget']).get_all_records())
 
             session['language'] = form.language.data
-            session['full_name'] = form.first_name.data
-
             flash(translations[language]['Submission Success'], 'success')
-            return render_template('budget_dashboard.html', monthly_income=monthly_income, total_expenses=total_expenses, surplus_deficit=surplus_deficit, rank=rank, advice=advice, badges=badges, tips=tips, courses=courses, chart_html=chart_html, comparison_chart_html=comparison_chart_html, full_name=form.first_name.data, translations=translations, language=language)
+            return render_template(
+                'budget_dashboard.html',
+                first_name=form.first_name.data,
+                email=form.email.data,
+                monthly_income=monthly_income,
+                total_expenses=total_expenses,
+                surplus_deficit=surplus_deficit,
+                advice=advice,
+                tips=tips,
+                courses=courses,
+                breakdown_chart=breakdown_chart,
+                rank=rank,
+                total_users=total_users,
+                FEEDBACK_FORM_URL=FEEDBACK_FORM_URL,
+                translations=translations,
+                language=language
+            )
         else:
             for field, errors in form.errors.items():
                 for error in errors:
                     flash(f"{field}: {error}", 'error')
-            return render_template('budget_form.html', form=form, translations=translations, language=language)
+            return render_template('budget_form.html', form=form, translations=translations, language=language, FEEDBACK_FORM_URL=FEEDBACK_FORM_URL)
 
-    return render_template('budget_form.html', form=form, translations=translations, language=language)
+    return render_template('budget_form.html', form=form, translations=translations, language=language, FEEDBACK_FORM_URL=FEEDBACK_FORM_URL)
 
 if __name__ == '__main__':
     app.run(debug=True)
