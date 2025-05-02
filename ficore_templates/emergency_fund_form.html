@@ -54,7 +54,8 @@
             border-radius: 12px 12px 0 0;
             text-align: center;
             font-weight: 600;
-            font-size: 1.35rem;
+            font-size: 1.75rem;
+            white-space: nowrap;
             margin-bottom: 1rem;
             border: 2px solid #1565C0;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
@@ -67,6 +68,10 @@
         .form-label {
             color: #0288D1;
             font-weight: 500;
+        }
+        .form-label.required::after {
+            content: " *";
+            color: #DC3545;
         }
         .form-control, .form-select {
             border: 2px solid #0288D1;
@@ -150,10 +155,14 @@
             color: #6c757d;
         }
         .guide-section {
-            background: #F5F5F5;
+            background: #D6E8F8;
             padding: 1rem;
             border-radius: 8px;
             margin-bottom: 1rem;
+            display: none;
+        }
+        .guide-section.active {
+            display: block;
         }
         .guide-section ul {
             list-style-type: disc;
@@ -192,6 +201,8 @@
             font-size: 0.9rem;
             color: #333;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            position: absolute;
+            z-index: 1000;
         }
         .tooltip-fallback.active {
             display: block;
@@ -289,7 +300,7 @@
             <div class="col-md-10">
                 <div class="form-card">
                     <!-- New to Finances Toggle with Stylish Blue Book -->
-                    <div class="book-toggle" id="guide-toggle" aria-label="{{ translations[language]['Toggle financial guide'] }}" role="button">
+                    <div class="book-toggle" id="guide-toggle" aria-label="{{ translations[language]['Toggle financial guide'] }}" role="button" tabindex="0">
                         <div class="book-icon" id="book-icon" aria-hidden="true"></div>
                         <span class="book-label">{{ translations[language]['New to finances? Click here to get guided tips on how to fill this form.'] }}</span>
                     </div>
@@ -311,7 +322,7 @@
                             <span class="emoji">👤</span> {{ translations[language]['Personal Information'] }}
                         </div>
                         <div class="mb-3">
-                            {{ form.first_name.label(class="form-label", **{'for': 'first_name'}) }}
+                            {{ form.first_name.label(class="form-label required", **{'for': 'first_name'}) }}
                             {{ form.first_name(class="form-control", placeholder=translations[language]['Enter your first name'], required=True, **{'data-error': translations[language]['First Name Required']}) }}
                         </div>
                         <div class="mb-3">
@@ -319,11 +330,11 @@
                             {{ form.last_name(class="form-control", placeholder=translations[language]['Enter your last name (optional)']) }}
                         </div>
                         <div class="mb-3">
-                            {{ form.email.label(class="form-label", **{'for': 'email'}) }}
+                            {{ form.email.label(class="form-label required", **{'for': 'email'}) }}
                             {{ form.email(class="form-control", placeholder=translations[language]['Enter your email'], type="email", required=True, pattern="[^@]+@[^@]+\.[^@]+", **{'data-error': translations[language]['Invalid Email']}) }}
                         </div>
                         <div class="mb-3">
-                            {{ form.auto_email.label(class="form-label", **{'for': 'auto_email'}) }}
+                            {{ form.auto_email.label(class="form-label required", **{'for': 'auto_email'}) }}
                             {{ form.auto_email(class="form-control", placeholder=translations[language]['Confirm your email'], type="email", required=True, pattern="[^@]+@[^@]+\.[^@]+", **{'data-error': translations[language]['Email Mismatch']}) }}
                         </div>
                         <div class="mb-3">
@@ -332,7 +343,7 @@
                         </div>
                         <div class="mb-3">
                             <p class="note-text">{{ translations[language]['Language'] }}: English or Hausa</p>
-                            {{ form.language.label(class="form-label", **{'for': 'language'}) }}
+                            {{ form.language.label(class="form-label required", **{'for': 'language'}) }}
                             {{ form.language(class="form-select", required=True) }}
                         </div>
 
@@ -343,23 +354,23 @@
                         <div class="mb-3">
                             <div class="field-container">
                                 <span class="visual-icon">💵</span>
-                                {{ form.monthly_income.label(class="form-label", **{'for': 'monthly_income'}) }}
+                                {{ form.monthly_income.label(class="form-label required", **{'for': 'monthly_income'}) }}
                                 <span class="info-icon" data-bs-toggle="tooltip" data-bs-title="{{ translations[language]['Your total monthly income from all sources.'] }}" aria-label="{{ translations[language]['More info on income'] }}">ℹ️</span>
                             </div>
-                            {{ form.monthly_income(class="form-control number-input", placeholder="e.g. 150,000", type="text", required=True, pattern="^[0-9,]+(\.[0-9]{1,2})?$", **{'data-error': translations[language]['Invalid Number']}) }}
+                            {{ form.monthly_income(class="form-control number-input", placeholder="e.g. 150,000", type="text", required=True, pattern="^[0-9]+(,[0-9]{3})*(\.[0-9]{1,2})?$", max="10000000000", **{'data-error': translations[language]['Invalid Number']}) }}
                         </div>
                         <div class="mb-3">
                             <div class="field-container">
                                 <span class="visual-icon">💸</span>
-                                {{ form.monthly_expenses.label(class="form-label", **{'for': 'monthly_expenses'}) }}
+                                {{ form.monthly_expenses.label(class="form-label required", **{'for': 'monthly_expenses'}) }}
                                 <span class="info-icon" data-bs-toggle="tooltip" data-bs-title="{{ translations[language]['Your total monthly expenses, including bills and essentials.'] }}" aria-label="{{ translations[language]['More info on expenses'] }}">ℹ️</span>
                             </div>
-                            {{ form.monthly_expenses(class="form-control number-input", placeholder="e.g. 100,000", type="text", required=True, pattern="^[0-9,]+(\.[0-9]{1,2})?$", **{'data-error': translations[language]['Invalid Number']}) }}
+                            {{ form.monthly_expenses(class="form-control number-input", placeholder="e.g. 100,000", type="text", required=True, pattern="^[0-9]+(,[0-9]{3})*(\.[0-9]{1,2})?$", max="10000000000", **{'data-error': translations[language]['Invalid Number']}) }}
                         </div>
 
                         <!-- Submit Button -->
                         <div class="d-grid">
-                            <button type="submit" class="btn btn-primary btn-lg" id="submit-btn">
+                            <button type="submit" class="btn btn-primary btn-lg" id="submit-btn" aria-label="{{ translations[language]['Submit form'] }}">
                                 <span>{{ translations[language]['Submit'] }}</span>
                             </button>
                             <div role="alert" id="submission-feedback" class="mt-2" aria-live="polite"></div>
@@ -398,15 +409,24 @@
             const guideContent = document.getElementById('guide-content');
             const hideGuideBtn = document.getElementById('hide-guide');
             if (guideToggle && bookIcon && guideContent && hideGuideBtn) {
-                guideContent.style.display = 'block'; // Show by default
-                guideToggle.addEventListener('click', function () {
-                    const isOpen = guideContent.style.display === 'block';
-                    guideContent.style.display = isOpen ? 'none' : 'block';
+                guideContent.classList.remove('active'); // Hide by default
+                guideToggle.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    const isOpen = guideContent.classList.contains('active');
+                    guideContent.classList.toggle('active', !isOpen);
                     bookIcon.classList.toggle('open', !isOpen);
                 });
-                hideGuideBtn.addEventListener('click', function () {
-                    guideContent.style.display = 'none';
+                hideGuideBtn.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    guideContent.classList.remove('active');
                     bookIcon.classList.remove('open');
+                });
+                // Keyboard support
+                guideToggle.addEventListener('keydown', function (e) {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        guideToggle.click();
+                    }
                 });
             }
 
@@ -422,13 +442,17 @@
                     let integerPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
                     let decimalPart = parts[1] ? '.' + parts[1].slice(0, 2) : '';
                     e.target.value = integerPart + decimalPart;
+                    if (parseFloat(value.replace(/,/g, '')) > 10000000000) {
+                        e.target.value = '10,000,000,000';
+                    }
                 });
                 input.addEventListener('blur', function(e) {
                     let cleanValue = e.target.value.replace(/,/g, '');
                     if (cleanValue === '' || isNaN(parseFloat(cleanValue))) {
                         e.target.value = '';
                     } else {
-                        e.target.value = parseFloat(cleanValue).toLocaleString('en-US', {
+                        let numValue = Math.min(parseFloat(cleanValue), 10000000000);
+                        e.target.value = numValue.toLocaleString('en-US', {
                             minimumFractionDigits: 0,
                             maximumFractionDigits: 2
                         });
@@ -440,6 +464,8 @@
                 });
                 input.addEventListener('keypress', function(e) {
                     if (!/[0-9.]/.test(e.key)) e.preventDefault();
+                    let value = e.target.value.replace(/,/g, '') + e.key;
+                    if (value.split('.').length > 2) e.preventDefault();
                 });
             });
 
@@ -458,7 +484,7 @@
                 });
             }
 
-            // Submit button loading state
+            // Submit button loading state with feedback
             const submitBtn = document.getElementById('submit-btn');
             const submissionForm = document.getElementById('submission-form');
             const submissionFeedback = document.getElementById('submission-feedback');
@@ -472,9 +498,21 @@
                         if (cleanValue === '' || isNaN(parseFloat(cleanValue))) {
                             input.value = '0';
                         } else {
-                            input.value = parseFloat(cleanValue).toString();
+                            input.value = Math.min(parseFloat(cleanValue), 10000000000).toString();
                         }
                     });
+                    // Simulate server response (replace with actual AJAX if needed)
+                    setTimeout(() => {
+                        const flashContainer = document.querySelector('.alert-container');
+                        if (flashContainer) {
+                            const successMsg = document.createElement('div');
+                            successMsg.className = 'alert alert-success alert-dismissible fade show';
+                            successMsg.setAttribute('role', 'alert');
+                            successMsg.innerHTML = `${translations[language]['Form submitted successfully! Redirecting...']}<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>`;
+                            flashContainer.appendChild(successMsg);
+                            submitBtn.classList.remove('loading');
+                        }
+                    }, 2000); // Simulate 2-second delay
                 });
             }
         });
