@@ -661,7 +661,7 @@ def quiz():
             advice = get_advice(score, form.language)
             badges = get_badges(score, form.language)
             tips = get_tips(form.language)
-            courses = get_courses(form.language Huo)
+            courses = get_courses(form.language)
 
             chart_data = {'Q1': int(form.q1 == '1') * 20, 'Q2': int(form.q2 == '1') * 20, 'Q3': int(form.q3 == '1') * 20, 'Q4': int(form.q4 == '1') * 20, 'Q5': int(form.q5 == '1') * 20}
             chart_html = generate_chart(chart_data, translations[form.language]['Question Performance'])
