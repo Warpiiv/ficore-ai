@@ -19,8 +19,11 @@ translations = {
         'Comparison to Peers': 'Comparison to Peers',
         'Your Badges': 'Your Badges',
         'No Badges Yet': 'No badges earned yet. Keep submitting to earn more!',
+        'First Health Score Completed!': 'First Health Score Completed!',
         'Financial Stability Achieved!': 'Financial Stability Achieved!',
         'Debt Slayer!': 'Debt Slayer!',
+        'High Value Badge': 'High Value Badge',
+        'Positive Value Badge': 'Positive Value Badge',
         'Recommended Learning': 'Recommended Learning',
         'Recommended Course': 'Recommended Course',
         'Quick Financial Tips': 'Quick Financial Tips',
@@ -37,10 +40,12 @@ translations = {
         'Personal Information': 'Personal Information',
         'Enter your first name': 'Enter your first name',
         'First Name Required': 'First name is required.',
+        'Enter your last name (optional)': 'Enter your last name (optional)',
         'Enter your email': 'Enter your email',
         'Invalid Email': 'Please enter a valid email address.',
         'Confirm your email': 'Confirm your email',
         'Emails Do Not Match': 'Emails do not match.',
+        'Enter phone number (optional)': 'Enter phone number (optional)',
         'Language': 'Language',
         'Submit': 'Submit',
         'Invalid Number': 'Please enter a valid number.',
@@ -76,111 +81,178 @@ translations = {
                     <a href="{FEEDBACK_FORM_URL}" style="display: inline-block; padding: 10px 20px; background-color: #2E7D32; color: white; text-decoration: none; border-radius: 5px; font-size: 0.9rem;">Feedback Form</a>
                 </p>
                 <p style="margin-bottom: 10px;">
-                    Want Smart Insights? Join the waitlist for Ficore Premium: 
-                    <a href="{WAITLIST_FORM_URL}" style="display: inline-block; padding: 10px 20px; background-color: #1976D2; color: white; text-decoration: none; border-radius: 5px; font-size: 0.9rem;">Join Waitlist</a>
+                    Want Smart Insights? Join our waitlist: 
+                    <a href="{WAITLIST_FORM_URL}" style="display: inline-block; padding: 10px 20px; background-color: #0288D1; color: white; text-decoration: none; border-radius: 5px; font-size: 0.9rem;">Join Waitlist</a>
                 </p>
                 <p style="margin-bottom: 10px;">
-                    Need personalized advice? 
-                    <a href="{CONSULTANCY_FORM_URL}" style="display: inline-block; padding: 10px 20px; background-color: #388E3C; color: white; text-decoration: none; border-radius: 5px; font-size: 0.9rem;">Book Consultancy</a>
+                    Need expert advice? Book a consultancy: 
+                    <a href="{CONSULTANCY_FORM_URL}" style="display: inline-block; padding: 10px 20px; background-color: #D81B60; color: white; text-decoration: none; border-radius: 5px; font-size: 0.9rem;">Book Consultancy</a>
                 </p>
-                <p style="margin-bottom: 10px;">
-                    Have a Nice Day!
+                <p>Thank you for using Ficore Africa!</p>
+                <p style="font-size: 0.8rem; color: #666;">
+                    © 2025 Ficore Africa. All rights reserved.
                 </p>
-                <p>Best regards,<br>The Ficore Africa Team</p>
             </body>
             </html>
-        '''
+        ''',
+        'User Information': 'User Information',
+        'Type personal name if no business': 'Type personal name if no business',
+        'User Type': 'User Type',
+        'Financial Information': 'Financial Information',
+        'Income/Revenue': 'Income/Revenue',
+        'Total money you receive regularly, like salary, business sales, gifts, grants, incentives, or side hustles.': 'Total money you receive regularly, like salary, business sales, gifts, grants, incentives, or side hustles.',
+        'Expenses/Costs': 'Expenses/Costs',
+        'All the money you spend, such as on rent, food, transport, electricity bill, gas and utilities, fine and penalties, levies, taxes, etc.': 'All the money you spend, such as on rent, food, transport, electricity bill, gas and utilities, fine and penalties, levies, taxes, etc.',
+        'Debt/Loan': 'Debt/Loan',
+        'Money you owe, like loans, IOUs, borrowings, or funds lent to you.': 'Money you owe, like loans, IOUs, borrowings, or funds lent to you.',
+        'Debt Interest Rate': 'Debt Interest Rate',
+        'Extra percentage you pay on a loan, usually per year or month. It’s usually something like 12% or 7%.': 'Extra percentage you pay on a loan, usually per year or month. It’s usually something like 12% or 7%.',
+        'e.g. 150,000': 'e.g. 150,000',
+        'e.g. 60,000': 'e.g. 60,000',
+        'e.g. 25,000': 'e.g. 25,000',
+        'e.g. 10%': 'e.g. 10%',
+        'New to finances? Click here to get guided tips on how to fill this form.': 'New to finances? Click here to get guided tips on how to fill this form.',
+        'Getting Started with Ficore Africa': 'Getting Started with Ficore Africa',
+        'Fill in your name, email, and phone number. Choose your language—English or Hausa.': 'Fill in your name, email, and phone number. Choose your language—English or Hausa.',
+        'Enter your business name, or your personal name if you don’t have a business. Select if you’re an individual or a business.': 'Enter your business name, or your personal name if you don’t have a business. Select if you’re an individual or a business.',
+        'Add your monthly money details. Hover or tap the ℹ️ icons for help on what to enter.': 'Add your monthly money details. Hover or tap the ℹ️ icons for help on what to enter.',
+        'Double-check your details, then click Submit to get your financial health score!': 'Double-check your details, then click Submit to get your financial health score!',
+        'Get Your Score': 'Find out how financially healthy you are with Ficore Africa.',
+        'Positive Value Advice': 'Your positive value indicates financial progress. Keep managing your finances wisely!',
+        'Zero Value Advice': 'Your value is zero. Consider reviewing your financial inputs to ensure accuracy.',
+        'Negative Value Advice': 'A negative value suggests financial challenges. Focus on reducing expenses or increasing income.',
+        'Tip 1': 'Create a budget to track your income and expenses.',
+        'Tip 2': 'Build an emergency fund to cover unexpected costs.',
+        'Tip 3': 'Pay off high-interest debt to reduce financial stress.',
+        'Course 1 Title': 'Introduction to Financial Planning',
+        'Course 2 Title': 'Debt Management Basics'
     },
     'Hausa': {
         'Welcome': 'Barka da zuwa',
-        'Your Financial Health Summary': 'Takaitaccen Bayanai Akan Lafiyar Kuɗin Ku',
-        'Your Financial Health Score': 'Maki Da Lafiyar Kuɗin Ku Ta Samu',
-        'Ranked': 'Darajar Lafiyar Kuɗin Ku',
-        'out of': 'Daga Cikin',
-        'users': 'Dukkan Masu Amfani Da Ficore Zuwa Yanzu',
-        'Strong Financial Health': 'Makin ku yana nuna ƙarfin lafiyar kuɗinku. Ku Mai da hankali kan zuba hannun jari daga cikin kuɗin da ya rage muku don haɓaka dukiyarku.',
-        'Stable Finances': 'Makin Kuɗin ku suna Nuni da kwanciyar hankali, amma zaku iya ingantashi duk da haka.',
-        'Financial Strain': 'Makin ku yana nuna Akwai damuwar kuɗi. Ku Fifita biyan bashi sannan ku sarrafa kashe kuɗinku dakyau.',
-        'Urgent Attention Needed': 'Makin Kuɗin ku suna Nuna buƙatar kulawa cikin gaggawa. Ku Nemi shawarar ƙwararru kuma Ku bincika dabarun farfadowa daga wannan yanayi.',
-        'Score Breakdown': 'Bayanai Akan Makin ku',
-        'Chart Unavailable': 'Zanen Lissafi ba ya samuwa a wannan lokacin saboda Netowrk.',
-        'Asset-Liability Breakdown': 'Bayanan Kadara da Bashi',
-        'Expense-Fund Breakdown': 'Bayanan Kudin Asusun Gaggawa',
-        'Question Performance': 'Tambayoyin Ku',
-        'Expense Breakdown': 'Bayanan Kashe Kuɗi',
-        'Comparison to Peers': 'Kwatantawa da Sauran Mutane',
-        'Your Badges': 'Lambar Yabo',
-        'No Badges Yet': 'Babu Lambar Yabo tukunna. Cigaba da Amafani da Ficore don samun Lambar Yabo!',
-        'Financial Stability Achieved!': 'Akwai Wadata!',
-        'Debt Slayer!': 'Mai Ragargaza Bashi!',
-        'Recommended Learning': 'Shawari aka Koyon Inganta Neman Kudi da Ajiya',
-        'Recommended Course': 'Darasi da Aka Shawarta Maka',
-        'Quick Financial Tips': 'Shawarwari',
-        'Build Savings': 'Ajiye 10% na kuɗin shigarka a kowane wata don Samar da Asusun gaggawa domin rashin Lafiya ko Jarabawa.',
-        'Cut Costs': 'Kula da kashe kuɗinku kuma ku rage kashe kuɗin da ba dole ba don haɓaka arzikinku.',
-        'Reduce Debt': 'Fifita biyan Bashi masu Interest don sauƙaƙe damuwar kuɗi.',
-        'Back to Home': 'Koma Shafin Farko',
-        'Provide Feedback': 'Bayar da Ra\'ayinku',
-        'Join Waitlist': 'Shiga Jerin Masu Jira',
-        'Book Consultancy': 'Nemi Shawarwari',
-        'Contact Us': 'Tuntube Mu a',
-        'for support': 'Don Tura Sako',
-        'Click to Email': 'Danna Don Tura Sako',
-        'Personal Information': 'Bayanan Kai',
+        'Your Financial Health Summary': 'Takaitaccen Bayanin Lafiyar Kuɗin Ku',
+        'Your Financial Health Score': 'Makin Lafiyar Kuɗin Ku',
+        'Ranked': 'An jera',
+        'out of': 'daga cikin',
+        'users': 'masu amfani',
+        'Strong Financial Health': 'Makin ku yana nuna ƙarfin lafiyar kuɗi. Mayar da hankali kan saka hannun jari a cikin rarar kuɗin don haɓaka dukiyarka.',
+        'Stable Finances': 'Kuɗaɗenku suna da ƙarfi amma za su iya inganta. Ka ji daɗin tanadi ko rage kashe kuɗin ka.',
+        'Financial Strain': 'Makin ku yana nuna damuwa ta kuɗi. Ka ba da fifiko wajen biyan bashi da sarrafa kashe kuɗin ka.',
+        'Urgent Attention Needed': 'Kuɗaɗenku suna buƙatar kulawa ta gaggawa. Nemi shawarar ƙwararru da bincika dabarun farfadowa.',
+        'Score Breakdown': 'Rarraba Maki',
+        'Chart Unavailable': 'Ba a samu zane a wannan lokacin.',
+        'Asset-Liability Breakdown': 'Rarraba Kadara da Alhakai',
+        'Expense-Fund Breakdown': 'Rarraba Kashe Kuɗi da Asusun Gaggawa',
+        'Question Performance': 'Ayyukan Tambaya',
+        'Expense Breakdown': 'Rarraba Kashe Kuɗi',
+        'Comparison to Peers': 'Kwatantawa da Takwarorinka',
+        'Your Badges': 'Alamominka',
+        'No Badges Yet': 'Ba a sami alamomi ba tukuna. Ci gaba da ƙaddamarwa don samun ƙarin!',
+        'First Health Score Completed!': 'An Kammala Makin Lafiyar Kuɗi na Farko!',
+        'Financial Stability Achieved!': 'An Sami Kwanciyar Hankali na Kuɗi!',
+        'Debt Slayer!': 'Mai Kashe Bashi!',
+        'High Value Badge': 'Alamar Daraja Mai Girma',
+        'Positive Value Badge': 'Alamar Daraja Mai Kyau',
+        'Recommended Learning': 'Shawarar Koyo',
+        'Recommended Course': 'Kursi da Aka Shawarta',
+        'Quick Financial Tips': 'Shawarwari masu Sauri na Kuɗi',
+        'Build Savings': 'Tanadi kashi 10% na kuɗin shiga kowane wata don ƙirƙirar asusun gaggawa.',
+        'Cut Costs': 'Duba buƙatu da son rai - duba kashe kuɗi kuma rage kashe kuɗin da ba dole ba don haɓaka kuɗin shiga.',
+        'Reduce Debt': 'Ba da fifiko wajen biyan lamuni masu yawan riba don rage damuwar kuɗi.',
+        'Back to Home': 'Koma Gida',
+        'Provide Feedback': 'Ba da Shawara',
+        'Join Waitlist': 'Shiga Jerin Jirage',
+        'Book Consultancy': 'Yi Rijistar Shawara',
+        'Contact Us': 'Tuntube mu a:',
+        'for support': 'domin tallafi',
+        'Click to Email': 'Danna don Imel',
+        'Personal Information': 'Bayanin Kai',
         'Enter your first name': 'Shigar da sunanka na farko',
         'First Name Required': 'Ana buƙatar sunan farko.',
-        'Enter your email': 'Shigar da email ɗinka',
-        'Invalid Email': 'Da fatan za a shigar da adireshin email mai inganci.',
-        'Confirm your email': 'Sake Tabbatar da email ɗinka',
-        'Emails Do Not Match': 'Email din ba su yi daidai ba',
-        'Language': 'Zabi Yare',
-        'Submit': 'ƙaddamar da Sako',
-        'Invalid Number': 'A shigar da lamba daidai.',
-        'Please answer all questions before submitting!': 'Da fatan za a amsa dukkan tambayoyi kafin a ƙaddamar!',
-        'Submission Success': 'An shigar da bayananka cikin nasara! Duba allon bayananka a ƙasa 👇',
-        'Error processing form': 'Kuskure wajen sarrafa bayanai. Da fatan za a sake gwadawa.',
-        'Email sent successfully': 'An aika Email cikin nasara!',
-        'Failed to send email': 'An kasa aika Email. Da fatan za a sake gwadawa daga baya.',
-        'Score Report Subject': '📊 Rahoton Makin ku na Ficore Yana Shirye, {user_name}!',
+        'Enter your last name (optional)': 'Shigar da sunanka na ƙarshe (na zaɓi)',
+        'Enter your email': 'Shigar da imel ɗinka',
+        'Invalid Email': 'Da fatan za a shigar da adireshin imel mai inganci.',
+        'Confirm your email': 'Tabbatar da imel ɗinka',
+        'Emails Do Not Match': 'Imel ɗin ba su dace ba.',
+        'Enter phone number (optional)': 'Shigar da lambar waya (na zaɓi)',
+        'Language': 'Yare',
+        'Submit': 'Sallama',
+        'Invalid Number': 'Da fatan za a shigar da lamba mai inganci.',
+        'Please answer all questions before submitting!': 'Da fatan za a amsa duk tambayoyin kafin ƙaddamarwa!',
+        'Submission Success': 'An ƙaddamar da bayaninka cikin nasara! Duba dashboard ɗinka a ƙasa 👇',
+        'Error processing form': 'Kuskure wajen sarrafa fom. Da fatan za a sake gwadawa.',
+        'Email sent successfully': 'An aika imel cikin nasara!',
+        'Failed to send email': 'An kasa aika imel. Da fatan za a sake gwadawa daga baya.',
+        'Score Report Subject': '📊 Rahoton Makin Ficore ɗinka Ya Shida, {user_name}!',
         'Email Body': '''
             <html>
             <body style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
                 <div style="background-color: #1E7F71; padding: 20px; border-radius: 10px; text-align: center; margin-bottom: 20px;">
-                    <h2 style="color: #FFFFFF; margin: 0;">Makin Lafiyar Kuɗinku na Ficore Africa</h2>
+                    <h2 style="color: #FFFFFF; margin: 0;">Makin Lafiyar Kuɗi na Ficore Africa</h2>
                     <p style="font-style: italic; color: #E0F7FA; font-size: 0.9rem; margin: 5px 0 0 0;">
-                        Tikitin ci gaban arciki na yan Afirka
+                        Fasfo din ci gaban kuɗi na Afirka
                     </p>
                 </div>
-                <p>Barka Da Warhaka {user_name},</p>
-                <p>Mun ƙididdige Makin Lafiyar Kuɗinku ta hanyar amfani da Ficore Africa bisa bayanan da kuka bayar.</p>
+                <p>Mai girma {user_name},</p>
+                <p>Mun ƙididdige Makin Lafiyar Kuɗi na Ficore Africa bisa ƙaddamarwar ka ta baya-bayan nan.</p>
                 <ul>
                     <li><strong>Maki</strong>: {health_score}</li>
                     <li><strong>Shawara</strong>: {score_description}</li>
                     <li><strong>Matsayi</strong>: #{rank} daga cikin {total_users} masu amfani</li>
                 </ul>
-                <p>Bi shawarar da ke sama don inganta arzikin ku.</p>
+                <p>Bi shawarar da ke sama don inganta lafiyar kuɗin ka.</p>
                 <p style="margin-bottom: 10px;">
-                    Kuna son ƙarin ilimi akan wannan? Duba wannan Darasi: 
+                    Kana son ƙarin koyo? Duba wannan kursi: 
                     <a href="{course_url}" style="display: inline-block; padding: 10px 20px; background-color: #FBC02D; color: #333; text-decoration: none; border-radius: 5px; font-size: 0.9rem;">{course_title}</a>
                 </p>
                 <p style="margin-bottom: 10px;">
-                    Da fatan za a ba da shawara ko ra,ayi akan Ficore: 
-                    <a href="{FEEDBACK_FORM_URL}" style="display: inline-block; padding: 10px 20px; background-color: #2E7D32; color: white; text-decoration: none; border-radius: 5px; font-size: 0.9rem;">Fom ɗin Shawara</a>
+                    Da fatan za a ba da shawara kan kwarewarka: 
+                    <a href="{FEEDBACK_FORM_URL}" style="display: inline-block; padding: 10px 20px; background-color: #2E7D32; color: white; text-decoration: none; border-radius: 5px; font-size: 0.9rem;">Fom na Shawara</a>
                 </p>
                 <p style="margin-bottom: 10px;">
-                    Karbi Shawara daga Kwararru, Shiga jiran Ficore Premium: 
-                    <a href="{WAITLIST_FORM_URL}" style="display: inline-block; padding: 10px 20px; background-color: #1976D2; color: white; text-decoration: none; border-radius: 5px; font-size: 0.9rem;">Shiga Jerin Jira</a>
+                    Kana son Insights masu Wayo? Shiga jerin jiragen mu: 
+                    <a href="{WAITLIST_FORM_URL}" style="display: inline-block; padding: 10px 20px; background-color: #0288D1; color: white; text-decoration: none; border-radius: 5px; font-size: 0.9rem;">Shiga Jerin Jirage</a>
                 </p>
                 <p style="margin-bottom: 10px;">
-                    Kuna buƙatar shawarwari keɓaɓɓu? 
-                    <a href="{CONSULTANCY_FORM_URL}" style="display: inline-block; padding: 10px 20px; background-color: #388E3C; color: white; text-decoration: none; border-radius: 5px; font-size: 0.9rem;">Shiga Jerin Masu So</a>
+                    Kana buƙatar shawarar ƙwararru? Yi rijistar shawara: 
+                    <a href="{CONSULTANCY_FORM_URL}" style="display: inline-block; padding: 10px 20px; background-color: #D81B60; color: white; text-decoration: none; border-radius: 5px; font-size: 0.9rem;">Yi Rijistar Shawara</a>
                 </p>
-                <p style="margin-bottom: 10px;">
-                    A huta Lafiya!
+                <p>Muna godiya da amfani da Ficore Africa!</p>
+                <p style="font-size: 0.8rem; color: #666;">
+                    © 2025 Ficore Africa. Duk haƙƙoƙin sun tanada.
                 </p>
-                <p>Gaisuwa,<br>Daga Ƙungiyar Ficore Africa</p>
             </body>
             </html>
-        '''
+        ''',
+        'User Information': 'Bayanin Mai Amfani',
+        'Type personal name if no business': 'Rubuta sunanka idan ba ka da kasuwanci',
+        'User Type': 'Nau’in Mai Amfani',
+        'Financial Information': 'Bayanin Kuɗi',
+        'Income/Revenue': 'Kuɗin Shiga/Riba',
+        'Total money you receive regularly, like salary, business sales, gifts, grants, incentives, or side hustles.': 'Jimlar kuɗin da kake samu akai-akai, kamar albashi, tallace-tallacen kasuwanci, kyaututtuka, tallafi, abubuwan ƙarfafawa, ko ayyukan gefe.',
+        'Expenses/Costs': 'Kashe Kuɗi/Kudin Kulawa',
+        'All the money you spend, such as on rent, food, transport, electricity bill, gas and utilities, fine and penalties, levies, taxes, etc.': 'Duk kuɗin da kake kashewa, kamar haya, abinci, sufuri, lissafin wutar lantarki, iskar gas da kayan aiki, tara da hukunci, haraji, da sauransu.',
+        'Debt/Loan': 'Bashi/Lamuni',
+        'Money you owe, like loans, IOUs, borrowings, or funds lent to you.': 'Kuɗin da kake bin bashi, kamar lamuni, IOUs, aro, ko kuɗin da aka ba ka aro.',
+        'Debt Interest Rate': 'Yawan Riba na Bashi',
+        'Extra percentage you pay on a loan, usually per year or month. It’s usually something like 12% or 7%.': 'Ƙarin kashi da kake biya akan lamuni, yawanci a kowace shekara ko wata. Yawanci wani abu ne kamar 12% ko 7%.',
+        'e.g. 150,000': 'misali 150,000',
+        'e.g. 60,000': 'misali 60,000',
+        'e.g. 25,000': 'misali 25,000',
+        'e.g. 10%': 'misali 10%',
+        'New to finances? Click here to get guided tips on how to fill this form.': 'Sabon zuwa ga kuɗi? Danna nan don samun shawarwari kan yadda za ka cika wannan fom.',
+        'Getting Started with Ficore Africa': 'Fara da Ficore Africa',
+        'Fill in your name, email, and phone number. Choose your language—English or Hausa.': 'Cika sunanka, imel, da lambar waya. Zaɓi yaranka—Turanci ko Hausa.',
+        'Enter your business name, or your personal name if you don’t have a business. Select if you’re an individual or a business.': 'Shigar da sunan kasuwancinka, ko sunanka idan ba ka da kasuwanci. Zaɓi idan kai mutum ne ko kasuwanci.',
+        'Add your monthly money details. Hover or tap the ℹ️ icons for help on what to enter.': 'Ƙara bayanan kuɗin ka na wata-wata. Janyo ko taɓa alamun ℹ️ don taimako kan abin da za ka shigar.',
+        'Double-check your details, then click Submit to get your financial health score!': 'Duba bayananka sau biyu, sannan danna Sallama don samun makin lafiyar kuɗin ka!',
+        'Get Your Score': 'Samu makin lafiyar kuɗin ka tare da Ficore Africa.',
+        'Positive Value Advice': 'Darajarka mai kyau tana nuna ci gaban kuɗi. Ci gaba da sarrafa kuɗaɗen ka cikin hikima!',
+        'Zero Value Advice': 'Darajarka sifili ce. Ka ji daɗin duba bayanan kuɗin ka don tabbatar da daidaito.',
+        'Negative Value Advice': 'Daraja mara kyau tana nuna ƙalubalen kuɗi. Mayar da hankali kan rage kashe kuɗi ko ƙara kuɗin shiga.',
+        'Tip 1': 'Ƙirƙiri kasafin kuɗi don bin diddigin kuɗin shiga da kashe kuɗi.',
+        'Tip 2': 'Gina asusun gaggawa don biyan kuɗin da ba a ji tsammani ba.',
+        'Tip 3': 'Biya bashi mai yawan riba don rage damuwar kuɗi.',
+        'Course 1 Title': 'Gabatarwa ga Shirye-shiryen Kuɗi',
+        'Course 2 Title': 'Ƙa’idodin Sarrafa Bashi'
     }
 }
