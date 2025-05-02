@@ -161,6 +161,10 @@
             cursor: pointer;
             color: #dc3545;
         }
+        .language-selector {
+            max-width: 200px;
+            margin: 1rem auto;
+        }
         @media (max-width: 600px) {
             .card {
                 margin-bottom: 1rem;
@@ -183,11 +187,24 @@
                 padding: 10px 20px;
                 font-size: 1rem;
             }
+            .language-selector {
+                max-width: 150px;
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
+        <!-- Language Selector -->
+        <div class="language-selector my-3 text-center">
+            <form method="POST" action="{{ url_for('set_language') }}">
+                <select name="language" class="form-select" onchange="this.form.submit()" aria-label="{{ translations[language]['Select Language'] }}">
+                    <option value="English" {% if language == 'English' %}selected{% endif %}>English</option>
+                    <option value="Hausa" {% if language == 'Hausa' %}selected{% endif %}>Hausa</option>
+                </select>
+            </form>
+        </div>
+
         <header class="my-4">
             <div class="logo-container">
                 <img src="{{ url_for('static', filename='img/ficore_logo.png') }}" alt="Ficore Africa Logo" class="img-fluid">
@@ -223,7 +240,7 @@
                             {{ translations[language]['Assess your financial health with a personalized score and insights.'] }}
                             <span class="info-icon" data-tooltip-target="health-score-tooltip" title="{{ translations[language]['This tool evaluates your income, expenses, and debt to provide a health score.'] }}" aria-label="More info">ℹ️</span>
                         </p>
-                        <a href="{{ url_for('home') }}" class="btn btn-primary" aria-label="{{ translations[language]['Get Started with Financial Health Score'] }}">{{ translations[language]['Get Started'] }}</a>
+                        <a href="{{ url_for('financial_health') }}" class="btn btn-primary" aria-label="{{ translations[language]['Get Started with Financial Health Score'] }}">{{ translations[language]['Get Started'] }}</a>
                         <div class="tooltip-fallback" id="health-score-tooltip">
                             <button class="close-btn" aria-label="Close tooltip">×</button>
                             <span></span>
