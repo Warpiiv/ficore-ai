@@ -66,6 +66,10 @@
             box-shadow: 0 0 8px rgba(46, 125, 50, 0.3);
             outline: none;
         }
+        .form-control:invalid {
+            border-color: #dc3545;
+            box-shadow: 0 0 8px rgba(220, 53, 69, 0.3);
+        }
         .btn-primary {
             background: linear-gradient(135deg, #2E7D32, #0288D1);
             border: none;
@@ -166,9 +170,20 @@
             font-size: 0.9rem;
             color: #333;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            position: relative;
         }
         .tooltip-fallback.active {
             display: block;
+        }
+        .tooltip-fallback .close-btn {
+            position: absolute;
+            top: 2px;
+            right: 5px;
+            font-size: 1rem;
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #dc3545;
         }
         /* Stylish Blue Book Styles */
         .book-toggle {
@@ -276,7 +291,7 @@
                         </ul>
                     </div>
 
-                    <form id="submission-form" method="POST" action="{{ url_for('submit') }}">
+                    <form id="submission-form" method="POST" action="{{ url_for('submit') }}" novalidate>
                         {{ form.hidden_tag() }} <!-- Ensure CSRF token is included -->
 
                         <!-- Personal Information -->
@@ -325,37 +340,49 @@
                             <div class="field-container">
                                 <span class="visual-icon">💰</span>
                                 {{ form.income_revenue.label(class="form-label", **{'for': 'income_revenue'}) }}
-                                <span class="info-icon" data-tooltip-target="income-tooltip" title="{{ translations[language]['Total money you receive regularly, like salary, business sales, gifts, grants, incentives, or side hustles.'] }}">ℹ️</span>
+                                <span class="info-icon" data-tooltip-target="income-tooltip" title="{{ translations[language]['Total money you receive regularly, like salary, business sales, gifts, grants, incentives, or side hustles.'] }}" aria-label="More info">ℹ️</span>
                             </div>
-                            {{ form.income_revenue(class="form-control number-input", placeholder=translations[language]['e.g. 150,000'], type="text", required=True, pattern="^[0-9,]+(\.[0-9]{1,2})?$", **{'data-error': translations[language]['Invalid Number']}) }}
-                            <div class="tooltip-fallback" id="income-tooltip"></div>
+                            {{ form.income_revenue(class="form-control number-input", placeholder=translations[language]['e.g. 150,000'], type="number", min="0", step="0.01", required=True, pattern="^[0-9]+(\.[0-9]{1,2})?$", **{'data-error': translations[language]['Invalid Number']}) }}
+                            <div class="tooltip-fallback" id="income-tooltip">
+                                <button class="close-btn" aria-label="Close tooltip">&times;</button>
+                                <span></span>
+                            </div>
                         </div>
                         <div class="mb-3">
                             <div class="field-container">
                                 <span class="visual-icon">💸</span>
                                 {{ form.expenses_costs.label(class="form-label", **{'for': 'expenses_costs'}) }}
-                                <span class="info-icon" data-tooltip-target="expenses-tooltip" title="{{ translations[language]['All the money you spend, such as on rent, food, transport, electricity bill, gas and utilities, fine and penalties, levies, taxes, etc.'] }}">ℹ️</span>
+                                <span class="info-icon" data-tooltip-target="expenses-tooltip" title="{{ translations[language]['All the money you spend, such as on rent, food, transport, electricity bill, gas and utilities, fine and penalties, levies, taxes, etc.'] }}" aria-label="More info">ℹ️</span>
                             </div>
-                            {{ form.expenses_costs(class="form-control number-input", placeholder=translations[language]['e.g. 60,000'], type="text", required=True, pattern="^[0-9,]+(\.[0-9]{1,2})?$", **{'data-error': translations[language]['Invalid Number']}) }}
-                            <div class="tooltip-fallback" id="expenses-tooltip"></div>
+                            {{ form.expenses_costs(class="form-control number-input", placeholder=translations[language]['e.g. 60,000'], type="number", min="0", step="0.01", required=True, pattern="^[0-9]+(\.[0-9]{1,2})?$", **{'data-error': translations[language]['Invalid Number']}) }}
+                            <div class="tooltip-fallback" id="expenses-tooltip">
+                                <button class="close-btn" aria-label="Close tooltip">&times;</button>
+                                <span></span>
+                            </div>
                         </div>
                         <div class="mb-3">
                             <div class="field-container">
                                 <span class="visual-icon">🏦</span>
                                 {{ form.debt_loan.label(class="form-label", **{'for': 'debt_loan'}) }}
-                                <span class="info-icon" data-tooltip-target="debt-tooltip" title="{{ translations[language]['Money you owe, like loans, IOUs, borrowings, or funds lent to you.'] }}">ℹ️</span>
+                                <span class="info-icon" data-tooltip-target="debt-tooltip" title="{{ translations[language]['Money you owe, like loans, IOUs, borrowings, or funds lent to you.'] }}" aria-label="More info">ℹ️</span>
                             </div>
-                            {{ form.debt_loan(class="form-control number-input", placeholder=translations[language]['e.g. 25,000'], type="text", required=True, pattern="^[0-9,]+(\.[0-9]{1,2})?$", **{'data-error': translations[language]['Invalid Number']}) }}
-                            <div class="tooltip-fallback" id="debt-tooltip"></div>
+                            {{ form.debt_loan(class="form-control number-input", placeholder=translations[language]['e.g. 25,000'], type="number", min="0", step="0.01", required=True, pattern="^[0-9]+(\.[0-9]{1,2})?$", **{'data-error': translations[language]['Invalid Number']}) }}
+                            <div class="tooltip-fallback" id="debt-tooltip">
+                                <button class="close-btn" aria-label="Close tooltip">&times;</button>
+                                <span></span>
+                            </div>
                         </div>
                         <div class="mb-3">
                             <div class="field-container">
                                 <span class="visual-icon">📈</span>
                                 {{ form.debt_interest_rate.label(class="form-label", **{'for': 'debt_interest_rate'}) }}
-                                <span class="info-icon" data-tooltip-target="interest-tooltip" title="{{ translations[language]['Extra percentage you pay on a loan, usually per year or month. It’s usually something like 12% or 7%.'] }}">ℹ️</span>
+                                <span class="info-icon" data-tooltip-target="interest-tooltip" title="{{ translations[language]['Extra percentage you pay on a loan, usually per year or month. It’s usually something like 12% or 7%.'] }}" aria-label="More info">ℹ️</span>
                             </div>
-                            {{ form.debt_interest_rate(class="form-control number-input", placeholder=translations[language]['e.g. 10%'], type="text", required=True, pattern="^[0-9,]+(\.[0-9]{1,2})?$", **{'data-error': translations[language]['Invalid Number']}) }}
-                            <div class="tooltip-fallback" id="interest-tooltip"></div>
+                            {{ form.debt_interest_rate(class="form-control number-input", placeholder=translations[language]['e.g. 10%'], type="number", min="0", step="0.01", required=True, pattern="^[0-9]+(\.[0-9]{1,2})?$", **{'data-error': translations[language]['Invalid Number']}) }}
+                            <div class="tooltip-fallback" id="interest-tooltip">
+                                <button class="close-btn" aria-label="Close tooltip">&times;</button>
+                                <span></span>
+                            </div>
                         </div>
 
                         <!-- Submit Button -->
@@ -426,18 +453,24 @@
             // Attempt to initialize Bootstrap tooltips
             const bootstrapTooltipsSuccess = initializeTooltips();
 
-            // Fallback for tooltips: Toggle visibility of fallback div on click
+            // Fallback for tooltips: Toggle visibility of fallback div with close button
             document.querySelectorAll('.info-icon').forEach(icon => {
-                icon.addEventListener('click', function () {
-                    const targetId = icon.getAttribute('data-tooltip-target');
-                    const targetDiv = document.getElementById(targetId);
-                    if (targetDiv) {
-                        // Populate the fallback div with the translated tooltip text
-                        targetDiv.textContent = icon.getAttribute('title');
-                        // Toggle visibility
-                        targetDiv.classList.toggle('active');
+                const targetId = icon.getAttribute('data-tooltip-target');
+                const targetDiv = document.getElementById(targetId);
+                if (targetDiv) {
+                    icon.addEventListener('click', function () {
+                        targetDiv.querySelector('span').textContent = icon.getAttribute('title');
+                        targetDiv.classList.add('active');
+                    });
+
+                    const closeBtn = targetDiv.querySelector('.close-btn');
+                    if (closeBtn) {
+                        closeBtn.addEventListener('click', function (e) {
+                            e.stopPropagation();
+                            targetDiv.classList.remove('active');
+                        });
                     }
-                });
+                }
             });
 
             // Toggle guide section visibility with book animation
@@ -459,61 +492,110 @@
             }
         });
 
-        // Format number inputs with thousands separators
+        // Format and validate number inputs
         document.querySelectorAll('.number-input').forEach(input => {
             input.addEventListener('input', function(e) {
                 let value = e.target.value.replace(/[^0-9.]/g, '');
-                if (value === '') {
+                // Ensure only one decimal point
+                if (value.split('.').length > 2) value = value.replace(/\.+$/, '');
+                if (value === '' || value === '.') {
                     e.target.value = '';
                     return;
                 }
                 let parts = value.split('.');
-                let integerPart = parts[0];
-                let decimalPart = parts[1] ? '.' + parts[1].slice(0, 2) : '';
+                let integerPart = parts[0].replace(/^0+/, '') || '0';
+                let decimalPart = parts[1] ? '.' + parts[1].slice(0, 2).padEnd(2, '0') : '.00';
                 integerPart = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
                 e.target.value = integerPart + decimalPart;
-            });
-            input.addEventListener('blur', function(e) {
-                let cleanValue = e.target.value.replace(/,/g, '');
-                if (cleanValue === '' || isNaN(parseFloat(cleanValue))) {
-                    e.target.value = '';
+
+                // Real-time validation for non-negative
+                const cleanValue = parseFloat(value.replace(/,/g, ''));
+                if (cleanValue < 0) {
+                    e.target.setCustomValidity(translations[language]['Negative values are not allowed']);
                 } else {
-                    e.target.value = parseFloat(cleanValue).toLocaleString('en-US', {
-                        minimumFractionDigits: 0,
-                        maximumFractionDigits: 2
-                    });
+                    e.target.setCustomValidity('');
                 }
             });
+
+            input.addEventListener('blur', function(e) {
+                let cleanValue = e.target.value.replace(/,/g, '');
+                if (cleanValue === '' || cleanValue === '.' || isNaN(parseFloat(cleanValue))) {
+                    e.target.value = '0.00';
+                } else {
+                    const numValue = parseFloat(cleanValue);
+                    if (numValue < 0) {
+                        e.target.value = '0.00';
+                        e.target.setCustomValidity(translations[language]['Negative values are not allowed']);
+                    } else {
+                        e.target.value = numValue.toLocaleString('en-US', {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2
+                        });
+                        e.target.setCustomValidity('');
+                    }
+                }
+            });
+
             input.addEventListener('focus', function(e) {
                 let value = e.target.value.replace(/,/g, '');
-                e.target.value = value;
+                e.target.value = value === '0.00' ? '' : value;
             });
         });
 
         // Custom HTML5 validation with translated error messages
         document.querySelectorAll('.form-control, .form-select').forEach(input => {
             input.addEventListener('invalid', function(e) {
-                e.target.setCustomValidity(e.target.dataset.error);
+                e.target.setCustomValidity(e.target.dataset.error || translations[language]['Please fill out this field correctly']);
             });
             input.addEventListener('input', function(e) {
                 e.target.setCustomValidity('');
             });
         });
 
-        // Clean number inputs before form submission and debug submission method
+        // Enhanced form submission with validation and confirmation
         document.getElementById('submission-form').addEventListener('submit', function(e) {
             try {
                 console.log('Form submission triggered. Method:', document.getElementById('submission-form').getAttribute('method'));
-                document.querySelectorAll('.number-input').forEach(input => {
+                const numberInputs = document.querySelectorAll('.number-input');
+                let isValid = true;
+
+                numberInputs.forEach(input => {
                     let cleanValue = input.value.replace(/,/g, '');
-                    if (cleanValue === '' || isNaN(parseFloat(cleanValue))) {
-                        input.value = '';
+                    const numValue = parseFloat(cleanValue);
+                    if (isNaN(numValue) || numValue < 0) {
+                        input.setCustomValidity(translations[language]['Negative values are not allowed or invalid number']);
+                        isValid = false;
                     } else {
-                        input.value = parseFloat(cleanValue).toString();
+                        input.value = numValue.toString();
+                        input.setCustomValidity('');
                     }
                 });
+
+                // Email matching validation
+                const email = document.getElementById('email');
+                const autoEmail = document.getElementById('auto_email');
+                if (email.value !== autoEmail.value) {
+                    autoEmail.setCustomValidity(translations[language]['Emails Do Not Match']);
+                    isValid = false;
+                } else {
+                    autoEmail.setCustomValidity('');
+                }
+
+                if (!isValid) {
+                    e.preventDefault();
+                    flash(translations[language]['Please correct the errors before submitting'], 'error');
+                    return;
+                }
+
+                // Confirmation prompt
+                if (!confirm(translations[language]['Are you sure you want to submit this form?'])) {
+                    e.preventDefault();
+                    return;
+                }
             } catch (error) {
                 console.error('Error during form submission preprocessing:', error);
+                flash(translations[language]['An error occurred. Please try again.'], 'error');
+                e.preventDefault();
             }
         });
     </script>
