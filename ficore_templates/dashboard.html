@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Track your financial health with Ficore AI. See your score, earn badges, and get smart insights.">
-    <meta name="keywords" content="ficore ai, financial health, dashboard, Africa SME finance, smart insights">
-    <meta name="author" content="Ficore AI">
-    <title>Ficore AI - {{ translations[language]['Your Financial Health Dashboard'] }}</title>
+    <meta name="description" content="Track your financial health with Ficore Africa. See your score, earn badges, and get smart insights.">
+    <meta name="keywords" content="ficore africa, financial health, dashboard, Africa SME finance, smart insights">
+    <meta name="author" content="Ficore Africa">
+    <title>Ficore Africa - {{ translations[language]['Your Financial Health Dashboard'] }}</title>
     <link href="{{ url_for('static', filename='css/bootstrap.min.css') }}" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
@@ -82,18 +82,10 @@
         .badge:hover {
             transform: scale(1.1);
         }
-        .alert {
+        .flash-message {
             border-radius: 8px;
             font-weight: 500;
             margin-bottom: 1.5rem;
-        }
-        .alert-success {
-            background-color: #D4EDDA;
-            color: #155724;
-        }
-        .alert-danger {
-            background-color: #F8D7DA;
-            color: #721C24;
         }
         .btn-primary {
             background: linear-gradient(135deg, #28A745, #1E88E5);
@@ -116,6 +108,18 @@
             transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
         .btn-secondary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+        .btn-share {
+            background: linear-gradient(135deg, #FF5722, #D81B60);
+            border: none;
+            padding: 10px 20px;
+            font-weight: 500;
+            border-radius: 8px;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .btn-share:hover {
             transform: translateY(-2px);
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
         }
@@ -192,7 +196,27 @@
         .row.main-grid {
             margin-bottom: 0;
         }
-        .chart-empty-state {
+        .chart-container {
+            position: relative;
+            width: 100%;
+            height: 300px;
+        }
+        .chart-loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 1rem;
+            color: #666;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .chart-loading::before {
+            content: "⏳";
+            font-size: 1.5rem;
+        }
+        .chart-error {
             background: #F5F5F5;
             border-radius: 8px;
             padding: 1rem;
@@ -200,8 +224,8 @@
             color: #666;
             font-size: 0.95rem;
         }
-        .chart-empty-state::before {
-            content: "📉";
+        .chart-error::before {
+            content: "⚠️";
             display: block;
             font-size: 1.5rem;
             margin-bottom: 0.5rem;
@@ -274,9 +298,9 @@
     <!-- Hidden Div to Pass Chart Data -->
     <div id="chart-data" 
          style="display: none;" 
-         data-user='{{ user_data | tojson | safe }}' 
-         data-health-score='{{ health_score | tojson | safe }}' 
-         data-peer='{{ peer_data | tojson | safe }}'
+         data-breakdown-chart='{{ breakdown_chart | safe }}' 
+         data-comparison-chart='{{ comparison_chart | safe }}'
+         data-health-score='{{ health_score | tojson | safe }}'
          data-language='{{ language }}'>
     </div>
 
@@ -286,8 +310,9 @@
             {% if messages %}
                 <div class="alert-container my-3">
                     {% for category, message in messages %}
-                        <div class="alert alert-{{ 'success' if category == 'success' else 'danger' }}">
+                        <div class="flash-message alert alert-{{ 'success' if category == 'success' else 'danger' }} alert-dismissible fade show" role="alert">
                             {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                         </div>
                     {% endfor %}
                 </div>
@@ -341,7 +366,11 @@
                     </div>
                     <div class="card-body">
                         <div class="header-subsection">
-                            <div id="score-breakdown-chart"></div>
+                            <div class="chart-container">
+                                <div id="score-breakdown-chart" role="img" aria-label="{{ translations[language]['Score Breakdown Chart'] }}"></div>
+                                <div class="chart-loading" id="breakdown-loading">{{ translations[language]['Loading Chart'] }}</div>
+                                <div class="chart-error" id="breakdown-error" style="display: none;">{{ translations[language]['Chart Unavailable'] }}</div>
+                            </div>
                             <p class="insight-text">
                                 {{ translations[language]['Score Composition'] }}:
                                 <ul>
@@ -373,19 +402,15 @@
                         <div class="header-subsection">
                             {% if badges %}
                                 {% for badge in badges %}
-                                    <span class="badge">{{ translations[language].get(badge, badge) }}</span>
+                                    <span class="badge" role="img" aria-label="{{ translations[language].get(badge, badge) }}">{{ translations[language].get(badge, badge) }}</span>
                                 {% endfor %}
                             {% else %}
                                 <p>{{ translations[language]['No Badges Yet'] }}</p>
                             {% endif %}
                             <div class="section-divider"></div>
                             <h3>📚 {{ translations[language]['Recommended Learning'] }}</h3>
-                            <a href="{{ course_url }}" target="_blank" class="course-link" aria-label="{{ translations[language]['Recommended Course'] }}: {{ course_title }}">
-                                {{ course_title }}
-                            </a>
-                            <a href="{{ course_url }}" target="_blank" class="enroll-button" aria-label="{{ translations[language]['Enroll in'] }} {{ course_title }}">
-                                {{ translations[language]['Enroll Now'] }}
-                            </a>
+                            <a href="{{ course_url }}" target="_blank" class="course-link" aria-label="{{ translations[language]['Recommended Course'] }}: {{ course_title }}">{{ course_title }}</a>
+                            <a href="{{ course_url }}" target="_blank" class="enroll-button" aria-label="{{ translations[language]['Enroll in'] }} {{ course_title }}">{{ translations[language]['Enroll Now'] }}</a>
                         </div>
                     </div>
                 </div>
@@ -424,7 +449,11 @@
                     </div>
                     <div class="card-body">
                         <div class="header-subsection">
-                            <div id="compare-others-chart"></div>
+                            <div class="chart-container">
+                                <div id="compare-others-chart" role="img" aria-label="{{ translations[language]['Comparison to Peers Chart'] }}"></div>
+                                <div class="chart-loading" id="comparison-loading">{{ translations[language]['Loading Chart'] }}</div>
+                                <div class="chart-error" id="comparison-error" style="display: none;">{{ translations[language]['Chart Unavailable'] }}</div>
+                            </div>
                             <p class="insight-text">
                                 {{ translations[language]['Your Rank'] }} #{{ rank }} {{ translations[language]['out of'] }} {{ total_users }} {{ translations[language]['users'] }} {{ translations[language]['places you'] }}:
                                 {% if rank <= total_users * 0.1 %}
@@ -454,12 +483,13 @@
                     <div class="card-body">
                         <div class="header-subsection">
                             <div class="d-flex flex-wrap justify-content-center gap-2 mb-3">
-                                <a href="{{ url_for('home') }}" class="btn btn-primary">{{ translations[language]['Back to Home'] }}</a>
-                                <a href="{{ FEEDBACK_FORM_URL }}" class="btn btn-secondary">{{ translations[language]['Provide Feedback'] }}</a>
-                                <a href="{{ WAITLIST_FORM_URL }}" class="btn btn-secondary">{{ translations[language]['Join Waitlist'] }}</a>
-                                <a href="{{ CONSULTANCY_FORM_URL }}" class="btn btn-secondary">{{ translations[language]['Book Consultancy'] }}</a>
+                                <a href="{{ url_for('home') }}" class="btn btn-primary" aria-label="{{ translations[language]['Back to Home'] }}">{{ translations[language]['Back to Home'] }}</a>
+                                <a href="{{ FEEDBACK_FORM_URL }}" class="btn btn-secondary" target="_blank" aria-label="{{ translations[language]['Provide Feedback'] }}">{{ translations[language]['Provide Feedback'] }}</a>
+                                <a href="{{ WAITLIST_FORM_URL }}" class="btn btn-secondary" target="_blank" aria-label="{{ translations[language]['Join Waitlist'] }}">{{ translations[language]['Join Waitlist'] }}</a>
+                                <a href="{{ CONSULTANCY_FORM_URL }}" class="btn btn-secondary" target="_blank" aria-label="{{ translations[language]['Book Consultancy'] }}">{{ translations[language]['Book Consultancy'] }}</a>
+                                <button class="btn btn-share" id="share-button" aria-label="{{ translations[language]['Share Your Results'] }}">{{ translations[language]['Share Your Results'] }}</button>
                             </div>
-                            <p class="text-center">{{ translations[language]['Contact Us'] }} <a href="mailto:Ficoreai@outlook.com">Ficoreai@outlook.com</a> {{ translations[language]['for support'] }}</p>
+                            <p class="text-center">{{ translations[language]['Contact Us'] }} <a href="mailto:ficore.ai.africa@gmail.com" aria-label="{{ translations[language]['Email Ficore Africa Support'] }}">ficore.ai.africa@gmail.com</a> {{ translations[language]['for support'] }}</p>
                         </div>
                     </div>
                 </div>
@@ -470,157 +500,72 @@
     <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
     <!-- Plotly Chart Rendering -->
     <script>
-        // Retrieve data from hidden div
-        const chartDataElement = document.getElementById('chart-data');
-        let userData, healthScore, peerData, language;
+        document.addEventListener('DOMContentLoaded', function () {
+            const chartDataElement = document.getElementById('chart-data');
+            const breakdownChartJson = chartDataElement.dataset.breakdownChart;
+            const comparisonChartJson = chartDataElement.dataset.comparisonChart;
+            const healthScore = JSON.parse(chartDataElement.dataset.healthScore || '0');
+            const language = chartDataElement.dataset.language || 'English';
 
-        // Log raw data attributes for debugging
-        console.log('Raw user data:', chartDataElement.dataset.user);
-        console.log('Raw health score:', chartDataElement.dataset.healthScore);
-        console.log('Raw peer data:', chartDataElement.dataset.peer);
-        console.log('Language:', chartDataElement.dataset.language);
+            // Function to render Plotly chart with error handling
+            function renderChart(chartId, chartJson, loadingId, errorId) {
+                try {
+                    const chartDiv = document.getElementById(chartId);
+                    const loadingDiv = document.getElementById(loadingId);
+                    const errorDiv = document.getElementById(errorId);
 
-        // Function to check if a string is valid JSON
-        function isValidJSON(str) {
-            if (typeof str !== 'string' || str.trim() === '') return false;
-            try {
-                JSON.parse(str);
-                return true;
-            } catch (e) {
-                return false;
+                    if (!chartJson || chartJson === '') {
+                        throw new Error('Chart data is empty or missing');
+                    }
+
+                    const chartData = JSON.parse(chartJson);
+                    if (!chartData.data || !chartData.layout) {
+                        throw new Error('Invalid chart data format');
+                    }
+
+                    // Hide loading and error states
+                    loadingDiv.style.display = 'none';
+                    errorDiv.style.display = 'none';
+
+                    // Render the chart
+                    Plotly.newPlot(chartId, chartData.data, chartData.layout, { responsive: true });
+                } catch (error) {
+                    console.error(`Error rendering chart ${chartId}:`, error.message);
+                    document.getElementById(loadingId).style.display = 'none';
+                    document.getElementById(errorId).style.display = 'block';
+                }
             }
-        }
 
-        // Parse userData
-        const rawUserData = chartDataElement.dataset.user;
-        if (isValidJSON(rawUserData)) {
-            try {
-                userData = JSON.parse(rawUserData);
-            } catch (e) {
-                console.error('Error parsing userData:', e.message, 'Raw data:', rawUserData);
-                userData = { income: 0, expenses: 0, debt: 0 };
-            }
-        } else {
-            console.warn('userData is not valid JSON:', rawUserData);
-            userData = { income: 0, expenses: 0, debt: 0 };
-        }
+            // Render the charts
+            renderChart('score-breakdown-chart', breakdownChartJson, 'breakdown-loading', 'breakdown-error');
+            renderChart('compare-others-chart', comparisonChartJson, 'comparison-loading', 'comparison-error');
 
-        // Parse healthScore
-        const rawHealthScore = chartDataElement.dataset.healthScore;
-        if (isValidJSON(rawHealthScore)) {
-            try {
-                healthScore = JSON.parse(rawHealthScore);
-            } catch (e) {
-                console.error('Error parsing healthScore:', e.message, 'Raw data:', rawHealthScore);
-                healthScore = 0;
-            }
-        } else {
-            console.warn('healthScore is not valid JSON:', rawHealthScore);
-            healthScore = 0;
-        }
+            // Share Results Button
+            document.getElementById('share-button').addEventListener('click', function () {
+                const shareText = `${translations[language]['My Financial Health Score']}: ${healthScore}/100\n${translations[language]['Ranked']}: #${{{ rank }}}                ${translations[language]['out of']}: ${{{ total_users }}}                ${translations[language]['Check yours at']}: ${window.location.origin}`;
+                const shareData = {
+                    title: translations[language]['My Financial Health Score'],
+                    text: shareText,
+                    url: window.location.origin
+                };
 
-        // Parse peerData
-        const rawPeerData = chartDataElement.dataset.peer;
-        if (isValidJSON(rawPeerData)) {
-            try {
-                peerData = JSON.parse(rawPeerData);
-            } catch (e) {
-                console.error('Error parsing peerData:', e.message, 'Raw data:', rawPeerData);
-                peerData = { averageScore: 50 };
-            }
-        } else {
-            console.warn('peerData is not valid JSON:', rawPeerData);
-            peerData = { averageScore: 50 };
-        }
-
-        // Parse language
-        language = chartDataElement.dataset.language || 'English';
-
-        // Fallback values to ensure data integrity
-        userData = {
-            income: userData && userData.income || 0,
-            expenses: userData && userData.expenses || 0,
-            debt: userData && userData.debt || 0
-        };
-        healthScore = typeof healthScore === 'number' ? healthScore : 0;
-        peerData = {
-            averageScore: peerData && peerData.averageScore || 50
-        };
-
-        // Debug: Log parsed data to console
-        console.log('Parsed User Data:', userData);
-        console.log('Parsed Health Score:', healthScore);
-        console.log('Parsed Peer Data:', peerData);
-
-        // Define translations for chart labels
-        const chartTranslations = {
-            'English': {
-                'Income': 'Income',
-                'Expenses': 'Expenses',
-                'Debt': 'Debt',
-                'Amount': 'Amount (₦)',
-                'Your Score': 'Your Score',
-                'Average Peer Score': 'Average Peer Score',
-                'Financial Health Score': 'Financial Health Score'
-            },
-            'Hausa': {
-                'Income': 'Kuɗin Shiga',
-                'Expenses': 'Kashe Kuɗi',
-                'Debt': 'Bashi',
-                'Amount': 'Adadin (₦)',
-                'Your Score': 'Makin Ku',
-                'Average Peer Score': 'Matsakaicin Makin Sauran Mutane',
-                'Financial Health Score': 'Makin Lafiyar Kuɗi'
-            }
-        };
-
-        // Select translations based on language
-        const labels = chartTranslations[language] || chartTranslations['English'];
-
-        // Score Breakdown Chart
-        const scoreBreakdownData = [{
-            x: [
-                userData.income,
-                userData.expenses,
-                userData.debt
-            ],
-            y: [labels['Income'], labels['Expenses'], labels['Debt']],
-            type: 'bar',
-            orientation: 'h',
-            marker: { color: ['#28A745', '#FF9800', '#DC3545'] }
-        }];
-
-        const scoreBreakdownLayout = {
-            title: '',
-            xaxis: { title: labels['Amount'] },
-            yaxis: { title: '' },
-            height: 300,
-            margin: { l: 100, r: 20, t: 20, b: 50 },
-            plot_bgcolor: 'rgba(0,0,0,0)',
-            paper_bgcolor: 'rgba(0,0,0,0)'
-        };
-
-        Plotly.newPlot('score-breakdown-chart', scoreBreakdownData, scoreBreakdownLayout);
-
-        // How You Compare to Others Chart
-        const compareOthersData = [{
-            x: [labels['Your Score'], labels['Average Peer Score']],
-            y: [healthScore, peerData.averageScore],
-            type: 'bar',
-            marker: { color: ['#28A745', '#6C757D'] }
-        }];
-
-        const compareOthersLayout = {
-            title: '',
-            xaxis: { title: '' },
-            yaxis: { title: labels['Financial Health Score'], range: [0, 100] },
-            height: 300,
-            margin: { l: 50, r: 20, t: 20, b: 50 },
-            plot_bgcolor: 'rgba(0,0,0,0)',
-            paper_bgcolor: 'rgba(0,0,0,0)'
-        };
-
-        Plotly.newPlot('compare-others-chart', compareOthersData, compareOthersLayout);
+                if (navigator.share) {
+                    navigator.share(shareData)
+                        .then(() => console.log('Shared successfully'))
+                        .catch((error) => console.error('Error sharing:', error));
+                } else {
+                    // Fallback: Copy to clipboard
+                    navigator.clipboard.writeText(shareText)
+                        .then(() => {
+                            alert(translations[language]['Results copied to clipboard']);
+                        })
+                        .catch((error) => {
+                            console.error('Error copying to clipboard:', error);
+                            alert(translations[language]['Failed to copy results']);
+                        });
+                }
+            });
+        });
     </script>
 </body>
 </html>
