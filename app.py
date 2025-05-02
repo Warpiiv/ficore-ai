@@ -72,7 +72,7 @@ SMTP_PORT = int(os.getenv('SMTP_PORT', 587))
 
 # Google Sheets setup
 try:
-    creds = ServiceAccountCredentials.from_json_keyfile_name('credentials.json', SCOPES)
+    creds = ServiceAccountCredentials.from_json_keyfile_name('GOOGLE_CREDENTIALS_JSON', SCOPES)
     client = gspread.authorize(creds)
     spreadsheet = client.open_by_key(SPREADSHEET_ID)
     logger.info("Successfully connected to Google Sheets database")
