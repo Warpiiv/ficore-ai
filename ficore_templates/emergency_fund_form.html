@@ -3,517 +3,113 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Plan your emergency fund with Ficore Africa by entering your monthly income and expenses.">
-    <meta name="keywords" content="ficore africa, emergency fund planner, income, expenses, financial security">
-    <meta name="author" content="Ficore Africa">
-    <title>Ficore Africa - {{ translations[language]['Emergency Fund Planner'] }}</title>
-    <link href="{{ url_for('static', filename='css/bootstrap.min.css') }}" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;600&display=swap" rel="stylesheet">
-    <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
-    <style>
-        body {
-            font-family: 'Open Sans', sans-serif;
-            background: linear-gradient(135deg, #E3F2FD, #F5F7FA);
-            margin: 0;
-            padding: 20px;
-            box-sizing: border-box;
-        }
-        .container {
-            max-width: 900px;
-            margin: auto;
-        }
-        header {
-            background: #fff;
-            padding: 2rem;
-            border-radius: 12px;
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
-            margin-bottom: 2rem;
-            text-align: center;
-        }
-        .logo-container {
-            margin-bottom: 1rem;
-        }
-        .logo-container img {
-            max-width: 200px;
-        }
-        .form-card {
-            background: #fff;
-            padding: 2rem;
-            border-radius: 12px;
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-        }
-        .form-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.15);
-        }
-        .card-header {
-            background: linear-gradient(135deg, #28A745, #1E88E5);
-            color: white;
-            padding: 1rem;
-            border-radius: 12px 12px 0 0;
-            text-align: center;
-            font-weight: 600;
-            font-size: 1.75rem;
-            white-space: nowrap;
-            margin-bottom: 1rem;
-            border: 2px solid #1565C0;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-        }
-        h3 {
-            color: #2E7D32;
-            font-weight: 600;
-            margin-bottom: 1.5rem;
-        }
-        .form-label {
-            color: #0288D1;
-            font-weight: 500;
-        }
-        .form-label.required::after {
-            content: " *";
-            color: #DC3545;
-        }
-        .form-control, .form-select {
-            border: 2px solid #0288D1;
-            border-radius: 8px;
-            padding: 10px;
-            transition: border-color 0.3s ease, box-shadow 0.3s ease;
-        }
-        .form-control:focus, .form-select:focus {
-            border-color: #2E7D32;
-            box-shadow: 0 0 8px rgba(46, 125, 50, 0.3);
-            outline: none;
-        }
-        .btn-primary {
-            background: linear-gradient(135deg, #2E7D32, #0288D1);
-            border: none;
-            padding: 12px 24px;
-            font-weight: 600;
-            border-radius: 8px;
-            font-size: 1.1rem;
-            color: white;
-            transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.3s ease;
-            position: relative;
-            overflow: hidden;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-        }
-        .btn-primary:hover {
-            transform: scale(1.05);
-            background: linear-gradient(135deg, #1E88E5, #0288D1);
-            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
-            border: 1px solid #4CAF50;
-        }
-        .btn-primary.loading::after {
-            content: '';
-            position: absolute;
-            width: 20px;
-            height: 20px;
-            border: 3px solid #fff;
-            border-top: 3px solid #0288D1;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-        }
-        .btn-primary.loading span {
-            visibility: hidden;
-        }
-        @keyframes spin {
-            0% { transform: translate(-50%, -50%) rotate(0deg); }
-            100% { transform: translate(-50%, -50%) rotate(360deg); }
-        }
-        .btn-secondary {
-            background: linear-gradient(135deg, #F57C00, #FF9800);
-            border: none;
-            padding: 10px 20px;
-            font-weight: 500;
-            border-radius: 8px;
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
-        }
-        .btn-secondary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-        }
-        .btn-email {
-            background: linear-gradient(135deg, #FF5722, #D81B60);
-            border: none;
-            padding: 10px 20px;
-            font-weight: 500;
-            border-radius: 8px;
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
-        }
-        .btn-email:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-        }
-        .alert {
-            border-radius: 8px;
-            font-weight: 500;
-        }
-        .number-input::placeholder {
-            color: #6c757d;
-        }
-        .guide-section {
-            background: #D6E8F8;
-            padding: 1rem;
-            border-radius: 8px;
-            margin-bottom: 1rem;
-            display: none;
-        }
-        .guide-section.active {
-            display: block;
-        }
-        .guide-section ul {
-            list-style-type: disc;
-            padding-left: 20px;
-        }
-        .guide-section li {
-            margin-bottom: 0.5rem;
-        }
-        .field-container {
-            position: relative;
-            display: flex;
-            align-items: center;
-        }
-        .info-icon {
-            margin-left: 8px;
-            font-size: 1rem;
-            color: #0288D1;
-            cursor: pointer;
-        }
-        .visual-icon {
-            margin-right: 8px;
-            font-size: 1.2rem;
-        }
-        .note-text {
-            font-size: 0.9rem;
-            color: #666;
-            margin-bottom: 0.5rem;
-        }
-        .tooltip-fallback {
-            display: none;
-            background: #E3F2FD;
-            border: 1px solid #0288D1;
-            border-radius: 4px;
-            padding: 8px;
-            margin-top: 4px;
-            font-size: 0.9rem;
-            color: #333;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-            position: absolute;
-            z-index: 1000;
-        }
-        .tooltip-fallback.active {
-            display: block;
-        }
-        .book-toggle {
-            display: flex;
-            align-items: center;
-            cursor: pointer;
-            margin-bottom: 1rem;
-            width: fit-content;
-        }
-        .book-icon {
-            position: relative;
-            width: 40px;
-            height: 30px;
-            background: #0288D1;
-            border-radius: 4px 8px 8px 4px;
-            margin-right: 10px;
-            transition: transform 0.3s ease;
-        }
-        .book-icon::before {
-            content: '';
-            position: absolute;
-            top: 2px;
-            left: 2px;
-            right: 2px;
-            bottom: 2px;
-            background: #E3F2FD;
-            border-radius: 2px 6px 6px 2px;
-        }
-        .book-icon::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 4px;
-            height: 100%;
-            background: #01579B;
-            border-radius: 4px 0 0 4px;
-        }
-        .book-icon.open {
-            transform: rotateY(-30deg);
-        }
-        .book-label {
-            font-weight: 500;
-            color: #0288D1;
-            font-size: 1rem;
-        }
-        @media (max-width: 600px) {
-            .form-card {
-                padding: 1.5rem;
-            }
-            h3 {
-                font-size: 1.5rem;
-            }
-            .info-icon {
-                font-size: 0.9rem;
-            }
-            .book-label {
-                font-size: 0.9rem;
-            }
-            .book-icon {
-                width: 30px;
-                height: 22px;
-            }
-        }
-    </style>
+    <title>{{ translations[language]['Emergency Fund'] }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/custom.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
 </head>
 <body>
-    <div class="container">
-        <header class="my-4">
-            <div class="logo-container">
-                <img src="{{ url_for('static', filename='img/ficore_logo.png') }}" alt="Ficore Africa Logo" class="img-fluid">
-            </div>
-            <h1>{{ translations[language]['Ficore Africa Emergency Fund Planner'] }}</h1>
-            <p class="lead">{{ translations[language]['Plan Your Emergency Fund'] }}</p>
+    <div class="container mt-5">
+        <header class="text-center mb-4">
+            <img src="{{ url_for('static', filename='img/ficore_logo.png') }}" alt="FiCore Logo" class="img-fluid" style="max-width: 200px;">
+            <h1><i class="fas fa-shield-alt icon"></i> {{ translations[language]['Emergency Fund'] }}</h1>
+            <p class="lead">{{ translations[language]['Protect your financial well-being from unexpected events. Calculate your ideal safety net.'] }}</p>
         </header>
 
-        <!-- Flash Messages -->
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
-                <div class="alert-container my-3">
-                    {% for category, message in messages %}
-                        <div class="alert alert-{{ 'danger' if category == 'error' else 'success' }} alert-dismissible fade show" role="alert">
-                            {{ message }}
-                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                        </div>
-                    {% endfor %}
-                </div>
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ 'danger' if category == 'error' else 'success' }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
             {% endif %}
         {% endwith %}
 
-        <!-- Form -->
-        <div class="row justify-content-center">
-            <div class="col-md-10">
-                <div class="form-card">
-                    <!-- New to Finances Toggle with Stylish Blue Book -->
-                    <div class="book-toggle" id="guide-toggle" aria-label="{{ translations[language]['Toggle financial guide'] }}" role="button" tabindex="0">
-                        <div class="book-icon" id="book-icon" aria-hidden="true"></div>
-                        <span class="book-label">{{ translations[language]['New to finances? Click here to get guided tips on how to fill this form.'] }}</span>
-                    </div>
-                    <div class="guide-section" id="guide-content">
-                        <h4>{{ translations[language]['Getting Started with Emergency Fund Planner'] }}</h4>
-                        <ul>
-                            <li><strong>{{ translations[language]['Personal Information'] }}</strong>: Fill in your name, email, and phone number. Choose your language—English or Hausa.</li>
-                            <li><strong>{{ translations[language]['Financial Information'] }}</strong>: Enter your monthly income and expenses. Hover or tap the ℹ️ icons for help.</li>
-                            <li><strong>{{ translations[language]['Submit'] }}</strong>: Double-check your details, then click Submit to calculate your emergency fund goal!</li>
-                        </ul>
-                        <button class="btn btn-secondary mt-2" id="hide-guide">{{ translations[language]['Hide Guide'] }}</button>
-                    </div>
+        <form method="POST" action="{{ url_for('emergency_fund') }}" novalidate>
+            {{ form.hidden_tag() }}
 
-                    <form id="submission-form" method="POST" action="{{ url_for('emergency_fund') }}">
-                        {{ form.hidden_tag() }}
-
-                        <!-- Personal Information -->
-                        <div class="card-header">
-                            <span class="emoji">👤</span> {{ translations[language]['Personal Information'] }}
-                        </div>
-                        <div class="mb-3">
-                            {{ form.first_name.label(class="form-label required", **{'for': 'first_name'}) }}
-                            {{ form.first_name(class="form-control", placeholder=translations[language]['Enter your first name'], required=True, **{'data-error': translations[language]['First Name Required']}) }}
-                        </div>
-                        <div class="mb-3">
-                            {{ form.last_name.label(class="form-label", **{'for': 'last_name'}) }}
-                            {{ form.last_name(class="form-control", placeholder=translations[language]['Enter your last name (optional)']) }}
-                        </div>
-                        <div class="mb-3">
-                            {{ form.email.label(class="form-label required", **{'for': 'email'}) }}
-                            {{ form.email(class="form-control", placeholder=translations[language]['Enter your email'], type="email", required=True, pattern="[^@]+@[^@]+\.[^@]+", **{'data-error': translations[language]['Invalid Email']}) }}
-                        </div>
-                        <div class="mb-3">
-                            {{ form.auto_email.label(class="form-label required", **{'for': 'auto_email'}) }}
-                            {{ form.auto_email(class="form-control", placeholder=translations[language]['Confirm your email'], type="email", required=True, pattern="[^@]+@[^@]+\.[^@]+", **{'data-error': translations[language]['Email Mismatch']}) }}
-                        </div>
-                        <div class="mb-3">
-                            {{ form.phone_number.label(class="form-label", **{'for': 'phone_number'}) }}
-                            {{ form.phone_number(class="form-control", placeholder=translations[language]['Enter phone number (optional)'], type="tel") }}
-                        </div>
-                        <div class="mb-3">
-                            <p class="note-text">{{ translations[language]['Language'] }}: English or Hausa</p>
-                            {{ form.language.label(class="form-label required", **{'for': 'language'}) }}
-                            {{ form.language(class="form-select", required=True) }}
-                        </div>
-
-                        <!-- Financial Information -->
-                        <div class="card-header">
-                            <span class="emoji">💰</span> {{ translations[language]['Financial Information'] }}
-                        </div>
-                        <div class="mb-3">
-                            <div class="field-container">
-                                <span class="visual-icon">💵</span>
-                                {{ form.monthly_income.label(class="form-label required", **{'for': 'monthly_income'}) }}
-                                <span class="info-icon" data-bs-toggle="tooltip" data-bs-title="{{ translations[language]['Your total monthly income from all sources.'] }}" aria-label="{{ translations[language]['More info on income'] }}">ℹ️</span>
-                            </div>
-                            {{ form.monthly_income(class="form-control number-input", placeholder="e.g. 150,000", type="text", required=True, pattern="^[0-9]+(,[0-9]{3})*(\.[0-9]{1,2})?$", max="10000000000", **{'data-error': translations[language]['Invalid Number']}) }}
-                        </div>
-                        <div class="mb-3">
-                            <div class="field-container">
-                                <span class="visual-icon">💸</span>
-                                {{ form.monthly_expenses.label(class="form-label required", **{'for': 'monthly_expenses'}) }}
-                                <span class="info-icon" data-bs-toggle="tooltip" data-bs-title="{{ translations[language]['Your total monthly expenses, including bills and essentials.'] }}" aria-label="{{ translations[language]['More info on expenses'] }}">ℹ️</span>
-                            </div>
-                            {{ form.monthly_expenses(class="form-control number-input", placeholder="e.g. 100,000", type="text", required=True, pattern="^[0-9]+(,[0-9]{3})*(\.[0-9]{1,2})?$", max="10000000000", **{'data-error': translations[language]['Invalid Number']}) }}
-                        </div>
-
-                        <!-- Submit Button -->
-                        <div class="d-grid">
-                            <button type="submit" class="btn btn-primary btn-lg" id="submit-btn" aria-label="{{ translations[language]['Submit form'] }}">
-                                <span>{{ translations[language]['Submit'] }}</span>
-                            </button>
-                            <div role="alert" id="submission-feedback" class="mt-2" aria-live="polite"></div>
-                        </div>
-                    </form>
-                </div>
+            <div class="mb-3">
+                {{ form.first_name.label(class="form-label") }}
+                {{ form.first_name(class="form-control", id="first_name") }}
+                {% for error in form.first_name.errors %}
+                    <span class="text-danger">{{ error }}</span>
+                {% endfor %}
             </div>
-        </div>
 
-        <!-- Contact Information -->
-        <div class="text-center my-4">
-            <p>{{ translations[language]['Contact Us'] }} <a href="mailto:ficore.ai.africa@gmail.com" class="btn btn-email" aria-label="{{ translations[language]['Email Ficore Africa Support'] }}">{{ translations[language]['Click to Email'] }}</a> {{ translations[language]['for support'] }}.</p>
-        </div>
+            <div class="mb-3">
+                {{ form.email.label(class="form-label") }}
+                {{ form.email(class="form-control", id="email") }}
+                {% for error in form.email.errors %}
+                    <span class="text-danger">{{ error }}</span>
+                {% endfor %}
+            </div>
 
-        <!-- Feedback Link -->
-        <div class="text-center my-4">
-            <a href="{{ FEEDBACK_FORM_URL }}" class="btn btn-secondary" target="_blank" aria-label="{{ translations[language]['Provide Feedback'] }}">{{ translations[language]['Provide Feedback'] }}</a>
-        </div>
+            <div class="mb-3">
+                {{ form.language.label(class="form-label") }}
+                {{ form.language(class="form-control", id="language") }}
+                {% for error in form.language.errors %}
+                    <span class="text-danger">{{ error }}</span>
+                {% endfor %}
+            </div>
+
+            <div class="mb-3">
+                {{ form.monthly_expenses.label(class="form-label") }}
+                <div class="input-group">
+                    <span class="input-group-text">₦</span>
+                    {{ form.monthly_expenses(class="form-control", id="monthly_expenses", type="number", min="0", step="0.01", placeholder=translations[language]['Enter your monthly expenses']) }}
+                    <span class="input-group-text" data-bs-toggle="tooltip" data-bs-placement="top" title="{{ translations[language]['Most experts recommend saving 3-6 months of essential living expenses.'] }}">
+                        <i class="fas fa-info-circle"></i>
+                    </span>
+                </div>
+                <small class="form-text text-muted">{{ translations[language]['Enter amounts in Naira (₦).'] }}</small>
+                <p id="fund-preview" class="form-text text-info" style="display: none;">
+                    {{ translations[language]['Recommended fund size: ₦'] }}<span id="fund-amount">0</span>
+                </p>
+                {% for error in form.monthly_expenses.errors %}
+                    <span class="text-danger">{{ error }}</span>
+                {% endfor %}
+            </div>
+
+            <div class="mb-3 text-center">
+                {{ form.submit(class="btn btn-primary btn-lg", value=translations[language]['Calculate Your Recommended Fund Size'], id="submit-btn", **{'aria-label': translations[language]['Submit emergency fund form']}) }}
+                <p class="mt-2 text-muted">{{ translations[language]['Find your safety net amount now!'] }}</p>
+            </div>
+        </form>
+
+        <footer class="text-center mt-4">
+            <p>
+                <a href="{{ FEEDBACK_FORM_URL }}" target="_blank">{{ translations[language]['Provide Feedback'] }}</a> |
+                <a href="https://ficore.africa" target="_blank">{{ translations[language]['FiCore Africa Home'] }}</a>
+            </p>
+            <p>© 2025 FiCore Africa</p>
+        </footer>
     </div>
 
-    <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}" onerror="console.error('Failed to load bootstrap.bundle.min.js.');"></script>
+    <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            // Initialize Bootstrap tooltips
-            const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
-            tooltipTriggerList.forEach(tooltipTriggerEl => {
-                new bootstrap.Tooltip(tooltipTriggerEl, {
-                    trigger: 'hover focus',
-                    placement: 'top'
-                });
-            });
+        // Enable Bootstrap tooltips
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl)
+        })
 
-            // Toggle guide section with book animation
-            const guideToggle = document.getElementById('guide-toggle');
-            const bookIcon = document.getElementById('book-icon');
-            const guideContent = document.getElementById('guide-content');
-            const hideGuideBtn = document.getElementById('hide-guide');
-            if (guideToggle && bookIcon && guideContent && hideGuideBtn) {
-                guideContent.classList.remove('active'); // Hide by default
-                guideToggle.addEventListener('click', function (e) {
-                    e.preventDefault();
-                    const isOpen = guideContent.classList.contains('active');
-                    guideContent.classList.toggle('active', !isOpen);
-                    bookIcon.classList.toggle('open', !isOpen);
-                });
-                hideGuideBtn.addEventListener('click', function (e) {
-                    e.preventDefault();
-                    guideContent.classList.remove('active');
-                    bookIcon.classList.remove('open');
-                });
-                // Keyboard support
-                guideToggle.addEventListener('keydown', function (e) {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault();
-                        guideToggle.click();
-                    }
-                });
-            }
+        // Emergency Fund Preview
+        const monthlyExpensesInput = document.getElementById('monthly_expenses');
+        const fundPreview = document.getElementById('fund-preview');
+        const fundAmount = document.getElementById('fund-amount');
 
-            // Format number inputs
-            document.querySelectorAll('.number-input').forEach(input => {
-                input.addEventListener('input', function(e) {
-                    let value = e.target.value.replace(/[^0-9.]/g, '');
-                    if (value === '') {
-                        e.target.value = '';
-                        return;
-                    }
-                    let parts = value.split('.');
-                    let integerPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-                    let decimalPart = parts[1] ? '.' + parts[1].slice(0, 2) : '';
-                    e.target.value = integerPart + decimalPart;
-                    if (parseFloat(value.replace(/,/g, '')) > 10000000000) {
-                        e.target.value = '10,000,000,000';
-                    }
-                });
-                input.addEventListener('blur', function(e) {
-                    let cleanValue = e.target.value.replace(/,/g, '');
-                    if (cleanValue === '' || isNaN(parseFloat(cleanValue))) {
-                        e.target.value = '';
-                    } else {
-                        let numValue = Math.min(parseFloat(cleanValue), 10000000000);
-                        e.target.value = numValue.toLocaleString('en-US', {
-                            minimumFractionDigits: 0,
-                            maximumFractionDigits: 2
-                        });
-                    }
-                });
-                input.addEventListener('focus', function(e) {
-                    let value = e.target.value.replace(/,/g, '');
-                    e.target.value = value;
-                });
-                input.addEventListener('keypress', function(e) {
-                    if (!/[0-9.]/.test(e.key)) e.preventDefault();
-                    let value = e.target.value.replace(/,/g, '') + e.key;
-                    if (value.split('.').length > 2) e.preventDefault();
-                });
-            });
-
-            // Email confirmation validation
-            const emailInput = document.getElementById('email');
-            const autoEmailInput = document.getElementById('auto_email');
-            if (emailInput && autoEmailInput) {
-                [emailInput, autoEmailInput].forEach(input => {
-                    input.addEventListener('input', function() {
-                        if (emailInput.value !== autoEmailInput.value) {
-                            autoEmailInput.setCustomValidity(translations[language]['Email Mismatch']);
-                        } else {
-                            autoEmailInput.setCustomValidity('');
-                        }
-                    });
-                });
-            }
-
-            // Submit button loading state with feedback
-            const submitBtn = document.getElementById('submit-btn');
-            const submissionForm = document.getElementById('submission-form');
-            const submissionFeedback = document.getElementById('submission-feedback');
-            if (submitBtn && submissionForm && submissionFeedback) {
-                submissionForm.addEventListener('submit', function(e) {
-                    submitBtn.classList.add('loading');
-                    submissionFeedback.textContent = translations[language]['Submitting...'];
-                    // Clean numbers before submission
-                    document.querySelectorAll('.number-input').forEach(input => {
-                        let cleanValue = input.value.replace(/,/g, '');
-                        if (cleanValue === '' || isNaN(parseFloat(cleanValue))) {
-                            input.value = '0';
-                        } else {
-                            input.value = Math.min(parseFloat(cleanValue), 10000000000).toString();
-                        }
-                    });
-                    // Simulate server response (replace with actual AJAX if needed)
-                    setTimeout(() => {
-                        const flashContainer = document.querySelector('.alert-container');
-                        if (flashContainer) {
-                            const successMsg = document.createElement('div');
-                            successMsg.className = 'alert alert-success alert-dismissible fade show';
-                            successMsg.setAttribute('role', 'alert');
-                            successMsg.innerHTML = `${translations[language]['Form submitted successfully! Redirecting...']}<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>`;
-                            flashContainer.appendChild(successMsg);
-                            submitBtn.classList.remove('loading');
-                        }
-                    }, 2000); // Simulate 2-second delay
-                });
+        monthlyExpensesInput.addEventListener('input', function() {
+            const value = parseFloat(this.value.replace(/,/g, '')) || 0;
+            if (value > 0) {
+                const recommendedFund = (value * 6).toFixed(2);
+                fundAmount.textContent = recommendedFund.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+                fundPreview.style.display = 'block';
+            } else {
+                fundPreview.style.display = 'none';
             }
         });
     </script>
