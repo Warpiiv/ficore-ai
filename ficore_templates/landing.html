@@ -1,0 +1,246 @@
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script><!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Welcome to Ficore Africa - Your financial growth passport for Africa. Access tools to calculate your financial health, net worth, emergency fund, and more.">
+    <meta name="keywords" content="ficore africa, financial health, net worth, emergency fund, financial quiz, budget planner, price calculator">
+    <meta name="author" content="Ficore Africa">
+    <title>Ficore Africa - Financial Growth Tools</title>
+    <link href="{{ url_for('static', filename='css/bootstrap.min.css') }}" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
+    <style>
+        body {
+            font-family: 'Open Sans', sans-serif;
+            background: linear-gradient(135deg, #E3F2FD, #F5F7FA);
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .container {
+            max-width: 1000px;
+            margin: auto;
+        }
+        header {
+            background: #fff;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+        .logo-container {
+            margin-bottom: 1rem;
+        }
+        .logo-container img {
+            max-width: 200px;
+        }
+        .card {
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+            margin-bottom: 1.5rem;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border: 1px solid #E0E0E0;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.15);
+        }
+        .card-body {
+            padding: 1.25rem;
+        }
+        h2, h3 {
+            color: #28A745;
+            font-weight: 600;
+        }
+        h3 {
+            font-size: 1.35rem;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #2E7D32, #0288D1);
+            border: none;
+            padding: 12px 24px;
+            font-weight: 600;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            color: white;
+            transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.3s ease;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+        .btn-primary:hover {
+            transform: scale(1.05);
+            background: linear-gradient(135deg, #1B5E20, #01579B);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
+        }
+        .alert {
+            border-radius: 8px;
+            font-weight: 500;
+        }
+        .tool-description {
+            color: #333;
+            font-size: 0.95rem;
+            line-height: 1.6;
+            margin-top: 0.5rem;
+        }
+        @media (max-width: 600px) {
+            .card {
+                padding: 1rem;
+                margin-bottom: 1rem;
+            }
+            h2 {
+                font-size: 1.5rem;
+            }
+            h3 {
+                font-size: 1.25rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="my-4">
+            <div class="logo-container">
+                <img src="{{ url_for('static', filename='img/ficore_logo.png') }}" alt="Ficore Africa Logo" class="img-fluid">
+            </div>
+            <h1>{{ translations[language]['Welcome to Ficore Africa'] }}</h1>
+            <p class="lead">{{ translations[language]['Your Financial Growth Passport'] }}</p>
+        </header>
+
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="alert-container my-3">
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ 'danger' if category == 'error' else 'success' }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <!-- Tools Grid -->
+        <div class="row">
+            <!-- Financial Health Score -->
+            <div class="col-md-4 mb-4">
+                <div class="card">
+                    <div class="card-body">
+                        <h3>📊 {{ translations[language]['Financial Health Score'] }}</h3>
+                        <p class="tool-description">{{ translations[language]['Assess your financial health with a personalized score and insights.'] }}</p>
+                        <a href="{{ url_for('input_form') }}" class="btn btn-primary">{{ translations[language]['Get Started'] }}</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Net Worth Calculator -->
+            <div class="col-md-4 mb-4">
+                <div class="card">
+                    <div class="card-body">
+                        <h3>💰 {{ translations[language]['Net Worth Calculator'] }}</h3>
+                        <p class="tool-description">{{ translations[language]['Calculate your net worth by evaluating your assets and liabilities.'] }}</p>
+                        <a href="{{ url_for('net_worth_form') }}" class="btn btn-primary">{{ translations[language]['Get Started'] }}</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Emergency Fund Planner -->
+            <div class="col-md-4 mb-4">
+                <div class="card">
+                    <div class="card-body">
+                        <h3>🏦 {{ translations[language]['Emergency Fund Planner'] }}</h3>
+                        <p class="tool-description">{{ translations[language]['Plan your emergency fund to cover unexpected expenses.'] }}</p>
+                        <a href="{{ url_for('emergency_fund_form') }}" class="btn btn-primary">{{ translations[language]['Get Started'] }}</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Financial Quiz -->
+            <div class="col-md-4 mb-4">
+                <div class="card">
+                    <div class="card-body">
+                        <h3>❓ {{ translations[language]['Financial Quiz'] }}</h3>
+                        <p class="tool-description">{{ translations[language]['Test your financial knowledge and get personalized tips.'] }}</p>
+                        <a href="{{ url_for('quiz_form') }}" class="btn btn-primary">{{ translations[language]['Get Started'] }}</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Budget Planner -->
+            <div class="col-md-4 mb-4">
+                <div class="card">
+                    <div class="card-body">
+                        <h3>📅 {{ translations[language]['Budget Planner'] }}</h3>
+                        <p class="tool-description">{{ translations[language]['Create a budget to manage your income and expenses effectively.'] }}</p>
+                        <a href="{{ url_for('budget_form') }}" class="btn btn-primary">{{ translations[language]['Get Started'] }}</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Price Calculator -->
+            <div class="col-md-4 mb-4">
+                <div class="card">
+                    <div class="card-body">
+                        <h3>🛒 {{ translations[language]['Price Calculator'] }}</h3>
+                        <p class="tool-description">{{ translations[language]['Estimate the true cost of purchases with taxes and fees.'] }}</p>
+                        <a href="{{ url_for('price_form') }}" class="btn btn-primary">{{ translations[language]['Get Started'] }}</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Contact Information -->
+        <div class="text-center my-4">
+            <p>{{ translations[language]['Contact Us'] }} <a href="mailto:ficore.ai.africa@gmail.com" class="btn btn-email">{{ translations[language]['Click to Email'] }}</a> {{ translations[language]['for support'] }}.</p>
+        </div>
+
+        <!-- Feedback Link -->
+        <div class="text-center my-4">
+            <a href="{{ FEEDBACK_FORM_URL }}" class="btn btn-secondary">{{ translations[language]['Provide Feedback'] }}</a>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}" onerror="console.error('Failed to load bootstrap.bundle.min.js.');"></script>
+</body>
+</html>
