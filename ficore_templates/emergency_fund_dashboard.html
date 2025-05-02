@@ -1,58 +1,19 @@
-<script type="text/javascript">
-        var gk_isXlsx = false;
-        var gk_xlsxFileLookup = {};
-        var gk_fileData = {};
-        function filledCell(cell) {
-          return cell !== '' && cell != null;
-        }
-        function loadFileData(filename) {
-        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
-            try {
-                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
-                var firstSheetName = workbook.SheetNames[0];
-                var worksheet = workbook.Sheets[firstSheetName];
-
-                // Convert sheet to JSON to filter blank rows
-                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
-                // Filter out blank rows (rows where all cells are empty, null, or undefined)
-                var filteredData = jsonData.filter(row => row.some(filledCell));
-
-                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
-                var headerRowIndex = filteredData.findIndex((row, index) =>
-                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
-                );
-                // Fallback
-                if (headerRowIndex === -1 || headerRowIndex > 25) {
-                  headerRowIndex = 0;
-                }
-
-                // Convert filtered JSON back to CSV
-                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
-                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
-                return csv;
-            } catch (e) {
-                console.error(e);
-                return "";
-            }
-        }
-        return gk_fileData[filename] || "";
-        }
-        </script><!DOCTYPE html>
-<html lang="en">
+<!DOCTYPE html>
+<html lang="{{ language }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="View your emergency fund recommendation with Ficore Africa, including expense breakdown and personalized advice.">
     <meta name="keywords" content="ficore africa, emergency fund dashboard, monthly expenses, financial security">
     <meta name="author" content="Ficore Africa">
-    <title>Ficore Africa - Emergency Fund Dashboard</title>
+    <title>Ficore Africa - {{ translations[language]['Emergency Fund Dashboard'] }}</title>
     <link href="{{ url_for('static', filename='css/bootstrap.min.css') }}" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@300;400;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;600&display=swap" rel="stylesheet">
     <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
-    <script src="https://cdn.plotly.com/plotly-latest.min.js"></script>
+    <script src="https://cdn.plotly.com/plotly-latest.min.js" onerror="console.error('Failed to load Plotly.');"></script>
     <style>
         body {
-            font-family: 'Noto Sans', sans-serif;
+            font-family: 'Open Sans', sans-serif;
             background: linear-gradient(135deg, #E3F2FD, #F5F7FA);
             margin: 0;
             padding: 20px;
@@ -94,6 +55,9 @@
             padding: 1rem;
             border-radius: 12px 12px 0 0;
             font-weight: 600;
+            border: 2px solid #1565C0;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            margin-bottom: 0.5rem;
         }
         .card-body {
             padding: 1.25rem;
@@ -128,13 +92,14 @@
         }
         .btn-primary:hover {
             transform: scale(1.05);
-            background: linear-gradient(135deg, #1B5E20, #01579B);
+            background: linear-gradient(135deg, #1E88E5, #0288D1);
             box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
+            border: 1px solid #4CAF50;
         }
         .btn-secondary {
-            background: linear-gradient(135deg, #1DA1F2, #0d47a1);
+            background: linear-gradient(135deg, #F57C00, #FF9800);
             border: none;
-            padding: 10px;
+            padding: 10px 20px;
             font-weight: 500;
             border-radius: 8px;
             transition: transform 0.2s ease, box-shadow 0.2s ease;
@@ -146,7 +111,7 @@
         .btn-email {
             background: linear-gradient(135deg, #FF5722, #D81B60);
             border: none;
-            padding: 10px;
+            padding: 10px 20px;
             font-weight: 500;
             border-radius: 8px;
             transition: transform 0.2s ease, box-shadow 0.2s ease;
@@ -162,12 +127,33 @@
         .chart-container {
             height: 300px;
             width: 100%;
+            position: relative;
+        }
+        .chart-container.loading::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 40px;
+            height: 40px;
+            border: 4px solid #fff;
+            border-top: 4px solid #0288D1;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            transform: translate(-50%, -50%);
         }
         .empty-state {
-            font-size: 2rem;
+            font-size: 1.5rem;
             color: #666;
             text-align: center;
             padding: 2rem;
+        }
+        .empty-state span {
+            font-size: 2rem;
+        }
+        @keyframes spin {
+            0% { transform: translate(-50%, -50%) rotate(0deg); }
+            100% { transform: translate(-50%, -50%) rotate(360deg); }
         }
         @media (max-width: 600px) {
             .card {
@@ -178,6 +164,10 @@
             }
             .chart-container {
                 height: 200px;
+            }
+            .btn-primary, .btn-secondary {
+                width: 100%;
+                margin-bottom: 0.5rem;
             }
         }
     </style>
@@ -212,8 +202,8 @@
                 {{ translations[language]['Welcome'] }}, {{ full_name }}!
             </div>
             <div class="card-body">
-                <p>{{ translations[language]['Recommended Emergency Fund'] }}: <span class="fund-value">{{ emergency_fund }}</span></p>
-                <p>{{ translations[language]['Rank'] }}: {{ rank }}%</p>
+                <p>{{ translations[language]['Recommended Emergency Fund'] }}: <span class="fund-value">{{ '{:,.2f}'.format(emergency_fund) if emergency_fund else '0.00' }}</span></p>
+                <p>{{ translations[language]['Rank'] }}: {{ rank }}% <span class="info-icon" data-bs-toggle="tooltip" data-bs-title="{{ translations[language]['Your rank among users based on emergency fund preparedness'] }}" aria-label="{{ translations[language]['More info on rank'] }}">ℹ️</span></p>
                 <p>{{ advice }}</p>
             </div>
         </div>
@@ -240,9 +230,11 @@
             </div>
             <div class="card-body">
                 {% if chart_html %}
-                    <div class="chart-container" id="emergency-fund-chart">{{ chart_html | safe }}</div>
+                    <div class="chart-container" id="emergency-fund-chart" role="img" aria-label="{{ translations[language]['Chart showing expense and fund breakdown'] }}">{{ chart_html | safe }}</div>
                 {% else %}
-                    <div class="empty-state">📊</div>
+                    <div class="chart-container loading" aria-live="polite">
+                        <div class="empty-state"><span>📊</span> {{ translations[language]['Loading chart...'] }}</div>
+                    </div>
                 {% endif %}
             </div>
         </div>
@@ -254,9 +246,11 @@
             </div>
             <div class="card-body">
                 {% if comparison_chart_html %}
-                    <div class="chart-container" id="emergency-fund-comparison">{{ comparison_chart_html | safe }}</div>
+                    <div class="chart-container" id="emergency-fund-comparison" role="img" aria-label="{{ translations[language]['Chart comparing your fund to peers'] }}">{{ comparison_chart_html | safe }}</div>
                 {% else %}
-                    <div class="empty-state">📉</div>
+                    <div class="chart-container loading" aria-live="polite">
+                        <div class="empty-state"><span>📉</span> {{ translations[language]['Loading comparison chart...'] }}</div>
+                    </div>
                 {% endif %}
             </div>
         </div>
@@ -282,25 +276,47 @@
             </div>
             <div class="card-body">
                 {% for course in courses %}
-                    <p><a href="{{ course.link }}" target="_blank">{{ course.title }}</a></p>
+                    <p><a href="{{ course.link }}" target="_blank" aria-label="{{ translations[language]['Open course'] }} {{ course.title }}">{{ course.title }}</a></p>
                 {% endfor %}
             </div>
         </div>
 
         <!-- Buttons -->
-        <div class="d-flex justify-content-between flex-wrap my-4">
-            <a href="{{ url_for('landing') }}" class="btn btn-primary">{{ translations[language]['Back to Home'] }}</a>
-            <a href="{{ WAITLIST_FORM_URL }}" class="btn btn-secondary">{{ translations[language]['Join Waitlist'] }}</a>
-            <a href="{{ CONSULTANCY_FORM_URL }}" class="btn btn-secondary">{{ translations[language]['Book Consultancy'] }}</a>
-            <a href="{{ FEEDBACK_FORM_URL }}" class="btn btn-secondary">{{ translations[language]['Provide Feedback'] }}</a>
+        <div class="row row-cols-1 row-cols-md-4 g-2 my-4">
+            <div class="col">
+                <a href="{{ url_for('landing') }}" class="btn btn-primary w-100" aria-label="{{ translations[language]['Back to Home'] }}">{{ translations[language]['Back to Home'] }}</a>
+            </div>
+            <div class="col">
+                <a href="{{ WAITLIST_FORM_URL }}" class="btn btn-secondary w-100" aria-label="{{ translations[language]['Join Waitlist'] }}">{{ translations[language]['Join Waitlist'] }}</a>
+            </div>
+            <div class="col">
+                <a href="{{ CONSULTANCY_FORM_URL }}" class="btn btn-secondary w-100" aria-label="{{ translations[language]['Book Consultancy'] }}">{{ translations[language]['Book Consultancy'] }}</a>
+            </div>
+            <div class="col">
+                <a href="{{ FEEDBACK_FORM_URL }}" class="btn btn-secondary w-100" aria-label="{{ translations[language]['Provide Feedback'] }}">{{ translations[language]['Provide Feedback'] }}</a>
+            </div>
+            <div class="col">
+                <a href="{{ url_for('send_emergency_fund_email') }}" class="btn btn-primary w-100" aria-label="{{ translations[language]['Send Email Report'] }}">{{ translations[language]['Send Email Report'] }}</a>
+            </div>
         </div>
 
         <!-- Contact Information -->
         <div class="text-center my-4">
-            <p>{{ translations[language]['Contact Us'] }} <a href="mailto:ficore.ai.africa@gmail.com" class="btn btn-email">{{ translations[language]['Click to Email'] }}</a> {{ translations[language]['for support'] }}.</p>
+            <p>{{ translations[language]['Contact Us'] }} <a href="mailto:ficore.ai.africa@gmail.com" class="btn btn-email" aria-label="{{ translations[language]['Email Ficore Africa Support'] }}">{{ translations[language]['Click to Email'] }}</a> {{ translations[language]['for support'] }}.</p>
         </div>
     </div>
 
     <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}" onerror="console.error('Failed to load bootstrap.bundle.min.js.');"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+            tooltipTriggerList.forEach(tooltipTriggerEl => {
+                new bootstrap.Tooltip(tooltipTriggerEl, {
+                    trigger: 'hover focus',
+                    placement: 'top'
+                });
+            });
+        });
+    </script>
 </body>
 </html>
