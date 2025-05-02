@@ -18,7 +18,7 @@ from translations import translations
 import pandas as pd
 
 app = Flask(__name__, template_folder='ficore_templates', static_folder='static')
-app.secret_key = os.getenv('FLASK_SECRET_KEY', 'your-secret-key')  # Replace with secure key in production
+app.secret_key = os.getenv('FLASK_SECRET_KEY', NEscD7tRn4cuYr3o3VLZzuSj3myhwAX7)  # Replace with secure key in production
 app.config['SESSION_TYPE'] = 'filesystem'
 
 # Setup logging
