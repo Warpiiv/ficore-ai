@@ -256,7 +256,7 @@ def save_to_google_sheets(feature, data):
         logger.error(f"Error saving to Google Sheets ({SHEET_NAMES[feature]}): {str(e)}")
         raise
 
-def get_rank_from_db(feature, value, column_name):
+def get_rank_from_db(feature, value, środowiska):
     try:
         worksheet = spreadsheet.worksheet(SHEET_NAMES[feature])
         all_data = worksheet.get_all_records()
@@ -320,10 +320,10 @@ def home():
                     value = float(re.sub(r'[,]', '', form[field].data))
                     if value < 0:
                         flash(translations[language]['Invalid Number'], 'error')
-                        return render_template('index.html', form=form, translations=translations[language], language=language)
+                        return render_template('index.html', form=form, translations=translations, language=language)
             except ValueError:
                 flash(translations[language]['Invalid Number'], 'error')
-                return render_template('index.html', form=form, translations=translations[language], language=language)
+                return render_template('index.html', form=form, translations=translations, language=language)
 
             session['language'] = form.language.data
             return redirect(url_for('submit'))
@@ -331,9 +331,9 @@ def home():
             for field, errors in form.errors.items():
                 for error in errors:
                     flash(f"{field}: {error}", 'error')
-            return render_template('index.html', form=form, translations=translations[language], language=language)
+            return render_template('index.html', form=form, translations=translations, language=language)
 
-    return render_template('index.html', form=form, translations=translations[language], language=language, FEEDBACK_FORM_URL=FEEDBACK_FORM_URL)
+    return render_template('index.html', form=form, translations=translations, language=language, FEEDBACK_FORM_URL=FEEDBACK_FORM_URL)
 
 @app.route('/submit', methods=['POST'])
 def submit():
@@ -454,7 +454,7 @@ def submit():
             FEEDBACK_FORM_URL=FEEDBACK_FORM_URL,
             WAITLIST_FORM_URL=WAITLIST_FORM_URL,
             CONSULTANCY_FORM_URL=CONSULTANCY_FORM_URL,
-            translations=translations[language]
+            translations=translations
         )
     else:
         for field, errors in form.errors.items():
@@ -477,7 +477,7 @@ def net_worth():
                 liabilities = float(form.liabilities.data.replace(',', ''))
             except ValueError:
                 flash(translations[language]['Invalid Number'], 'error')
-                return render_template('net_worth_form.html', form=form, translations=translations[language])
+                return render_template('net_worth_form.html', form=form, translations=translations)
 
             net_worth = assets - liabilities
             rank = get_rank_from_db('net_worth', net_worth, 'NetWorth')
@@ -492,7 +492,7 @@ def net_worth():
 
             if not chart_html or not comparison_chart_html:
                 flash(translations[language]['Chart Unavailable'], 'error')
-                return render_template('net_worth_form.html', form=form, translations=translations[language])
+                return render_template('net_worth_form.html', form=form, translations=translations)
 
             data = {
                 'Timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
@@ -526,14 +526,14 @@ def net_worth():
             session['full_name'] = form.first_name.data
 
             flash(translations[language]['Submission Success'], 'success')
-            return render_template('net_worth_dashboard.html', net_worth=net_worth, rank=rank, advice=advice, badges=badges, tips=tips, courses=courses, chart_html=chart_html, comparison_chart_html=comparison_chart_html, full_name=form.first_name.data, translations=translations[language])
+            return render_template('net_worth_dashboard.html', net_worth=net_worth, rank=rank, advice=advice, badges=badges, tips=tips, courses=courses, chart_html=chart_html, comparison_chart_html=comparison_chart_html, full_name=form.first_name.data, translations=translations)
         else:
             for field, errors in form.errors.items():
                 for error in errors:
                     flash(f"{field}: {error}", 'error')
-            return render_template('net_worth_form.html', form=form, translations=translations[language])
+            return render_template('net_worth_form.html', form=form, translations=translations)
 
-    return render_template('net_worth_form.html', form=form, translations=translations[language])
+    return render_template('net_worth_form.html', form=form, translations=translations)
 
 @app.route('/emergency_fund', methods=['GET', 'POST'])
 def emergency_fund():
@@ -549,7 +549,7 @@ def emergency_fund():
                 monthly_expenses = float(form.monthly_expenses.data.replace(',', ''))
             except ValueError:
                 flash(translations[language]['Invalid Number'], 'error')
-                return render_template('emergency_fund_form.html', form=form, translations=translations[language])
+                return render_template('emergency_fund_form.html', form=form, translations=translations)
 
             emergency_fund = monthly_expenses * 3
             rank = get_rank_from_db('emergency_fund', emergency_fund, 'EmergencyFund')
@@ -564,7 +564,7 @@ def emergency_fund():
 
             if not chart_html or not comparison_chart_html:
                 flash(translations[language]['Chart Unavailable'], 'error')
-                return render_template('emergency_fund_form.html', form=form, translations=translations[language])
+                return render_template('emergency_fund_form.html', form=form, translations=translations)
 
             data = {
                 'Timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
@@ -586,7 +586,7 @@ def emergency_fund():
                 course_title=courses[0]['title'],
                 FEEDBACK_FORM_URL=FEEDBACK_FORM_URL,
                 WAITLIST_FORM_URL=WAITLIST_FORM_URL,
-                CONSULTOCY_FORM_URL=CONSULTANCY_FORM_URL
+                CONSULTANCY_FORM_URL=CONSULTANCY_FORM_URL
             )
             if send_email(form.email.data, translations[language]['Score Report Subject'].format(user_name=form.first_name.data), email_body, language):
                 flash(translations[language]['Email sent successfully'], 'success')
@@ -594,17 +594,17 @@ def emergency_fund():
                 flash(translations[language]['Failed to send email'], 'error')
 
             session['language'] = form.language.data
-            session['full eliminates_name'] = form.first_name.data
+            session['full_name'] = form.first_name.data
 
             flash(translations[language]['Submission Success'], 'success')
-            return render_template('emergency_fund_dashboard.html', emergency_fund=emergency_fund, rank=rank, advice=advice, badges=badges, tips=tips, courses=courses, chart_html=chart_html, comparison_chart_html=comparison_chart_html, full_name=form.first_name.data, translations=translations[language])
+            return render_template('emergency_fund_dashboard.html', emergency_fund=emergency_fund, rank=rank, advice=advice, badges=badges, tips=tips, courses=courses, chart_html=chart_html, comparison_chart_html=comparison_chart_html, full_name=form.first_name.data, translations=translations)
         else:
             for field, errors in form.errors.items():
                 for error in errors:
                     flash(f"{field}: {error}", 'error')
-            return render_template('emergency_fund_form.html', form=form, translations=translations[language])
+            return render_template('emergency_fund_form.html', form=form, translations=translations)
 
-    return render_template('emergency_fund_form.html', form=form, translations=translations[language])
+    return render_template('emergency_fund_form.html', form=form, translations=translations)
 
 @app.route('/quiz', methods=['GET', 'POST'])
 def quiz():
@@ -619,7 +619,7 @@ def quiz():
             answers = [form.q1.data, form.q2.data, form.q3.data, form.q4.data, form.q5.data]
             if None in answers:
                 flash(translations[language]['Please answer all questions before submitting!'], 'error')
-                return render_template('quiz_form.html', form=form, translations=translations[language])
+                return render_template('quiz_form.html', form=form, translations=translations)
 
             score = sum(1 for q in answers if q == '1') * 20
             rank = get_rank_from_db('quiz', score, 'QuizScore')
@@ -634,7 +634,7 @@ def quiz():
 
             if not chart_html or not comparison_chart_html:
                 flash(translations[language]['Chart Unavailable'], 'error')
-                return render_template('quiz_form.html', form=form, translations=translations[language])
+                return render_template('quiz_form.html', form=form, translations=translations)
 
             data = {
                 'Timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
@@ -671,14 +671,14 @@ def quiz():
             session['full_name'] = form.first_name.data
 
             flash(translations[language]['Submission Success'], 'success')
-            return render_template('quiz_dashboard.html', score=score, rank=rank, advice=advice, badges=badges, tips=tips, courses=courses, chart_html=chart_html, comparison_chart_html=comparison_chart_html, full_name=form.first_name.data, translations=translations[language])
+            return render_template('quiz_dashboard.html', score=score, rank=rank, advice=advice, badges=badges, tips=tips, courses=courses, chart_html=chart_html, comparison_chart_html=comparison_chart_html, full_name=form.first_name.data, translations=translations)
         else:
             for field, errors in form.errors.items():
                 for error in errors:
                     flash(f"{field}: {error}", 'error')
-            return render_template('quiz_form.html', form=form, translations=translations[language])
+            return render_template('quiz_form.html', form=form, translations=translations)
 
-    return render_template('quiz_form.html', form=form, translations=translations[language])
+    return render_template('quiz_form.html', form=form, translations=translations)
 
 @app.route('/budget', methods=['GET', 'POST'])
 def budget():
@@ -698,7 +698,7 @@ def budget():
                 other_expenses = float(form.other_expenses.data.replace(',', ''))
             except ValueError:
                 flash(translations[language]['Invalid Number'], 'error')
-                return render_template('budget_form.html', form=form, translations=translations[language])
+                return render_template('budget_form.html', form=form, translations=translations)
 
             total_expenses = housing_expenses + food_expenses + transport_expenses + other_expenses
             surplus_deficit = monthly_income - total_expenses
@@ -719,7 +719,7 @@ def budget():
 
             if not chart_html or not comparison_chart_html:
                 flash(translations[language]['Chart Unavailable'], 'error')
-                return render_template('budget_form.html', form=form, translations=translations[language])
+                return render_template('budget_form.html', form=form, translations=translations)
 
             data = {
                 'Timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
@@ -758,14 +758,14 @@ def budget():
             session['full_name'] = form.first_name.data
 
             flash(translations[language]['Submission Success'], 'success')
-            return render_template('budget_dashboard.html', monthly_income=monthly_income, total_expenses=total_expenses, surplus_deficit=surplus_deficit, rank=rank, advice=advice, badges=badges, tips=tips, courses=courses, chart_html=chart_html, comparison_chart_html=comparison_chart_html, full_name=form.first_name.data, translations=translations[language])
+            return render_template('budget_dashboard.html', monthly_income=monthly_income, total_expenses=total_expenses, surplus_deficit=surplus_deficit, rank=rank, advice=advice, badges=badges, tips=tips, courses=courses, chart_html=chart_html, comparison_chart_html=comparison_chart_html, full_name=form.first_name.data, translations=translations)
         else:
             for field, errors in form.errors.items():
                 for error in errors:
                     flash(f"{field}: {error}", 'error')
-            return render_template('budget_form.html', form=form, translations=translations[language])
+            return render_template('budget_form.html', form=form, translations=translations)
 
-    return render_template('budget_form.html', form=form, translations=translations[language])
+    return render_template('budget_form.html', form=form, translations=translations)
 
 if __name__ == '__main__':
     app.run(debug=True)
