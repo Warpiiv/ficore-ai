@@ -1,51 +1,12 @@
-<script type="text/javascript">
-        var gk_isXlsx = false;
-        var gk_xlsxFileLookup = {};
-        var gk_fileData = {};
-        function filledCell(cell) {
-          return cell !== '' && cell != null;
-        }
-        function loadFileData(filename) {
-        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
-            try {
-                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
-                var firstSheetName = workbook.SheetNames[0];
-                var worksheet = workbook.Sheets[firstSheetName];
-
-                // Convert sheet to JSON to filter blank rows
-                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
-                // Filter out blank rows (rows where all cells are empty, null, or undefined)
-                var filteredData = jsonData.filter(row => row.some(filledCell));
-
-                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
-                var headerRowIndex = filteredData.findIndex((row, index) =>
-                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
-                );
-                // Fallback
-                if (headerRowIndex === -1 || headerRowIndex > 25) {
-                  headerRowIndex = 0;
-                }
-
-                // Convert filtered JSON back to CSV
-                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
-                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
-                return csv;
-            } catch (e) {
-                console.error(e);
-                return "";
-            }
-        }
-        return gk_fileData[filename] || "";
-        }
-        </script><!DOCTYPE html>
-<html lang="en">
+<!DOCTYPE html>
+<html lang="{{ language }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Take the fun financial quiz with Ficore Africa to test your money skills and share your score!">
     <meta name="keywords" content="ficore africa, financial quiz, money skills, savings, budgeting">
     <meta name="author" content="Ficore Africa">
-    <title>Ficore Africa - Financial Quiz</title>
+    <title>Ficore Africa - {{ translations[language]['Financial Quiz'] }}</title>
     <link href="{{ url_for('static', filename='css/bootstrap.min.css') }}" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;600&display=swap" rel="stylesheet">
     <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
@@ -80,10 +41,23 @@
             padding: 2rem;
             border-radius: 12px;
             box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
-            transition: transform 0.3s ease;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
         .quiz-card:hover {
             transform: translateY(-5px);
+            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.15);
+        }
+        .card-header {
+            background: linear-gradient(135deg, #28A745, #1E88E5);
+            color: white;
+            padding: 1rem;
+            border-radius: 12px 12px 0 0;
+            text-align: center;
+            font-weight: 600;
+            font-size: 1.35rem;
+            margin-bottom: 1rem;
+            border: 2px solid #1565C0;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         }
         h3 {
             color: #2E7D32;
@@ -128,6 +102,10 @@
             background: #D1E7DD;
             border-color: #2E7D32;
         }
+        .option-btn.error {
+            border-color: #dc3545;
+            background: #f8d7da;
+        }
         .btn-primary {
             background: linear-gradient(135deg, #2E7D32, #0288D1);
             border: none;
@@ -141,14 +119,34 @@
         }
         .btn-primary:hover {
             transform: scale(1.05);
-            background: linear-gradient(135deg, #1B5E20, #01579B);
+            background: linear-gradient(135deg, #1E88E5, #0288D1);
             box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
             border: 1px solid #4CAF50;
         }
+        .btn-primary.loading::after {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #fff;
+            border-top: 3px solid #0288D1;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+        .btn-primary.loading span {
+            visibility: hidden;
+        }
+        @keyframes spin {
+            0% { transform: translate(-50%, -50%) rotate(0deg); }
+            100% { transform: translate(-50%, -50%) rotate(360deg); }
+        }
         .btn-secondary {
-            background: linear-gradient(135deg, #1DA1F2, #0d47a1);
+            background: linear-gradient(135deg, #F57C00, #FF9800);
             border: none;
-            padding: 10px;
+            padding: 10px 20px;
             font-weight: 500;
             border-radius: 8px;
             transition: transform 0.2s ease, box-shadow 0.2s ease;
@@ -160,7 +158,7 @@
         .btn-email {
             background: linear-gradient(135deg, #FF5722, #D81B60);
             border: none;
-            padding: 10px;
+            padding: 10px 20px;
             font-weight: 500;
             border-radius: 8px;
             transition: transform 0.2s ease, box-shadow 0.2s ease;
@@ -178,7 +176,6 @@
             padding: 1rem;
             border-radius: 8px;
             margin-bottom: 1rem;
-            display: none;
         }
         .guide-section ul {
             list-style-type: disc;
@@ -207,19 +204,11 @@
             color: #666;
             margin-bottom: 0.5rem;
         }
-        .tooltip-fallback {
-            display: none;
-            background: #E3F2FD;
-            border: 1px solid #0288D1;
-            border-radius: 4px;
-            padding: 8px;
-            margin-top: 4px;
+        .error-message {
+            color: #dc3545;
             font-size: 0.9rem;
-            color: #333;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-        }
-        .tooltip-fallback.active {
-            display: block;
+            margin-top: 0.5rem;
+            display: none;
         }
         .book-toggle {
             display: flex;
@@ -317,8 +306,8 @@
             <div class="col-md-10">
                 <div class="quiz-card">
                     <!-- New to Finances Toggle with Stylish Blue Book -->
-                    <div class="book-toggle" id="guide-toggle">
-                        <div class="book-icon" id="book-icon"></div>
+                    <div class="book-toggle" id="guide-toggle" aria-label="{{ translations[language]['Toggle quiz guide'] }}" role="button">
+                        <div class="book-icon open" id="book-icon" aria-hidden="true"></div>
                         <span class="book-label">{{ translations[language]['New to quizzes? Click here for tips to ace this financial challenge!'] }}</span>
                     </div>
                     <div class="guide-section" id="guide-content">
@@ -328,13 +317,16 @@
                             <li><strong>{{ translations[language]['Answer Questions'] }}</strong>: Select one option per question. Use ℹ️ icons for hints!</li>
                             <li><strong>{{ translations[language]['Submit & Share'] }}</strong>: Hit Submit to see your score and share your badges with friends!</li>
                         </ul>
+                        <button class="btn btn-secondary mt-2" id="hide-guide">{{ translations[language]['Hide Guide'] }}</button>
                     </div>
 
-                    <form id="quiz-form" method="POST" action="{{ url_for('quiz_submit') }}">
+                    <form id="quiz-form" method="POST" action="{{ url_for('quiz') }}">
                         {{ form.hidden_tag() }}
 
                         <!-- Personal Information -->
-                        <h3>{{ translations[language]['Let’s Get Started!'] }}</h3>
+                        <div class="card-header">
+                            <span class="emoji">👤</span> {{ translations[language]['Let’s Get Started!'] }}
+                        </div>
                         <div class="mb-3">
                             {{ form.first_name.label(class="form-label", **{'for': 'first_name'}) }}
                             {{ form.first_name(class="form-control", placeholder=translations[language]['Enter your first name'], required=True, **{'data-error': translations[language]['First Name Required']}) }}
@@ -344,13 +336,17 @@
                             {{ form.email(class="form-control", placeholder=translations[language]['Enter your email'], type="email", required=True, pattern="[^@]+@[^@]+\.[^@]+", **{'data-error': translations[language]['Invalid Email']}) }}
                         </div>
                         <div class="mb-3">
+                            {{ form.auto_email.label(class="form-label", **{'for': 'auto_email'}) }}
+                            {{ form.auto_email(class="form-control", placeholder=translations[language]['Confirm your email'], type="email", required=True, pattern="[^@]+@[^@]+\.[^@]+", **{'data-error': translations[language]['Email Mismatch']}) }}
+                        </div>
+                        <div class="mb-3">
                             <p class="note-text">{{ translations[language]['Language'] }}: English or Hausa</p>
                             {{ form.language.label(class="form-label", **{'for': 'language'}) }}
                             {{ form.language(class="form-select", required=True) }}
                         </div>
 
                         <!-- Progress Bar -->
-                        <div class="progress" id="progress-bar">
+                        <div class="progress" id="progress-bar" aria-live="polite">
                             <div class="progress-bar" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
                         </div>
 
@@ -359,62 +355,60 @@
                             <!-- Question 1 -->
                             <h3 class="mt-4">1. 💰 {{ translations[language]['How often do you save a portion of your income?'] }}</h3>
                             <div class="field-container">
-                                <span class="info-icon" data-tooltip-target="q1-tooltip" title="{{ translations[language]['Saving regularly boosts financial security.'] }}">ℹ️</span>
+                                <span class="info-icon" data-bs-toggle="tooltip" data-bs-title="{{ translations[language]['Saving regularly boosts financial security.'] }}" aria-label="{{ translations[language]['More info on saving'] }}">ℹ️</span>
                             </div>
-                            <div class="tooltip-fallback" id="q1-tooltip"></div>
                             {% for subfield in form.q1 %}
-                                <label class="option-btn" data-value="{{ loop.index0 }}">{{ subfield.label.text }}</label>
+                                <label class="option-btn" for="{{ subfield.id }}" data-value="{{ loop.index0 }}" role="button" aria-label="{{ subfield.label.text }}">{{ subfield.label.text }}</label>
                                 {{ subfield(class_="d-none", **{'data-question': 'q1'}) }}
                             {% endfor %}
 
                             <!-- Question 2 -->
                             <h3 class="mt-4">2. 💳 {{ translations[language]['What’s your approach to managing debt?'] }}</h3>
                             <div class="field-container">
-                                <span class="info-icon" data-tooltip-target="q2-tooltip" title="{{ translations[language]['Paying off high-interest debt first is a smart move.'] }}">ℹ️</span>
+                                <span class="info-icon" data-bs-toggle="tooltip" data-bs-title="{{ translations[language]['Paying off high-interest debt first is a smart move.'] }}" aria-label="{{ translations[language]['More info on debt'] }}">ℹ️</span>
                             </div>
-                            <div class="tooltip-fallback" id="q2-tooltip"></div>
                             {% for subfield in form.q2 %}
-                                <label class="option-btn" data-value="{{ loop.index0 }}">{{ subfield.label.text }}</label>
+                                <label class="option-btn" for="{{ subfield.id }}" data-value="{{ loop.index0 }}" role="button" aria-label="{{ subfield.label.text }}">{{ subfield.label.text }}</label>
                                 {{ subfield(class_="d-none", **{'data-question': 'q2'}) }}
                             {% endfor %}
 
                             <!-- Question 3 -->
                             <h3 class="mt-4">3. 📅 {{ translations[language]['Do you track your monthly budget?'] }}</h3>
                             <div class="field-container">
-                                <span class="info-icon" data-tooltip-target="q3-tooltip" title="{{ translations[language]['Budgeting helps you control spending.'] }}">ℹ️</span>
+                                <span class="info-icon" data-bs-toggle="tooltip" data-bs-title="{{ translations[language]['Budgeting helps you control spending.'] }}" aria-label="{{ translations[language]['More info on budgeting'] }}">ℹ️</span>
                             </div>
-                            <div class="tooltip-fallback" id="q3-tooltip"></div>
                             {% for subfield in form.q3 %}
-                                <label class="option-btn" data-value="{{ loop.index0 }}">{{ subfield.label.text }}</label>
+                                <label class="option-btn" for="{{ subfield.id }}" data-value="{{ loop.index0 }}" role="button" aria-label="{{ subfield.label.text }}">{{ subfield.label.text }}</label>
                                 {{ subfield(class_="d-none", **{'data-question': 'q3'}) }}
                             {% endfor %}
 
                             <!-- Question 4 -->
                             <h3 class="mt-4">4. 🏦 {{ translations[language]['How do you handle unexpected expenses?'] }}</h3>
                             <div class="field-container">
-                                <span class="info-icon" data-tooltip-target="q4-tooltip" title="{{ translations[language]['An emergency fund can save the day!'] }}">ℹ️</span>
+                                <span class="info-icon" data-bs-toggle="tooltip" data-bs-title="{{ translations[language]['An emergency fund can save the day!'] }}" aria-label="{{ translations[language]['More info on expenses'] }}">ℹ️</span>
                             </div>
-                            <div class="tooltip-fallback" id="q4-tooltip"></div>
                             {% for subfield in form.q4 %}
-                                <label class="option-btn" data-value="{{ loop.index0 }}">{{ subfield.label.text }}</label>
+                                <label class="option-btn" for="{{ subfield.id }}" data-value="{{ loop.index0 }}" role="button" aria-label="{{ subfield.label.text }}">{{ subfield.label.text }}</label>
                                 {{ subfield(class_="d-none", **{'data-question': 'q4'}) }}
                             {% endfor %}
 
                             <!-- Question 5 -->
                             <h3 class="mt-4">5. 🌱 {{ translations[language]['What’s your goal for financial growth?'] }}</h3>
                             <div class="field-container">
-                                <span class="info-icon" data-tooltip-target="q5-tooltip" title="{{ translations[language]['Setting goals helps you stay motivated.'] }}">ℹ️</span>
+                                <span class="info-icon" data-bs-toggle="tooltip" data-bs-title="{{ translations[language]['Setting goals helps you stay motivated.'] }}" aria-label="{{ translations[language]['More info on goals'] }}">ℹ️</span>
                             </div>
-                            <div class="tooltip-fallback" id="q5-tooltip"></div>
                             {% for subfield in form.q5 %}
-                                <label class="option-btn" data-value="{{ loop.index0 }}">{{ subfield.label.text }}</label>
+                                <label class="option-btn" for="{{ subfield.id }}" data-value="{{ loop.index0 }}" role="button" aria-label="{{ subfield.label.text }}">{{ subfield.label.text }}</label>
                                 {{ subfield(class_="d-none", **{'data-question': 'q5'}) }}
                             {% endfor %}
                         </div>
 
                         <!-- Submit Button -->
                         <div class="d-grid mt-4">
-                            {{ form.submit(class="btn btn-primary btn-lg", value=translations[language]['Submit & Get Your Score!']) }}
+                            <button type="submit" class="btn btn-primary btn-lg" id="submit-btn">
+                                <span>{{ translations[language]['Submit & Get Your Score!'] }}</span>
+                            </button>
+                            <div class="error-message mt-2" id="error-message" role="alert" aria-live="polite">{{ translations[language]['Please answer all questions before submitting!'] }}</div>
                         </div>
                     </form>
                 </div>
@@ -423,55 +417,24 @@
 
         <!-- Contact Information -->
         <div class="text-center my-4">
-            <p>{{ translations[language]['Contact Us'] }} <a href="mailto:ficore.ai.africa@gmail.com" class="btn btn-email">{{ translations[language]['Click to Email'] }}</a> {{ translations[language]['for support'] }}.</p>
+            <p>{{ translations[language]['Contact Us'] }} <a href="mailto:ficore.ai.africa@gmail.com" class="btn btn-email" aria-label="{{ translations[language]['Email Ficore Africa Support'] }}">{{ translations[language]['Click to Email'] }}</a> {{ translations[language]['for support'] }}.</p>
         </div>
 
         <!-- Feedback Link -->
         <div class="text-center my-4">
-            <a href="{{ FEEDBACK_FORM_URL }}" class="btn btn-secondary">{{ translations[language]['Provide Feedback'] }}</a>
+            <a href="{{ FEEDBACK_FORM_URL }}" class="btn btn-secondary" target="_blank" aria-label="{{ translations[language]['Provide Feedback'] }}">{{ translations[language]['Provide Feedback'] }}</a>
         </div>
     </div>
 
     <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}" onerror="console.error('Failed to load bootstrap.bundle.min.js.');"></script>
     <script>
-        // Initialize Bootstrap tooltips with enhanced error handling
-        function initializeTooltips() {
-            try {
-                if (typeof bootstrap === 'undefined') {
-                    console.error('Bootstrap is not loaded.');
-                    return false;
-                }
-                const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-                if (tooltipTriggerList.length === 0) {
-                    console.warn('No elements with data-bs-toggle="tooltip" found.');
-                    return false;
-                }
-                tooltipTriggerList.map(function (tooltipTriggerEl) {
-                    return new bootstrap.Tooltip(tooltipTriggerEl, {
-                        trigger: 'hover focus',
-                        placement: 'top',
-                        customClass: 'custom-tooltip'
-                    });
-                });
-                return true;
-            } catch (error) {
-                console.error('Error initializing tooltips:', error);
-                return false;
-            }
-        }
-
         document.addEventListener('DOMContentLoaded', function () {
-            initializeTooltips();
-
-            // Fallback for tooltips
-            document.querySelectorAll('.info-icon').forEach(icon => {
-                icon.addEventListener('click', function () {
-                    const targetId = icon.getAttribute('data-tooltip-target');
-                    const targetDiv = document.getElementById(targetId);
-                    if (targetDiv) {
-                        targetDiv.textContent = icon.getAttribute('title');
-                        targetDiv.classList.toggle('active');
-                    }
+            // Initialize Bootstrap tooltips
+            const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+            tooltipTriggerList.forEach(tooltipTriggerEl => {
+                new bootstrap.Tooltip(tooltipTriggerEl, {
+                    trigger: 'hover focus',
+                    placement: 'top'
                 });
             });
 
@@ -479,11 +442,17 @@
             const guideToggle = document.getElementById('guide-toggle');
             const bookIcon = document.getElementById('book-icon');
             const guideContent = document.getElementById('guide-content');
-            if (guideToggle && bookIcon && guideContent) {
+            const hideGuideBtn = document.getElementById('hide-guide');
+            if (guideToggle && bookIcon && guideContent && hideGuideBtn) {
+                guideContent.style.display = 'block'; // Show by default
                 guideToggle.addEventListener('click', function () {
                     const isOpen = guideContent.style.display === 'block';
                     guideContent.style.display = isOpen ? 'none' : 'block';
                     bookIcon.classList.toggle('open', !isOpen);
+                });
+                hideGuideBtn.addEventListener('click', function () {
+                    guideContent.style.display = 'none';
+                    bookIcon.classList.remove('open');
                 });
             }
 
@@ -494,7 +463,7 @@
 
             options.forEach(option => {
                 option.addEventListener('click', function () {
-                    const question = option.closest('.field-container') ? option.closest('h3').nextElementSibling : option.parentElement;
+                    const question = option.parentElement;
                     const radio = question.querySelector(`input[data-question="${question.querySelector('input').dataset.question}"]`);
                     if (radio) {
                         radio.checked = true;
@@ -506,28 +475,51 @@
                         const progress = (selectedCount / 5) * 100; // 5 questions
                         progressBar.style.width = `${progress}%`;
                         progressBar.setAttribute('aria-valuenow', progress);
+                        progressBar.parentElement.setAttribute('aria-label', `${progress}% of quiz completed`);
                     }
                 });
             });
 
-            // Custom validation
-            document.querySelectorAll('.form-control, .form-select').forEach(input => {
-                input.addEventListener('invalid', function(e) {
-                    e.target.setCustomValidity(e.target.dataset.error);
+            // Email confirmation validation
+            const emailInput = document.getElementById('email');
+            const autoEmailInput = document.getElementById('auto_email');
+            if (emailInput && autoEmailInput) {
+                [emailInput, autoEmailInput].forEach(input => {
+                    input.addEventListener('input', function() {
+                        if (emailInput.value !== autoEmailInput.value) {
+                            autoEmailInput.setCustomValidity(translations[language]['Email Mismatch']);
+                        } else {
+                            autoEmailInput.setCustomValidity('');
+                        }
+                    });
                 });
-                input.addEventListener('input', function(e) {
-                    e.target.setCustomValidity('');
-                });
-            });
+            }
 
-            // Validate all questions on submit
-            document.getElementById('quiz-form').addEventListener('submit', function(e) {
-                const selected = document.querySelectorAll('.option-btn.selected').length;
-                if (selected < 5) {
-                    e.preventDefault();
-                    alert(translations[language]['Please answer all questions before submitting!']);
-                }
-            });
+            // Submit button loading state and validation
+            const submitBtn = document.getElementById('submit-btn');
+            const quizForm = document.getElementById('quiz-form');
+            const errorMessage = document.getElementById('error-message');
+            if (submitBtn && quizForm && errorMessage) {
+                quizForm.addEventListener('submit', function(e) {
+                    const selected = document.querySelectorAll('.option-btn.selected').length;
+                    if (selected < 5) {
+                        e.preventDefault();
+                        errorMessage.style.display = 'block';
+                        // Highlight unanswered questions
+                        const questions = document.querySelectorAll('#quiz-questions h3');
+                        questions.forEach((q, index) => {
+                            const opts = q.nextElementSibling.nextElementSibling.querySelectorAll('.option-btn');
+                            const isAnswered = Array.from(opts).some(opt => opt.classList.contains('selected'));
+                            if (!isAnswered) {
+                                opts.forEach(opt => opt.classList.add('error'));
+                            }
+                        });
+                    } else {
+                        submitBtn.classList.add('loading');
+                        errorMessage.style.display = 'none';
+                    }
+                });
+            }
         });
     </script>
 </body>
