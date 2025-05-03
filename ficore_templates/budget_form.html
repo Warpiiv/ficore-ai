@@ -9,12 +9,51 @@
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
+    <style>
+        .info-icon {
+            cursor: pointer;
+            color: #0288D1;
+            margin-left: 5px;
+            font-size: 0.9rem;
+        }
+        .info-icon:hover {
+            color: #2E7D32;
+        }
+        .tooltip-text {
+            visibility: hidden;
+            width: 220px;
+            background-color: #555;
+            color: #fff;
+            text-align: center;
+            border-radius: 6px;
+            padding: 10px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -110px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .info-icon:hover .tooltip-text {
+            visibility: visible;
+            opacity: 1;
+        }
+        .form-control, .form-select {
+            min-height: 48px;
+            font-size: 1rem;
+        }
+        .btn-primary, .btn-secondary {
+            min-height: 48px;
+            font-size: 1rem;
+        }
+    </style>
 </head>
 <body>
     <div class="container mt-5">
         <header class="text-center mb-4">
             <img src="{{ url_for('static', filename='img/ficore_logo.png') }}" alt="FiCore Logo" class="img-fluid" style="max-width: 200px;">
-            <h1><i class="fas fa-chart-pie icon"></i> {{ translations[language]['Monthly Budget Planner'] }}</h1>
+            <h1><i class="fas fa-chart-pie icon"></i> <strong>{{ translations[language]['Monthly Budget Planner'] }}</strong></h1>
             <p class="lead">{{ translations[language]['Take control of your finances and achieve your goals by creating a monthly budget.'] }}</p>
         </header>
 
@@ -34,7 +73,7 @@
 
             <div class="mb-3">
                 {{ form.first_name.label(class="form-label") }}
-                {{ form.first_name(class="form-control", id="first_name") }}
+                {{ form.first_name(class="form-control", id="first_name", placeholder=translations[language]['Enter your first name'], **{'aria-required': 'true'}) }}
                 {% for error in form.first_name.errors %}
                     <span class="text-danger">{{ error }}</span>
                 {% endfor %}
@@ -42,7 +81,11 @@
 
             <div class="mb-3">
                 {{ form.email.label(class="form-label") }}
-                {{ form.email(class="form-control", id="email") }}
+                {{ form.email(class="form-control", id="email", placeholder=translations[language]['Enter your email'], **{'aria-required': 'true'}) }}
+                <span class="info-icon" aria-label="Email Info">
+                    <i class="fas fa-info-circle"></i>
+                    <span class="tooltip-text">{{ translations[language]['Get budgeting tips in your inbox.'] }}</span>
+                </span>
                 {% for error in form.email.errors %}
                     <span class="text-danger">{{ error }}</span>
                 {% endfor %}
@@ -50,7 +93,7 @@
 
             <div class="mb-3">
                 {{ form.auto_email.label(class="form-label") }}
-                {{ form.auto_email(class="form-control", id="auto_email") }}
+                {{ form.auto_email(class="form-control", id="auto_email", placeholder=translations[language]['Confirm your email'], **{'aria-required': 'true'}) }}
                 {% for error in form.auto_email.errors %}
                     <span class="text-danger">{{ error }}</span>
                 {% endfor %}
@@ -58,7 +101,7 @@
 
             <div class="mb-3">
                 {{ form.language.label(class="form-label") }}
-                {{ form.language(class="form-control", id="language") }}
+                {{ form.language(class="form-control", id="language", **{'aria-required': 'true'}) }}
                 {% for error in form.language.errors %}
                     <span class="text-danger">{{ error }}</span>
                 {% endfor %}
@@ -68,7 +111,11 @@
                 {{ form.monthly_income.label(class="form-label") }}
                 <div class="input-group">
                     <span class="input-group-text">₦</span>
-                    {{ form.monthly_income(class="form-control", id="monthly_income", type="number", min="0", step="0.01", placeholder=translations[language]['Enter your monthly income']) }}
+                    {{ form.monthly_income(class="form-control", id="monthly_income", type="number", min="0", step="0.01", placeholder=translations[language]['e.g. 150,000'], **{'aria-required': 'true'}) }}
+                    <span class="input-group-text info-icon" aria-label="Monthly Income Info">
+                        <i class="fas fa-info-circle"></i>
+                        <span class="tooltip-text">{{ translations[language]['Enter your total monthly earnings, including salary and side income.'] }}</span>
+                    </span>
                 </div>
                 <small class="form-text text-muted">{{ translations[language]['Enter amounts in Naira (₦).'] }}</small>
                 {% for error in form.monthly_income.errors %}
@@ -80,9 +127,10 @@
                 {{ form.housing_expenses.label(class="form-label") }}
                 <div class="input-group">
                     <span class="input-group-text">₦</span>
-                    {{ form.housing_expenses(class="form-control", id="housing_expenses", type="number", min="0", step="0.01", placeholder=translations[language]['Enter your housing expenses']) }}
-                    <span class="input-group-text" data-bs-toggle="tooltip" data-bs-placement="top" title="{{ translations[language]['E.g., rent, mortgage, utilities.'] }}">
+                    {{ form.housing_expenses(class="form-control", id="housing_expenses", type="number", min="0", step="0.01", placeholder=translations[language]['e.g. 30,000'], **{'aria-required': 'true'}) }}
+                    <span class="input-group-text info-icon" aria-label="Housing Expenses Info">
                         <i class="fas fa-info-circle"></i>
+                        <span class="tooltip-text">{{ translations[language]['Include rent, electricity, water, and related housing bills.'] }}</span>
                     </span>
                 </div>
                 <small class="form-text text-muted">{{ translations[language]['Enter amounts in Naira (₦).'] }}</small>
@@ -95,9 +143,10 @@
                 {{ form.food_expenses.label(class="form-label") }}
                 <div class="input-group">
                     <span class="input-group-text">₦</span>
-                    {{ form.food_expenses(class="form-control", id="food_expenses", type="number", min="0", step="0.01", placeholder=translations[language]['Enter your food expenses']) }}
-                    <span class="input-group-text" data-bs-toggle="tooltip" data-bs-placement="top" title="{{ translations[language]['E.g., groceries, dining out.'] }}">
+                    {{ form.food_expenses(class="form-control", id="food_expenses", type="number", min="0", step="0.01", placeholder=translations[language]['e.g. 45,000'], **{'aria-required': 'true'}) }}
+                    <span class="input-group-text info-icon" aria-label="Food Expenses Info">
                         <i class="fas fa-info-circle"></i>
+                        <span class="tooltip-text">{{ translations[language]['Estimate how much you spend on food monthly.'] }}</span>
                     </span>
                 </div>
                 <small class="form-text text-muted">{{ translations[language]['Enter amounts in Naira (₦).'] }}</small>
@@ -110,9 +159,10 @@
                 {{ form.transport_expenses.label(class="form-label") }}
                 <div class="input-group">
                     <span class="input-group-text">₦</span>
-                    {{ form.transport_expenses(class="form-control", id="transport_expenses", type="number", min="0", step="0.01", placeholder=translations[language]['Enter your transport expenses']) }}
-                    <span class="input-group-text" data-bs-toggle="tooltip" data-bs-placement="top" title="{{ translations[language]['E.g., fuel, public transport, vehicle maintenance.'] }}">
+                    {{ form.transport_expenses(class="form-control", id="transport_expenses", type="number", min="0", step="0.01", placeholder=translations[language]['e.g. 10,000'], **{'aria-required': 'true'}) }}
+                    <span class="input-group-text info-icon" aria-label="Transport Expenses Info">
                         <i class="fas fa-info-circle"></i>
+                        <span class="tooltip-text">{{ translations[language]['Monthly cost of transport—bus, bike, taxi, or fuel.'] }}</span>
                     </span>
                 </div>
                 <small class="form-text text-muted">{{ translations[language]['Enter amounts in Naira (₦).'] }}</small>
@@ -125,9 +175,10 @@
                 {{ form.other_expenses.label(class="form-label") }}
                 <div class="input-group">
                     <span class="input-group-text">₦</span>
-                    {{ form.other_expenses(class="form-control", id="other_expenses", type="number", min="0", step="0.01", placeholder=translations[language]['Enter your other expenses']) }}
-                    <span class="input-group-text" data-bs-toggle="tooltip" data-bs-placement="top" title="{{ translations[language]['E.g., entertainment, subscriptions, personal care.'] }}">
+                    {{ form.other_expenses(class="form-control", id="other_expenses", type="number", min="0", step="0.01", placeholder=translations[language]['e.g. 20,000'], **{'aria-required': 'true'}) }}
+                    <span class="input-group-text info-icon" aria-label="Other Expenses Info">
                         <i class="fas fa-info-circle"></i>
+                        <span class="tooltip-text">{{ translations[language]['Include internet, airtime, clothes, or personal spending.'] }}</span>
                     </span>
                 </div>
                 <small class="form-text text-muted">{{ translations[language]['Enter amounts in Naira (₦).'] }}</small>
@@ -144,6 +195,10 @@
 
         <footer class="text-center mt-4">
             <p>
+                <a href="{{ url_for('index') }}" class="btn btn-secondary">{{ translations[language]['Home'] }}</a>
+                <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">{{ translations[language]['Back'] }}</a>
+            </p>
+            <p>
                 <a href="{{ FEEDBACK_FORM_URL }}" target="_blank">{{ translations[language]['Provide Feedback'] }}</a> |
                 <a href="https://ficore.africa" target="_blank">{{ translations[language]['FiCore Africa Home'] }}</a>
             </p>
@@ -152,12 +207,5 @@
     </div>
 
     <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
-    <script>
-        // Enable Bootstrap tooltips
-        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
-        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-            return new bootstrap.Tooltip(tooltipTriggerEl)
-        })
-    </script>
 </body>
 </html>
