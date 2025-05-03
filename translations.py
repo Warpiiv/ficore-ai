@@ -314,7 +314,7 @@ translations = {
                     <li><strong>Matsayi</strong>: #{rank} daga cikin {total_users} masu amfani</li>
                 </ul>
                 <p>Bi shawarar da ke sama don inganta lafiyar kuɗin ka.</p>
-                <p style="margin-bottom -bottom: 10px;">
+                <p style="margin-bottom: 10px;">
                     Kana son ƙarin koyo? Duba wannan kwas: 
                     <a href="{course_url}" style="display: inline-block; padding: 10px 20px; background-color: #FBC02D; color: #333; text-decoration: none; border-radius: 5px; font-size: 0.9rem;">{course_title}</a>
                 </p>
@@ -466,12 +466,12 @@ translations = {
         'Assess your financial health with a personalized score and insights': 'Tantance lafiyar kuɗin ku tare da maki na keɓaɓɓu da fahimta',
         'This tool evaluates your income, expenses, and debt to provide a health score': 'Wannan kayan aiki yana kimanta kuɗin shiga, kashe kuɗi, da bashi don samar da makin lafiya',
         'Get Started with Financial Health Score': 'Fara da Makin Lafiyar Kuɗi',
-        'Calculate your net worth by evaluating your assets and liabilities': 'Lissafa darajar net ɗin ku ta hanyar kimanta kadarori da alhaki',
-        'Net worth is calculated as assets minus liabilities': 'Darajar net ana lissafa kamar kadarori ban da alhaki',
-        'Get Started with Net Worth Calculator': 'Fara da Kalkuletar Darajar Net',
-        'Plan your emergency fund to cover unexpected expenses': 'Shirya asusun gaggawa don rufe kashe kuɗin da ba a ji tsammani ba',
+        'Calculate your net worth by evaluating your assets and liabilities': 'Lissafa darajar dukiyarka ta hanyar kimanta kadarori da basussuka',
+        'Net worth is calculated as assets minus liabilities': 'Darajar dukiya ana lissafa kamar kadarori ban da basussuka',
+        'Get Started with Net Worth Calculator': 'Fara da Kalkuletar Darajar Dukiya',
+        'Plan your emergency fund to cover unexpected expenses': 'Shirya kuɗin gaggawa don rufe kashe kuɗin da ba a ji tsammani ba',
         'Aims to cover 3-6 months of expenses for financial security': 'Yana nufin rufe kashe kuɗin watanni 3-6 don tsaron kuɗi',
-        'Get Started with Emergency Fund Calculator': 'Fara da Kalkuletar Asusun Gaggawa',
+        'Get Started with Emergency Fund Calculator': 'Fara da Kalkuletar Kuɗin Gaggawa',
         'Test your financial knowledge and get personalized tips': 'Gwada ilimin kuɗin ku kuma sami shawarwari na keɓaɓɓu',
         'Answer a series of questions to assess your financial literacy': 'Amsa jerin tambayoyi don tantance ilimin kuɗin ku',
         'Get Started with Financial Personality Quiz': 'Fara da Gwajin Halin Kuɗi',
