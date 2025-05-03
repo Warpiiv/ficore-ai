@@ -14,7 +14,10 @@ from dateutil.parser import parse
 from dateutil import parser
 import random
 
-app = Flask(__name__)
+# Initialize Flask app with custom template and static folders
+# Set template_folder to 'ficore_templates' to match repository structure and fix TemplateNotFound error
+# Set static_folder to 'static' to explicitly point to the static assets directory
+app = Flask(__name__, template_folder='ficore_templates', static_folder='static')
 app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'your-secret-key')
 app.config['SESSION_COOKIE_SECURE'] = True
 app.config['SESSION_COOKIE_HTTPONLY'] = True
