@@ -6,7 +6,7 @@
     <meta name="description" content="View your emergency fund recommendation with Ficore Africa, including expense breakdown and personalized advice.">
     <meta name="keywords" content="ficore africa, emergency fund dashboard, monthly expenses, financial security">
     <meta name="author" content="Ficore Africa">
-    <title>Ficore Africa - {{ translations[language]['Emergency Fund Dashboard'] }}</title>
+    <title>Ficore Africa - {{ translations['Emergency Fund Dashboard'] }}</title>
     <link href="{{ url_for('static', filename='css/bootstrap.min.css') }}" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;600&display=swap" rel="stylesheet">
     <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
@@ -213,8 +213,8 @@
             <div class="logo-container">
                 <img src="{{ url_for('static', filename='img/ficore_logo.png') }}" alt="Ficore Africa Logo" class="img-fluid">
             </div>
-            <h2>{{ translations[language]['Ficore Africa Emergency Fund Dashboard'] }}</h2>
-            <p class="lead">{{ translations[language]['Your Emergency Fund Insights'] }}</p>
+            <h2>{{ translations['Ficore Africa Emergency Fund Dashboard'] }}</h2>
+            <p class="lead">{{ translations['Your Emergency Fund Insights'] }}</p>
         </header>
 
         <!-- Flash Messages -->
@@ -234,11 +234,11 @@
         <!-- Welcome and Fund Recommendation -->
         <div class="card">
             <div class="card-header">
-                <span class="emoji">🎉</span> {{ translations[language]['Welcome'] }}, {{ full_name }}!
+                <span class="emoji">🎉</span> {{ translations['Welcome'] }}, {{ full_name }}!
             </div>
             <div class="card-body">
-                <p>{{ translations[language]['Recommended Emergency Fund'] }}: <span class="fund-value" role="region" aria-label="{{ translations[language]['Your recommended emergency fund is'] }} {{ emergency_fund | format_currency('NGN') }}">{{ emergency_fund | format_currency('NGN') }}</span></p>
-                <p>{{ translations[language]['Rank'] }}: {{ rank }}% <span class="info-icon" data-bs-toggle="tooltip" data-bs-title="{{ translations[language]['Your rank among users based on emergency fund preparedness'] }}" aria-label="{{ translations[language]['More info on rank'] }}">ℹ️</span></p>
+                <p>{{ translations['Recommended Emergency Fund'] }}: <span class="fund-value" role="region" aria-label="{{ translations['Your recommended emergency fund is'] }} {{ emergency_fund | format_currency('NGN') }}">{{ emergency_fund | format_currency('NGN') }}</span></p>
+                <p>{{ translations['Rank'] }}: {{ rank }}% <span class="info-icon" data-bs-toggle="tooltip" data-bs-title="{{ translations['Your rank among users based on emergency fund preparedness'] }}" aria-label="{{ translations['More info on rank'] }}">ℹ️</span></p>
                 <p>{{ advice }}</p>
             </div>
         </div>
@@ -246,14 +246,14 @@
         <!-- Badges -->
         <div class="card">
             <div class="card-header">
-                <span class="emoji">🏅</span> {{ translations[language]['Your Badges'] }}
+                <span class="emoji">🏅</span> {{ translations['Your Badges'] }}
             </div>
             <div class="card-body">
                 {% for badge in badges %}
-                    <span class="badge-item" role="img" aria-label="{{ translations[language]['Badge'] }}: {{ badge }}">{{ badge }}</span>
+                    <span class="badge-item" role="img" aria-label="{{ translations['Badge'] }}: {{ badge }}">{{ badge }}</span>
                 {% endfor %}
                 {% if not badges %}
-                    <p>{{ translations[language]['No badges yet. Submit more data to earn badges!'] }}</p>
+                    <p>{{ translations['No badges yet. Submit more data to earn badges!'] }}</p>
                 {% endif %}
             </div>
         </div>
@@ -261,17 +261,17 @@
         <!-- Chart: Expense-Fund Breakdown -->
         <div class="card">
             <div class="card-header">
-                <span class="emoji">📊</span> {{ translations[language]['Expense-Fund Breakdown'] }}
+                <span class="emoji">📊</span> {{ translations['Expense-Fund Breakdown'] }}
             </div>
             <div class="card-body">
                 {% if chart_html %}
-                    <div class="chart-container loading" id="emergency-fund-chart-container" role="img" aria-label="{{ translations[language]['Chart showing expense and fund breakdown'] }}">
+                    <div class="chart-container loading" id="emergency-fund-chart-container" role="img" aria-label="{{ translations['Chart showing expense and fund breakdown'] }}">
                         <div id="emergency-fund-chart">{{ chart_html | safe }}</div>
-                        <div class="chart-error" id="breakdown-error" style="display: none;">{{ translations[language]['Chart Unavailable'] }}</div>
+                        <div class="chart-error" id="breakdown-error" style="display: none;">{{ translations['Chart Unavailable'] }}</div>
                     </div>
                 {% else %}
                     <div class="chart-container loading" aria-live="polite">
-                        <div class="empty-state"><span>📊</span> {{ translations[language]['Loading chart...'] }}</div>
+                        <div class="empty-state"><span>📊</span> {{ translations['Loading chart...'] }}</div>
                     </div>
                 {% endif %}
             </div>
@@ -280,17 +280,17 @@
         <!-- Comparison Chart -->
         <div class="card">
             <div class="card-header">
-                <span class="emoji">⚖️</span> {{ translations[language]['Comparison to Peers'] }}
+                <span class="emoji">⚖️</span> {{ translations['Comparison to Peers'] }}
             </div>
             <div class="card-body">
                 {% if comparison_chart_html %}
-                    <div class="chart-container loading" id="emergency-fund-comparison-container" role="img" aria-label="{{ translations[language]['Chart comparing your fund to peers'] }}">
+                    <div class="chart-container loading" id="emergency-fund-comparison-container" role="img" aria-label="{{ translations['Chart comparing your fund to peers'] }}">
                         <div id="emergency-fund-comparison">{{ comparison_chart_html | safe }}</div>
-                        <div class="chart-error" id="comparison-error" style="display: none;">{{ translations[language]['Chart Unavailable'] }}</div>
+                        <div class="chart-error" id="comparison-error" style="display: none;">{{ translations['Chart Unavailable'] }}</div>
                     </div>
                 {% else %}
                     <div class="chart-container loading" aria-live="polite">
-                        <div class="empty-state"><span>📉</span> {{ translations[language]['Loading comparison chart...'] }}</div>
+                        <div class="empty-state"><span>📉</span> {{ translations['Loading comparison chart...'] }}</div>
                     </div>
                 {% endif %}
             </div>
@@ -299,7 +299,7 @@
         <!-- Quick Tips -->
         <div class="card">
             <div class="card-header">
-                <span class="emoji">💡</span> {{ translations[language]['Quick Tips'] }}
+                <span class="emoji">💡</span> {{ translations['Quick Tips'] }}
             </div>
             <div class="card-body">
                 <ul>
@@ -313,11 +313,11 @@
         <!-- Recommended Courses -->
         <div class="card">
             <div class="card-header">
-                <span class="emoji">📚</span> {{ translations[language]['Recommended Courses'] }}
+                <span class="emoji">📚</span> {{ translations['Recommended Courses'] }}
             </div>
             <div class="card-body">
                 {% for course in courses %}
-                    <p><a href="{{ course.link }}" target="_blank" class="course-link" aria-label="{{ translations[language]['Open course'] }} {{ course.title }}">{{ course.title }}</a></p>
+                    <p><a href="{{ course.link }}" target="_blank" class="course-link" aria-label="{{ translations['Open course'] }} {{ course.title }}">{{ course.title }}</a></p>
                 {% endfor %}
             </div>
         </div>
@@ -325,30 +325,30 @@
         <!-- Buttons -->
         <div class="row row-cols-1 row-cols-md-5 g-2 my-4">
             <div class="col">
-                <a href="{{ url_for('landing') }}" class="btn btn-primary w-100" aria-label="{{ translations[language]['Back to Home'] }}">{{ translations[language]['Back to Home'] }}</a>
+                <a href="{{ url_for('landing') }}" class="btn btn-primary w-100" aria-label="{{ translations['Back to Home'] }}">{{ translations['Back to Home'] }}</a>
             </div>
             <div class="col">
-                <a href="{{ WAITLIST_FORM_URL }}" class="btn btn-secondary w-100" aria-label="{{ translations[language]['Join Waitlist'] }}">{{ translations[language]['Join Waitlist'] }}</a>
+                <a href="{{ WAITLIST_FORM_URL }}" class="btn btn-secondary w-100" aria-label="{{ translations['Join Waitlist'] }}">{{ translations['Join Waitlist'] }}</a>
             </div>
             <div class="col">
-                <a href="{{ CONSULTANCY_FORM_URL }}" class="btn btn-secondary w-100" aria-label="{{ translations[language]['Book Consultancy'] }}">{{ translations[language]['Book Consultancy'] }}</a>
+                <a href="{{ CONSULTANCY_FORM_URL }}" class="btn btn-secondary w-100" aria-label="{{ translations['Book Consultancy'] }}">{{ translations['Book Consultancy'] }}</a>
             </div>
             <div class="col">
-                <a href="{{ FEEDBACK_FORM_URL }}" class="btn btn-secondary w-100" aria-label="{{ translations[language]['Provide Feedback'] }}">{{ translations[language]['Provide Feedback'] }}</a>
+                <a href="{{ FEEDBACK_FORM_URL }}" class="btn btn-secondary w-100" aria-label="{{ translations['Provide Feedback'] }}">{{ translations['Provide Feedback'] }}</a>
             </div>
             <div class="col">
-                <a href="{{ url_for('send_emergency_fund_email') }}" class="btn btn-primary w-100" id="email-report-btn" aria-label="{{ translations[language]['Send Email Report'] }}">
-                    <span>{{ translations[language]['Send Email Report'] }}</span>
+                <a href="{{ url_for('send_emergency_fund_email') }}" class="btn btn-primary w-100" id="email-report-btn" aria-label="{{ translations['Send Email Report'] }}">
+                    <span>{{ translations['Send Email Report'] }}</span>
                 </a>
             </div>
             <div class="col">
-                <button class="btn btn-share w-100" id="share-button" aria-label="{{ translations[language]['Share Your Results'] }}">{{ translations[language]['Share Your Results'] }}</button>
+                <button class="btn btn-share w-100" id="share-button" aria-label="{{ translations['Share Your Results'] }}">{{ translations['Share Your Results'] }}</button>
             </div>
         </div>
 
         <!-- Contact Information -->
         <div class="text-center my-4">
-            <p>{{ translations[language]['Contact Us'] }} <a href="mailto:ficore.ai.africa@gmail.com" class="btn btn-email" aria-label="{{ translations[language]['Email Ficore Africa Support'] }}">{{ translations[language]['Click to Email'] }}</a> {{ translations[language]['for support'] }}.</p>
+            <p>{{ translations['Contact Us'] }} <a href="mailto:ficore.ai.africa@gmail.com" class="btn btn-email" aria-label="{{ translations['Email Ficore Africa Support'] }}">{{ translations['Click to Email'] }}</a> {{ translations['for support'] }}.</p>
         </div>
     </div>
 
@@ -395,9 +395,9 @@
                 shareButton.addEventListener('click', function () {
                     const emergencyFund = {{ emergency_fund | tojson }};
                     const rank = {{ rank | tojson }};
-                    const shareText = `${translations[language]['My Recommended Emergency Fund']}: ${emergencyFund.toLocaleString('en-US', { style: 'currency', currency: 'NGN' })}\n${translations[language]['Rank']}: ${rank}% (${translations[language]['Top']} ${100 - rank}%)\n${translations[language]['Check yours at']}: ${window.location.origin}`;
+                    const shareText = `${translations['My Recommended Emergency Fund']}: ${emergencyFund.toLocaleString('en-US', { style: 'currency', currency: 'NGN' })}\n${translations['Rank']}: ${rank}% (${translations['Top']} ${100 - rank}%)\n${translations['Check yours at']}: ${window.location.origin}`;
                     const shareData = {
-                        title: translations[language]['My Emergency Fund Results'],
+                        title: translations['My Emergency Fund Results'],
                         text: shareText,
                         url: window.location.origin
                     };
@@ -409,7 +409,7 @@
                                 successMsg.className = 'alert alert-success alert-dismissible fade show';
                                 successMsg.setAttribute('role', 'alert');
                                 successMsg.setAttribute('aria-live', 'polite');
-                                successMsg.innerHTML = `${translations[language]['Results shared successfully!']}<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>`;
+                                successMsg.innerHTML = `${translations['Results shared successfully!']}<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>`;
                                 flashContainer.appendChild(successMsg);
                             })
                             .catch((error) => console.error('Error sharing:', error));
@@ -420,7 +420,7 @@
                                 successMsg.className = 'alert alert-success alert-dismissible fade show';
                                 successMsg.setAttribute('role', 'alert');
                                 successMsg.setAttribute('aria-live', 'polite');
-                                successMsg.innerHTML = `${translations[language]['Results copied to clipboard!']}<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>`;
+                                successMsg.innerHTML = `${translations['Results copied to clipboard!']}<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>`;
                                 flashContainer.appendChild(successMsg);
                             })
                             .catch((error) => {
@@ -429,7 +429,7 @@
                                 errorMsg.className = 'alert alert-danger alert-dismissible fade show';
                                 errorMsg.setAttribute('role', 'alert');
                                 errorMsg.setAttribute('aria-live', 'polite');
-                                errorMsg.innerHTML = `${translations[language]['Failed to copy results']}<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>`;
+                                errorMsg.innerHTML = `${translations['Failed to copy results']}<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>`;
                                 flashContainer.appendChild(errorMsg);
                             });
                     }
@@ -464,7 +464,7 @@
                         errorMsg.className = 'alert alert-danger alert-dismissible fade show';
                         errorMsg.setAttribute('role', 'alert');
                         errorMsg.setAttribute('aria-live', 'polite');
-                        errorMsg.innerHTML = `${translations[language]['Failed to send email report']}<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>`;
+                        errorMsg.innerHTML = `${translations['Failed to send email report']}<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>`;
                         flashContainer.appendChild(errorMsg);
                         console.error('Error:', error);
                     });
