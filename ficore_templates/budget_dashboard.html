@@ -6,7 +6,7 @@
     <meta name="description" content="View your budget breakdown with Ficore Africa, including expense categories and personalized advice.">
     <meta name="keywords" content="ficore africa, budget dashboard, income, expenses, financial planning">
     <meta name="author" content="Ficore Africa">
-    <title>Ficore Africa - {{ translations[language]['Budget Dashboard'] }}</title>
+    <title>Ficore Africa - {{ translations['Budget Dashboard'] }}</title>
     <link href="{{ url_for('static', filename='css/bootstrap.min.css') }}" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;600&display=swap" rel="stylesheet">
     <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
@@ -195,8 +195,8 @@
             <div class="logo-container">
                 <img src="{{ url_for('static', filename='img/ficore_logo.png') }}" alt="Ficore Africa Logo" class="img-fluid">
             </div>
-            <h2>{{ translations[language]['Ficore Africa Budget Dashboard'] }}</h2>
-            <p class="lead">{{ translations[language]['Your Budget Insights'] }}</p>
+            <h2>{{ translations['Ficore Africa Budget Dashboard'] }}</h2>
+            <p class="lead">{{ translations['Your Budget Insights'] }}</p>
         </header>
 
         <!-- Flash Messages -->
@@ -214,23 +214,23 @@
         {% endwith %}
 
         <!-- Welcome and Budget Overview -->
-        <div class="card" role="region" aria-label="{{ translations[language]['Budget Overview'] }}">
+        <div class="card" role="region" aria-label="{{ translations['Budget Overview'] }}">
             <div class="card-header">
-                <span class="emoji">👋</span> {{ translations[language]['Welcome'] }}, {{ full_name }}!
+                <span class="emoji">👋</span> {{ translations['Welcome'] }}, {{ full_name }}!
             </div>
             <div class="card-body">
-                <p>{{ translations[language]['Monthly Income'] }}: {{ '{:,.2f}'.format(monthly_income) }} NGN</p>
-                <p>{{ translations[language]['Total Expenses'] }}: {{ '{:,.2f}'.format(total_expenses) }} NGN</p>
-                <p>{{ translations[language]['Surplus/Deficit'] }}: <span class="budget-value {{ 'deficit' if surplus_deficit < 0 else '' }}">{{ '{:,.2f}'.format(surplus_deficit) }} NGN</span></p>
-                <p>{{ translations[language]['Rank'] }}: {{ rank }}%</p>
-                <p>{{ translations[language]['Advice'] }}: {{ advice }}</p>
+                <p>{{ translations['Monthly Income'] }}: {{ '{:,.2f}'.format(monthly_income) }} NGN</p>
+                <p>{{ translations['Total Expenses'] }}: {{ '{:,.2f}'.format(total_expenses) }} NGN</p>
+                <p>{{ translations['Surplus/Deficit'] }}: <span class="budget-value {{ 'deficit' if surplus_deficit < 0 else '' }}">{{ '{:,.2f}'.format(surplus_deficit) }} NGN</span></p>
+                <p>{{ translations['Rank'] }}: {{ rank }}%</p>
+                <p>{{ translations['Advice'] }}: {{ advice }}</p>
             </div>
         </div>
 
         <!-- Badges -->
-        <div class="card" role="region" aria-label="{{ translations[language]['Badges Section'] }}">
+        <div class="card" role="region" aria-label="{{ translations['Badges Section'] }}">
             <div class="card-header">
-                <span class="emoji">🏅</span> {{ translations[language]['Your Badges'] }}
+                <span class="emoji">🏅</span> {{ translations['Your Badges'] }}
             </div>
             <div class="card-body">
                 {% if badges %}
@@ -238,20 +238,20 @@
                         <span class="badge-item" role="img" aria-label="{{ badge }}">{{ badge }}</span>
                     {% endfor %}
                 {% else %}
-                    <p>{{ translations[language]['No badges yet.'] }} <a href="{{ url_for('budget_submit') }}">{{ translations[language]['Submit more data to earn badges!'] }}</a></p>
+                    <p>{{ translations['No badges yet.'] }} <a href="{{ url_for('budget_submit') }}">{{ translations['Submit more data to earn badges!'] }}</a></p>
                 {% endif %}
             </div>
         </div>
 
         <!-- Chart: Expense Breakdown -->
-        <div class="card" role="region" aria-label="{{ translations[language]['Expense Breakdown Chart'] }}">
+        <div class="card" role="region" aria-label="{{ translations['Expense Breakdown Chart'] }}">
             <div class="card-header">
-                <span class="emoji">📊</span> {{ translations[language]['Expense Breakdown'] }}
+                <span class="emoji">📊</span> {{ translations['Expense Breakdown'] }}
             </div>
             <div class="card-body">
                 {% if chart_html %}
                     <div class="chart-container" id="budget-chart">
-                        <div class="chart-loading" aria-live="polite" id="chart-loading">{{ translations[language]['Loading chart...'] }}</div>
+                        <div class="chart-loading" aria-live="polite" id="chart-loading">{{ translations['Loading chart...'] }}</div>
                     </div>
                     <script>
                         document.addEventListener('DOMContentLoaded', function() {
@@ -267,25 +267,25 @@
                                 }
                             } catch (error) {
                                 console.error('Error rendering chart:', error);
-                                chartDiv.innerHTML = '<div class="empty-state">📊 {{ translations[language]["Error loading chart."] }} <a href="{{ url_for('budget_submit') }}">{{ translations[language]["Try again"] }}</a></div>';
+                                chartDiv.innerHTML = '<div class="empty-state">📊 {{ translations["Error loading chart."] }} <a href="{{ url_for('budget_submit') }}">{{ translations["Try again"] }}</a></div>';
                             }
                         });
                     </script>
                 {% else %}
-                    <div class="empty-state">📊 <a href="{{ url_for('budget_submit') }}">{{ translations[language]['No data available. Go back to form to submit data.'] }}</a></div>
+                    <div class="empty-state">📊 <a href="{{ url_for('budget_submit') }}">{{ translations['No data available. Go back to form to submit data.'] }}</a></div>
                 {% endif %}
             </div>
         </div>
 
         <!-- Comparison Chart -->
-        <div class="card" role="region" aria-label="{{ translations[language]['Peer Comparison Chart'] }}">
+        <div class="card" role="region" aria-label="{{ translations['Peer Comparison Chart'] }}">
             <div class="card-header">
-                <span class="emoji">📉</span> {{ translations[language]['Comparison to Peers'] }} <small>({{ translations[language]['Based on aggregated user data'] }})</small>
+                <span class="emoji">📉</span> {{ translations['Comparison to Peers'] }} <small>({{ translations['Based on aggregated user data'] }})</small>
             </div>
             <div class="card-body">
                 {% if comparison_chart_html %}
                     <div class="chart-container" id="budget-comparison">
-                        <div class="chart-loading" aria-live="polite" id="comparison-loading">{{ translations[language]['Loading chart...'] }}</div>
+                        <div class="chart-loading" aria-live="polite" id="comparison-loading">{{ translations['Loading chart...'] }}</div>
                     </div>
                     <script>
                         document.addEventListener('DOMContentLoaded', function() {
@@ -301,20 +301,20 @@
                                 }
                             } catch (error) {
                                 console.error('Error rendering comparison chart:', error);
-                                comparisonDiv.innerHTML = '<div class="empty-state">📉 {{ translations[language]["Error loading chart."] }} <a href="{{ url_for('budget_submit') }}">{{ translations[language]["Try again"] }}</a></div>';
+                                comparisonDiv.innerHTML = '<div class="empty-state">📉 {{ translations["Error loading chart."] }} <a href="{{ url_for('budget_submit') }}">{{ translations["Try again"] }}</a></div>';
                             }
                         });
                     </script>
                 {% else %}
-                    <div class="empty-state">📉 <a href="{{ url_for('budget_submit') }}">{{ translations[language]['No data available. Go back to form to submit data.'] }}</a></div>
+                    <div class="empty-state">📉 <a href="{{ url_for('budget_submit') }}">{{ translations['No data available. Go back to form to submit data.'] }}</a></div>
                 {% endif %}
             </div>
         </div>
 
         <!-- Quick Tips -->
-        <div class="card" role="region" aria-label="{{ translations[language]['Quick Tips Section'] }}">
+        <div class="card" role="region" aria-label="{{ translations['Quick Tips Section'] }}">
             <div class="card-header">
-                <span class="emoji">💡</span> {{ translations[language]['Quick Tips'] }}
+                <span class="emoji">💡</span> {{ translations['Quick Tips'] }}
             </div>
             <div class="card-body">
                 <ul>
@@ -323,41 +323,41 @@
                             <li>{{ tip }}</li>
                         {% endfor %}
                     {% else %}
-                        <li>{{ translations[language]['Track daily spending.'] }}</li>
-                        <li>{{ translations[language]['Set a savings goal.'] }}</li>
+                        <li>{{ translations['Track daily spending.'] }}</li>
+                        <li>{{ translations['Set a savings goal.'] }}</li>
                     {% endif %}
                 </ul>
             </div>
         </div>
 
         <!-- Recommended Courses -->
-        <div class="card" role="region" aria-label="{{ translations[language]['Recommended Courses Section'] }}">
+        <div class="card" role="region" aria-label="{{ translations['Recommended Courses Section'] }}">
             <div class="card-header">
-                <span class="emoji">🎓</span> {{ translations[language]['Recommended Courses'] }}
+                <span class="emoji">🎓</span> {{ translations['Recommended Courses'] }}
             </div>
             <div class="card-body">
                 {% if courses %}
                     {% for course in courses %}
-                        <p><a href="{{ course.link }}" target="_blank" aria-label="{{ translations[language]['Open course'] }} {{ course.title }}">{{ course.title }}</a></p>
+                        <p><a href="{{ course.link }}" target="_blank" aria-label="{{ translations['Open course'] }} {{ course.title }}">{{ course.title }}</a></p>
                     {% endfor %}
                 {% else %}
-                    <p><a href="https://example.com/budgeting" target="_blank" aria-label="{{ translations[language]['Open course'] }} Budgeting 101">Budgeting 101</a></p>
+                    <p><a href="https://example.com/budgeting" target="_blank" aria-label="{{ translations['Open course'] }} Budgeting 101">Budgeting 101</a></p>
                 {% endif %}
             </div>
         </div>
 
         <!-- Buttons -->
         <div class="d-flex justify-content-between flex-wrap my-4">
-            <a href="{{ url_for('landing') }}" class="btn btn-primary" aria-label="{{ translations[language]['Back to Home'] }}">{{ translations[language]['Back to Home'] }}</a>
-            <a href="{{ WAITLIST_FORM_URL }}" class="btn btn-secondary" aria-label="{{ translations[language]['Join Waitlist'] }}">{{ translations[language]['Join Waitlist'] }}</a>
-            <a href="{{ CONSULTANCY_FORM_URL }}" class="btn btn-secondary" aria-label="{{ translations[language]['Book Consultancy'] }}">{{ translations[language]['Book Consultancy'] }}</a>
-            <a href="{{ FEEDBACK_FORM_URL }}" class="btn btn-secondary" aria-label="{{ translations[language]['Provide Feedback'] }}">{{ translations[language]['Provide Feedback'] }}</a>
-            <button class="btn btn-primary" id="share-btn" aria-label="{{ translations[language]['Share Your Results'] }}"><span>{{ translations[language]['Share Your Results'] }}</span></button>
+            <a href="{{ url_for('landing') }}" class="btn btn-primary" aria-label="{{ translations['Back to Home'] }}">{{ translations['Back to Home'] }}</a>
+            <a href="{{ WAITLIST_FORM_URL }}" class="btn btn-secondary" aria-label="{{ translations['Join Waitlist'] }}">{{ translations['Join Waitlist'] }}</a>
+            <a href="{{ CONSULTANCY_FORM_URL }}" class="btn btn-secondary" aria-label="{{ translations['Book Consultancy'] }}">{{ translations['Book Consultancy'] }}</a>
+            <a href="{{ FEEDBACK_FORM_URL }}" class="btn btn-secondary" aria-label="{{ translations['Provide Feedback'] }}">{{ translations['Provide Feedback'] }}</a>
+            <button class="btn btn-primary" id="share-btn" aria-label="{{ translations['Share Your Results'] }}"><span>{{ translations['Share Your Results'] }}</span></button>
         </div>
 
         <!-- Contact Information -->
         <div class="text-center my-4">
-            <p>{{ translations[language]['Contact Us'] }} <a href="mailto:ficore.ai.africa@gmail.com" class="btn btn-email" aria-label="{{ translations[language]['Email Ficore Africa Support'] }}">{{ translations[language]['Click to Email'] }}</a> {{ translations[language]['for support'] }}.</p>
+            <p>{{ translations['Contact Us'] }} <a href="mailto:ficore.ai.africa@gmail.com" class="btn btn-email" aria-label="{{ translations['Email Ficore Africa Support'] }}">{{ translations['Click to Email'] }}</a> {{ translations['for support'] }}.</p>
         </div>
     </div>
 
@@ -370,9 +370,9 @@
                 shareBtn.addEventListener('click', function() {
                     const shareText = `My Budget Insights from Ficore Africa:\nIncome: {{ '{:,.2f}'.format(monthly_income) }} NGN\nExpenses: {{ '{:,.2f}'.format(total_expenses) }} NGN\nSurplus/Deficit: {{ '{:,.2f}'.format(surplus_deficit) }} NGN\nRank: {{ rank }}%\nCheck out my results: ${window.location.href}`;
                     navigator.clipboard.writeText(shareText).then(() => {
-                        shareBtn.querySelector('span').textContent = '{{ translations[language]['Copied!'] }}';
+                        shareBtn.querySelector('span').textContent = '{{ translations['Copied!'] }}';
                         setTimeout(() => {
-                            shareBtn.querySelector('span').textContent = '{{ translations[language]['Share Your Results'] }}';
+                            shareBtn.querySelector('span').textContent = '{{ translations['Share Your Results'] }}';
                         }, 2000);
                     }).catch(err => {
                         console.error('Failed to copy: ', err);
