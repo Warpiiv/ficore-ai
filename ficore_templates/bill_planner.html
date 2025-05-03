@@ -42,7 +42,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ translations[language]['Bill Planner'] }}</title>
+    <title>{{ translations['Bill Planner'] }}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/custom.css') }}">
     <style>
@@ -54,7 +54,7 @@
 </head>
 <body>
     <div class="container mt-5">
-        <h1>{{ translations[language]['Bill Planner'] }}</h1>
+        <h1>{{ translations['Bill Planner'] }}</h1>
         
         <!-- Flash Messages -->
         {% with messages = get_flashed_messages(with_categories=true) %}
@@ -68,59 +68,59 @@
         {% endwith %}
         
         <!-- Task Form -->
-        <h3>{{ translations[language]['Add Task'] }}</h3>
+        <h3>{{ translations['Add Task'] }}</h3>
         <form method="POST" action="{{ url_for('bill_submit') }}">
             {{ form.hidden_tag() }}
             <div class="mb-3">
-                <label for="first_name" class="form-label">{{ translations[language]['First Name'] }}</label>
-                {{ form.first_name(class="form-control", placeholder=translations[language]['Enter your first name']) }}
+                <label for="first_name" class="form-label">{{ translations['First Name'] }}</label>
+                {{ form.first_name(class="form-control", placeholder=translations['Enter your first name']) }}
             </div>
             <div class="mb-3">
-                <label for="email" class="form-label">{{ translations[language]['Enter your email'] }}</label>
-                {{ form.email(class="form-control", placeholder=translations[language]['Enter your email']) }}
+                <label for="email" class="form-label">{{ translations['Enter your email'] }}</label>
+                {{ form.email(class="form-control", placeholder=translations['Enter your email']) }}
             </div>
             <div class="mb-3">
-                <label for="language" class="form-label">{{ translations[language]['Language'] }}</label>
+                <label for="language" class="form-label">{{ translations['Language'] }}</label>
                 {{ form.language(class="form-select") }}
             </div>
             <div class="mb-3">
-                <label for="description" class="form-label">{{ translations[language]['Description'] }}</label>
+                <label for="description" class="form-label">{{ translations['Description'] }}</label>
                 {{ form.description(class="form-control", placeholder="e.g. Pay ₦2000 for electricity next Tuesday") }}
             </div>
             <div class="mb-3">
-                <label for="amount" class="form-label">{{ translations[language]['Amount'] }} (₦)</label>
+                <label for="amount" class="form-label">{{ translations['Amount'] }} (₦)</label>
                 {{ form.amount(class="form-control", placeholder="e.g. 2000") }}
             </div>
             <div class="mb-3">
-                <label for="due_date" class="form-label">{{ translations[language]['Due Date'] }}</label>
+                <label for="due_date" class="form-label">{{ translations['Due Date'] }}</label>
                 {{ form.due_date(class="form-control", placeholder="e.g. 2025-05-10 or next Tuesday") }}
             </div>
             <div class="mb-3">
-                <label for="category" class="form-label">{{ translations[language]['Category'] }}</label>
+                <label for="category" class="form-label">{{ translations['Category'] }}</label>
                 {{ form.category(class="form-select") }}
             </div>
             <div class="mb-3">
-                <label for="recurrence" class="form-label">{{ translations[language]['Recurrence'] }}</label>
+                <label for="recurrence" class="form-label">{{ translations['Recurrence'] }}</label>
                 {{ form.recurrence(class="form-select") }}
             </div>
-            <button type="submit" class="btn btn-primary">{{ translations[language]['Add Task'] }}</button>
+            <button type="submit" class="btn btn-primary">{{ translations['Add Task'] }}</button>
         </form>
         
         <!-- Task List -->
-        <h3 class="mt-5">{{ translations[language]['Task List'] }}</h3>
+        <h3 class="mt-5">{{ translations['Task List'] }}</h3>
         {% if tasks %}
             <table class="table table-striped">
                 <thead>
                     <tr>
-                        <th>{{ translations[language]['Date'] }}</th>
-                        <th>{{ translations[language]['Description'] }}</th>
-                        <th>{{ translations[language]['Category'] }}</th>
-                        <th>{{ translations[language]['Amount'] }} (₦)</th>
-                        <th>{{ translations[language]['Due Date'] }}</th>
-                        <th>{{ translations[language]['Recurrence'] }}</th>
-                        <th>{{ translations[language]['Status'] }}</th>
-                        <th>{{ translations[language]['Edit'] }}</th>
-                        <th>{{ translations[language]['Complete'] }}</th>
+                        <th>{{ translations['Date'] }}</th>
+                        <th>{{ translations['Description'] }}</th>
+                        <th>{{ translations['Category'] }}</th>
+                        <th>{{ translations['Amount'] }} (₦)</th>
+                        <th>{{ translations['Due Date'] }}</th>
+                        <th>{{ translations['Recurrence'] }}</th>
+                        <th>{{ translations['Status'] }}</th>
+                        <th>{{ translations['Edit'] }}</th>
+                        <th>{{ translations['Complete'] }}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -131,17 +131,17 @@
                             <td>{{ task['Category'] }}</td>
                             <td>{{ task['Amount'] | float | round(2) }}</td>
                             <td>{{ task['DueDate'] }}</td>
-                            <td>{{ translations[language][task['Recurrence']] }}</td>
-                            <td class="{{ task['Status'] | lower }}">{{ translations[language][task['Status']] }}</td>
+                            <td>{{ translations[task['Recurrence']] }}</td>
+                            <td class="{{ task['Status'] | lower }}">{{ translations[task['Status']] }}</td>
                             <td>
                                 <a href="{{ url_for('bill_edit', id=loop.index0) }}" class="btn btn-sm btn-warning">
-                                    {{ translations[language]['Edit'] }}
+                                    {{ translations['Edit'] }}
                                 </a>
                             </td>
                             <td>
                                 {% if task['Status'] != 'Completed' %}
                                     <a href="{{ url_for('bill_complete', id=loop.index0) }}" class="btn btn-sm btn-success">
-                                        {{ translations[language]['Complete'] }}
+                                        {{ translations['Complete'] }}
                                     </a>
                                 {% endif %}
                             </td>
@@ -150,11 +150,11 @@
                 </tbody>
             </table>
         {% else %}
-            <p>{{ translations[language]['No Tasks'] }}</p>
+            <p>{{ translations['No Tasks'] }}</p>
         {% endif %}
         
-        <a href="{{ url_for('landing') }}" class="btn btn-primary mt-3">{{ translations[language]['Back to Home'] }}</a>
-        <p class="mt-3"><a href="{{ FEEDBACK_FORM_URL }}" target="_blank">{{ translations[language]['Provide Feedback'] }}</a></p>
+        <a href="{{ url_for('landing') }}" class="btn btn-primary mt-3">{{ translations['Back to Home'] }}</a>
+        <p class="mt-3"><a href="{{ FEEDBACK_FORM_URL }}" target="_blank">{{ translations['Provide Feedback'] }}</a></p>
     </div>
     
     <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
