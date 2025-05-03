@@ -42,16 +42,16 @@
      <head>
          <meta charset="UTF-8">
          <meta name="viewport" content="width=device-width, initial-scale=1.0">
-         <title>{{ translations[language]['Internal Server Error'] }}</title>
+         <title>{{ translations['Internal Server Error'] }}</title>
          <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
          <link rel="stylesheet" href="{{ url_for('static', filename='css/custom.css') }}">
      </head>
      <body>
          <div class="container text-center mt-5">
-             <h1>500 - {{ translations[language]['Internal Server Error'] }}</h1>
-             <p>{{ translations[language]['Something went wrong on our end. Please try again later.'] }}</p>
-             <a href="{{ url_for('landing') }}" class="btn btn-primary">{{ translations[language]['Back to Home'] }}</a>
-             <p class="mt-3"><a href="{{ FEEDBACK_FORM_URL }}" target="_blank">{{ translations[language]['Provide Feedback'] }}</a></p>
+             <h1>500 - {{ translations['Internal Server Error'] }}</h1>
+             <p>{{ translations['Something went wrong on our end. Please try again later.'] }}</p>
+             <a href="{{ url_for('landing') }}" class="btn btn-primary">{{ translations['Back to Home'] }}</a>
+             <p class="mt-3"><a href="{{ FEEDBACK_FORM_URL }}" target="_blank">{{ translations['Provide Feedback'] }}</a></p>
          </div>
          <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
      </body>
