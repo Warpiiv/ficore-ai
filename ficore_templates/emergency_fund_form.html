@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ translations[language]['Emergency Fund Calculator'] }}</title>
+    <title>{{ translations['Emergency Fund Calculator'] }}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/custom.css') }}">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
@@ -53,8 +53,8 @@
     <div class="container mt-5">
         <header class="text-center mb-4">
             <img src="{{ url_for('static', filename='img/ficore_logo.png') }}" alt="FiCore Logo" class="img-fluid" style="max-width: 200px;">
-            <h1><i class="fas fa-shield-alt icon"></i> <strong>{{ translations[language]['Emergency Fund Calculator'] }}</strong></h1>
-            <p class="lead">{{ translations[language]['Protect your financial well-being from unexpected events. Calculate your ideal safety net.'] }}</p>
+            <h1><i class="fas fa-shield-alt icon"></i> <strong>{{ translations['Emergency Fund Calculator'] }}</strong></h1>
+            <p class="lead">{{ translations['Protect your financial well-being from unexpected events. Calculate your ideal safety net.'] }}</p>
         </header>
 
         {% with messages = get_flashed_messages(with_categories=true) %}
@@ -73,7 +73,7 @@
 
             <div class="mb-3">
                 {{ form.first_name.label(class="form-label") }}
-                {{ form.first_name(class="form-control", id="first_name", placeholder=translations[language]['Enter your first name'], **{'aria-required': 'true'}) }}
+                {{ form.first_name(class="form-control", id="first_name", placeholder=translations['Enter your first name'], **{'aria-required': 'true'}) }}
                 {% for error in form.first_name.errors %}
                     <span class="text-danger">{{ error }}</span>
                 {% endfor %}
@@ -81,7 +81,7 @@
 
             <div class="mb-3">
                 {{ form.email.label(class="form-label") }}
-                {{ form.email(class="form-control", id="email", placeholder=translations[language]['Enter your email'], **{'aria-required': 'true'}) }}
+                {{ form.email(class="form-control", id="email", placeholder=translations['Enter your email'], **{'aria-required': 'true'}) }}
                 {% for error in form.email.errors %}
                     <span class="text-danger">{{ error }}</span>
                 {% endfor %}
@@ -99,15 +99,15 @@
                 {{ form.monthly_expenses.label(class="form-label") }}
                 <div class="input-group">
                     <span class="input-group-text">₦</span>
-                    {{ form.monthly_expenses(class="form-control", id="monthly_expenses", type="number", min="0", step="0.01", placeholder=translations[language]['e.g. 50,000'], **{'aria-required': 'true'}) }}
+                    {{ form.monthly_expenses(class="form-control", id="monthly_expenses", type="number", min="0", step="0.01", placeholder=translations['e.g. 50,000'], **{'aria-required': 'true'}) }}
                     <span class="input-group-text info-icon" aria-label="Monthly Expenses Info">
                         <i class="fas fa-info-circle"></i>
-                        <span class="tooltip-text">{{ translations[language]['Enter the total amount you spend monthly on essentials like food, rent, transport, etc.'] }}</span>
+                        <span class="tooltip-text">{{ translations['Enter the total amount you spend monthly on essentials like food, rent, transport, etc.'] }}</span>
                     </span>
                 </div>
-                <small class="form-text text-muted">{{ translations[language]['Enter amounts in Naira (₦).'] }}</small>
+                <small class="form-text text-muted">{{ translations['Enter amounts in Naira (₦).'] }}</small>
                 <p id="fund-preview" class="form-text text-info" style="display: none;">
-                    {{ translations[language]['Recommended fund size: ₦'] }}<span id="fund-amount">0</span>
+                    {{ translations['Recommended fund size: ₦'] }}<span id="fund-amount">0</span>
                 </p>
                 {% for error in form.monthly_expenses.errors %}
                     <span class="text-danger">{{ error }}</span>
@@ -115,19 +115,19 @@
             </div>
 
             <div class="mb-3 text-center">
-                {{ form.submit(class="btn btn-primary btn-lg", value=translations[language]['Calculate Your Recommended Fund Size'], id="submit-btn", **{'aria-label': translations[language]['Submit emergency fund form']}) }}
-                <p class="mt-2 text-muted">{{ translations[language]['Find your safety net amount now!'] }}</p>
+                {{ form.submit(class="btn btn-primary btn-lg", value=translations['Calculate Your Recommended Fund Size'], id="submit-btn", **{'aria-label': translations['Submit emergency fund form']}) }}
+                <p class="mt-2 text-muted">{{ translations['Find your safety net amount now!'] }}</p>
             </div>
         </form>
 
         <footer class="text-center mt-4">
             <p>
-                <a href="{{ url_for('index') }}" class="btn btn-secondary">{{ translations[language]['Home'] }}</a>
-                <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">{{ translations[language]['Back'] }}</a>
+                <a href="{{ url_for('index') }}" class="btn btn-secondary">{{ translations['Home'] }}</a>
+                <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">{{ translations['Back'] }}</a>
             </p>
             <p>
-                <a href="{{ FEEDBACK_FORM_URL }}" target="_blank">{{ translations[language]['Provide Feedback'] }}</a> |
-                <a href="https://ficore.africa" target="_blank">{{ translations[language]['FiCore Africa Home'] }}</a>
+                <a href="{{ FEEDBACK_FORM_URL }}" target="_blank">{{ translations['Provide Feedback'] }}</a> |
+                <a href="https://ficore.africa" target="_blank">{{ translations['FiCore Africa Home'] }}</a>
             </p>
             <p>© 2025 FiCore Africa</p>
         </footer>
