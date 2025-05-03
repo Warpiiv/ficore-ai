@@ -6,7 +6,7 @@
     <meta name="description" content="Check your financial quiz score with Ficore Africa and share your achievements!">
     <meta name="keywords" content="ficore africa, quiz dashboard, financial knowledge, shareable score">
     <meta name="author" content="Ficore Africa">
-    <title>Ficore Africa - {{ translations[language]['Quiz Dashboard'] }}</title>
+    <title>Ficore Africa - {{ translations['Quiz Dashboard'] }}</title>
     <link href="{{ url_for('static', filename='css/bootstrap.min.css') }}" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;600&display=swap" rel="stylesheet">
     <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
@@ -203,8 +203,8 @@
             <div class="logo-container">
                 <img src="{{ url_for('static', filename='img/ficore_logo.png') }}" alt="Ficore Africa Logo" class="img-fluid">
             </div>
-            <h2>{{ translations[language]['Ficore Africa Quiz Dashboard'] }}</h2>
-            <p class="lead">{{ translations[language]['Your Financial Knowledge Score!'] }}</p>
+            <h2>{{ translations['Ficore Africa Quiz Dashboard'] }}</h2>
+            <p class="lead">{{ translations['Your Financial Knowledge Score!'] }}</p>
         </header>
 
         <!-- Flash Messages -->
@@ -224,11 +224,11 @@
         <!-- Welcome and Score -->
         <div class="card">
             <div class="card-header">
-                {{ translations[language]['Welcome'] }}, {{ full_name }}!
+                {{ translations['Welcome'] }}, {{ full_name }}!
             </div>
             <div class="card-body">
-                <p>{{ translations[language]['Your Quiz Score'] }}: <span class="score-value">{{ score }}%</span></p>
-                <p>{{ translations[language]['Rank'] }}: {{ rank }}% <span class="info-icon" data-bs-toggle="tooltip" data-bs-title="{{ translations[language]['Your rank among users based on quiz performance'] }}" aria-label="{{ translations[language]['More info on rank'] }}">ℹ️</span></p>
+                <p>{{ translations['Your Quiz Score'] }}: <span class="score-value">{{ score }}%</span></p>
+                <p>{{ translations['Rank'] }}: {{ rank }}% <span class="info-icon" data-bs-toggle="tooltip" data-bs-title="{{ translations['Your rank among users based on quiz performance'] }}" aria-label="{{ translations['More info on rank'] }}">ℹ️</span></p>
                 <p>{{ advice }}</p>
                 {% if score >= 80 %}
                     <canvas class="confetti-canvas" id="confetti" aria-hidden="true"></canvas>
@@ -251,31 +251,31 @@
         <!-- Badges -->
         <div class="card">
             <div class="card-header">
-                {{ translations[language]['Your Badges'] }}
+                {{ translations['Your Badges'] }}
             </div>
             <div class="card-body">
                 {% for badge in badges %}
                     <span class="badge-item">{{ badge }}</span>
                 {% endfor %}
                 {% if not badges %}
-                    <p>{{ translations[language]['No badges yet. Aim for a higher score!'] }}</p>
+                    <p>{{ translations['No badges yet. Aim for a higher score!'] }}</p>
                 {% endif %}
-                <p class="mt-2">{{ translations[language]['Share your badges!'] }} <button class="btn btn-share" onclick="shareScore()" aria-label="{{ translations[language]['Share your quiz score'] }}">{{ translations[language]['Share Now'] }}</button></p>
-                <div class="alert alert-success mt-2 d-none" id="share-feedback" role="alert" aria-live="polite">{{ translations[language]['Score shared successfully!'] }}</div>
+                <p class="mt-2">{{ translations['Share your badges!'] }} <button class="btn btn-share" onclick="shareScore()" aria-label="{{ translations['Share your quiz score'] }}">{{ translations['Share Now'] }}</button></p>
+                <div class="alert alert-success mt-2 d-none" id="share-feedback" role="alert" aria-live="polite">{{ translations['Score shared successfully!'] }}</div>
             </div>
         </div>
 
         <!-- Chart: Question Performance -->
         <div class="card">
             <div class="card-header">
-                {{ translations[language]['Your Performance'] }}
+                {{ translations['Your Performance'] }}
             </div>
             <div class="card-body">
                 {% if chart_html %}
-                    <div class="chart-container" id="quiz-chart" role="img" aria-label="{{ translations[language]['Chart showing quiz performance'] }}">{{ chart_html | safe }}</div>
+                    <div class="chart-container" id="quiz-chart" role="img" aria-label="{{ translations['Chart showing quiz performance'] }}">{{ chart_html | safe }}</div>
                 {% else %}
                     <div class="chart-container loading" aria-live="polite">
-                        <div class="empty-state"><span>📊</span> {{ translations[language]['Loading chart...'] }}</div>
+                        <div class="empty-state"><span>📊</span> {{ translations['Loading chart...'] }}</div>
                     </div>
                 {% endif %}
             </div>
@@ -284,14 +284,14 @@
         <!-- Comparison Chart -->
         <div class="card">
             <div class="card-header">
-                {{ translations[language]['Comparison to Peers'] }}
+                {{ translations['Comparison to Peers'] }}
             </div>
             <div class="card-body">
                 {% if comparison_chart_html %}
-                    <div class="chart-container" id="quiz-comparison" role="img" aria-label="{{ translations[language]['Chart comparing your score to peers'] }}">{{ comparison_chart_html | safe }}</div>
+                    <div class="chart-container" id="quiz-comparison" role="img" aria-label="{{ translations['Chart comparing your score to peers'] }}">{{ comparison_chart_html | safe }}</div>
                 {% else %}
                     <div class="chart-container loading" aria-live="polite">
-                        <div class="empty-state"><span>📉</span> {{ translations[language]['Loading comparison chart...'] }}</div>
+                        <div class="empty-state"><span>📉</span> {{ translations['Loading comparison chart...'] }}</div>
                     </div>
                 {% endif %}
             </div>
@@ -300,7 +300,7 @@
         <!-- Quick Tips -->
         <div class="card">
             <div class="card-header">
-                {{ translations[language]['Quick Tips'] }}
+                {{ translations['Quick Tips'] }}
             </div>
             <div class="card-body">
                 <ul>
@@ -314,11 +314,11 @@
         <!-- Recommended Courses -->
         <div class="card">
             <div class="card-header">
-                {{ translations[language]['Recommended Courses'] }}
+                {{ translations['Recommended Courses'] }}
             </div>
             <div class="card-body">
                 {% for course in courses %}
-                    <p><a href="{{ course.link }}" target="_blank" aria-label="{{ translations[language]['Open course'] }} {{ course.title }}">{{ course.title }}</a></p>
+                    <p><a href="{{ course.link }}" target="_blank" aria-label="{{ translations['Open course'] }} {{ course.title }}">{{ course.title }}</a></p>
                 {% endfor %}
             </div>
         </div>
@@ -326,25 +326,25 @@
         <!-- Buttons -->
         <div class="row row-cols-1 row-cols-md-4 g-2 my-4">
             <div class="col">
-                <a href="{{ url_for('landing') }}" class="btn btn-primary w-100" aria-label="{{ translations[language]['Back to Home'] }}">{{ translations[language]['Back to Home'] }}</a>
+                <a href="{{ url_for('landing') }}" class="btn btn-primary w-100" aria-label="{{ translations['Back to Home'] }}">{{ translations['Back to Home'] }}</a>
             </div>
             <div class="col">
-                <a href="{{ WAITLIST_FORM_URL }}" class="btn btn-secondary w-100" aria-label="{{ translations[language]['Join Waitlist'] }}">{{ translations[language]['Join Waitlist'] }}</a>
+                <a href="{{ WAITLIST_FORM_URL }}" class="btn btn-secondary w-100" aria-label="{{ translations['Join Waitlist'] }}">{{ translations['Join Waitlist'] }}</a>
             </div>
             <div class="col">
-                <a href="{{ CONSULTANCY_FORM_URL }}" class="btn btn-secondary w-100" aria-label="{{ translations[language]['Book Consultancy'] }}">{{ translations[language]['Book Consultancy'] }}</a>
+                <a href="{{ CONSULTANCY_FORM_URL }}" class="btn btn-secondary w-100" aria-label="{{ translations['Book Consultancy'] }}">{{ translations['Book Consultancy'] }}</a>
             </div>
             <div class="col">
-                <a href="{{ FEEDBACK_FORM_URL }}" class="btn btn-secondary w-100" aria-label="{{ translations[language]['Provide Feedback'] }}">{{ translations[language]['Provide Feedback'] }}</a>
+                <a href="{{ FEEDBACK_FORM_URL }}" class="btn btn-secondary w-100" aria-label="{{ translations['Provide Feedback'] }}">{{ translations['Provide Feedback'] }}</a>
             </div>
             <div class="col">
-                <a href="{{ url_for('send_quiz_email') }}" class="btn btn-primary w-100" aria-label="{{ translations[language]['Send Email Report'] }}">{{ translations[language]['Send Email Report'] }}</a>
+                <a href="{{ url_for('send_quiz_email') }}" class="btn btn-primary w-100" aria-label="{{ translations['Send Email Report'] }}">{{ translations['Send Email Report'] }}</a>
             </div>
         </div>
 
         <!-- Contact Information -->
         <div class="text-center my-4">
-            <p>{{ translations[language]['Contact Us'] }} <a href="mailto:ficore.ai.africa@gmail.com" class="btn btn-email" aria-label="{{ translations[language]['Email Ficore Africa Support'] }}">{{ translations[language]['Click to Email'] }}</a> {{ translations[language]['for support'] }}.</p>
+            <p>{{ translations['Contact Us'] }} <a href="mailto:ficore.ai.africa@gmail.com" class="btn btn-email" aria-label="{{ translations['Email Ficore Africa Support'] }}">{{ translations['Click to Email'] }}</a> {{ translations['for support'] }}.</p>
         </div>
     </div>
 
