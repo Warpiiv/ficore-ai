@@ -6,7 +6,7 @@
     <meta name="description" content="Track your financial health with Ficore Africa. See your score, earn badges, and get smart insights.">
     <meta name="keywords" content="ficore africa, financial health, dashboard, Africa SME finance, smart insights">
     <meta name="author" content="Ficore Africa">
-    <title>Ficore Africa - {{ translations[language]['Your Financial Health Dashboard'] }}</title>
+    <title>Ficore Africa - {{ translations['Your Financial Health Dashboard'] }}</title>
     <link href="{{ url_for('static', filename='css/bootstrap.min.css') }}" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
@@ -326,64 +326,64 @@
                 <!-- Welcome + Financial Health Score Card -->
                 <div class="card grid-card badges-card">
                     <div class="card-header">
-                        <span class="emoji">🎉</span> {{ translations[language]['Welcome'] }}, {{ first_name }}!
+                        <span class="emoji">🎉</span> {{ translations['Welcome'] }}, {{ first_name }}!
                     </div>
                     <div class="card-body">
                         <div class="success-message">
                             <span class="tick-icon"></span>
-                            {{ translations[language]['Submission Success'] }}
+                            {{ translations['Submission Success'] }}
                         </div>
                         <div class="header-subsection">
-                            <p>{{ translations[language]['Email'] }}: {{ email }}</p>
-                            <p class="subheading">{{ translations[language]['Your Financial Health Summary'] }}</p>
+                            <p>{{ translations['Email'] }}: {{ email }}</p>
+                            <p class="subheading">{{ translations['Your Financial Health Summary'] }}</p>
                             {% if personalized_message %}
                                 <p><strong>{{ personalized_message }}</strong></p>
                             {% endif %}
                             <div class="section-divider"></div>
-                            <h3>⭐ {{ translations[language]['Your Financial Health Score'] }}</h3>
+                            <h3>⭐ {{ translations['Your Financial Health Score'] }}</h3>
                             <p class="result-text">{{ health_score }}/100</p>
-                            <p class="result-text">{{ translations[language]['Ranked'] }} #{{ rank }} {{ translations[language]['out of'] }} {{ total_users }} {{ translations[language]['users'] }}</p>
+                            <p class="result-text">{{ translations['Ranked'] }} #{{ rank }} {{ translations['out of'] }} {{ total_users }} {{ translations['users'] }}</p>
                             <p class="result-text">
                                 {% if health_score >= 75 %}
-                                    {{ translations[language]['Strong Financial Health'] }}
+                                    {{ translations['Strong Financial Health'] }}
                                 {% elif health_score >= 50 %}
-                                    {{ translations[language]['Stable Finances'] }}
+                                    {{ translations['Stable Finances'] }}
                                 {% elif health_score >= 25 %}
-                                    {{ translations[language]['Financial Strain'] }}
+                                    {{ translations['Financial Strain'] }}
                                 {% else %}
-                                    {{ translations[language]['Urgent Attention Needed'] }}
+                                    {{ translations['Urgent Attention Needed'] }}
                                 {% endif %}
                             </p>
                         </div>
-                        <p class="note-text">{{ translations[language]['Check Inbox'] }}</p>
+                        <p class="note-text">{{ translations['Check Inbox'] }}</p>
                     </div>
                 </div>
 
                 <!-- Score Breakdown Card -->
                 <div class="card grid-card">
                     <div class="card-header">
-                        <span class="emoji">📊</span> {{ translations[language]['Score Breakdown'] }}
+                        <span class="emoji">📊</span> {{ translations['Score Breakdown'] }}
                     </div>
                     <div class="card-body">
                         <div class="header-subsection">
                             <div class="chart-container">
-                                <div id="score-breakdown-chart" role="img" aria-label="{{ translations[language]['Score Breakdown Chart'] }}"></div>
-                                <div class="chart-loading" id="breakdown-loading">{{ translations[language]['Loading Chart'] }}</div>
-                                <div class="chart-error" id="breakdown-error" style="display: none;">{{ translations[language]['Chart Unavailable'] }}</div>
+                                <div id="score-breakdown-chart" role="img" aria-label="{{ translations['Score Breakdown Chart'] }}"></div>
+                                <div class="chart-loading" id="breakdown-loading">{{ translations['Loading Chart'] }}</div>
+                                <div class="chart-error" id="breakdown-error" style="display: none;">{{ translations['Chart Unavailable'] }}</div>
                             </div>
                             <p class="insight-text">
-                                {{ translations[language]['Score Composition'] }}:
+                                {{ translations['Score Composition'] }}:
                                 <ul>
-                                    <li><strong>{{ translations[language]['Cash Flow'] }}</strong>: {{ translations[language]['Cash Flow Description'] }}</li>
-                                    <li><strong>{{ translations[language]['Debt-to-Income Ratio'] }}</strong>: {{ translations[language]['Debt-to-Income Description'] }}</li>
-                                    <li><strong>{{ translations[language]['Debt Interest Burden'] }}</strong>: {{ translations[language]['Debt Interest Description'] }}</li>
+                                    <li><strong>{{ translations['Cash Flow'] }}</strong>: {{ translations['Cash Flow Description'] }}</li>
+                                    <li><strong>{{ translations['Debt-to-Income Ratio'] }}</strong>: {{ translations['Debt-to-Income Description'] }}</li>
+                                    <li><strong>{{ translations['Debt Interest Burden'] }}</strong>: {{ translations['Debt Interest Description'] }}</li>
                                 </ul>
                                 {% if health_score >= 75 %}
-                                    {{ translations[language]['Balanced Components'] }}
+                                    {{ translations['Balanced Components'] }}
                                 {% elif health_score >= 50 %}
-                                    {{ translations[language]['Components Need Attention'] }}
+                                    {{ translations['Components Need Attention'] }}
                                 {% else %}
-                                    {{ translations[language]['Components Indicate Challenges'] }}
+                                    {{ translations['Components Indicate Challenges'] }}
                                 {% endif %}
                             </p>
                         </div>
@@ -396,21 +396,21 @@
                 <!-- Badges + Recommended Learning Card -->
                 <div class="card grid-card badges-card">
                     <div class="card-header">
-                        <span class="emoji">🏅</span> {{ translations[language]['Your Badges'] }}
+                        <span class="emoji">🏅</span> {{ translations['Your Badges'] }}
                     </div>
                     <div class="card-body">
                         <div class="header-subsection">
                             {% if badges %}
                                 {% for badge in badges %}
-                                    <span class="badge" role="img" aria-label="{{ translations[language].get(badge, badge) }}">{{ translations[language].get(badge, badge) }}</span>
+                                    <span class="badge" role="img" aria-label="{{ translations.get(badge, badge) }}">{{ translations.get(badge, badge) }}</span>
                                 {% endfor %}
                             {% else %}
-                                <p>{{ translations[language]['No Badges Yet'] }}</p>
+                                <p>{{ translations['No Badges Yet'] }}</p>
                             {% endif %}
                             <div class="section-divider"></div>
-                            <h3>📚 {{ translations[language]['Recommended Learning'] }}</h3>
-                            <a href="{{ course_url }}" target="_blank" class="course-link" aria-label="{{ translations[language]['Recommended Course'] }}: {{ course_title }}">{{ course_title }}</a>
-                            <a href="{{ course_url }}" target="_blank" class="enroll-button" aria-label="{{ translations[language]['Enroll in'] }} {{ course_title }}">{{ translations[language]['Enroll Now'] }}</a>
+                            <h3>📚 {{ translations['Recommended Learning'] }}</h3>
+                            <a href="{{ course_url }}" target="_blank" class="course-link" aria-label="{{ translations['Recommended Course'] }}: {{ course_title }}">{{ course_title }}</a>
+                            <a href="{{ course_url }}" target="_blank" class="enroll-button" aria-label="{{ translations['Enroll in'] }} {{ course_title }}">{{ translations['Enroll Now'] }}</a>
                         </div>
                     </div>
                 </div>
@@ -418,20 +418,20 @@
                 <!-- Quick Financial Tips Card -->
                 <div class="card grid-card tips-card">
                     <div class="card-header">
-                        <span class="emoji">💡</span> {{ translations[language]['Quick Financial Tips'] }}
+                        <span class="emoji">💡</span> {{ translations['Quick Financial Tips'] }}
                     </div>
                     <div class="card-body">
                         <div class="header-subsection">
                             <ul class="tips-list">
                                 {% if health_score >= 75 %}
-                                    <li><strong>{{ translations[language]['Invest'] }}</strong>: {{ translations[language]['Invest Wisely'] }}</li>
-                                    <li><strong>{{ translations[language]['Scale'] }}</strong>: {{ translations[language]['Scale Smart'] }}</li>
+                                    <li><strong>{{ translations['Invest'] }}</strong>: {{ translations['Invest Wisely'] }}</li>
+                                    <li><strong>{{ translations['Scale'] }}</strong>: {{ translations['Scale Smart'] }}</li>
                                 {% elif health_score >= 50 %}
-                                    <li><strong>{{ translations[language]['Build'] }}</strong>: {{ translations[language]['Build Savings'] }}</li>
-                                    <li><strong>{{ translations[language]['Cut'] }}</strong>: {{ translations[language]['Cut Costs'] }}</li>
+                                    <li><strong>{{ translations['Build'] }}</strong>: {{ translations['Build Savings'] }}</li>
+                                    <li><strong>{{ translations['Cut'] }}</strong>: {{ translations['Cut Costs'] }}</li>
                                 {% else %}
-                                    <li><strong>{{ translations[language]['Reduce'] }}</strong>: {{ translations[language]['Reduce Debt'] }}</li>
-                                    <li><strong>{{ translations[language]['Boost'] }}</strong>: {{ translations[language]['Boost Income'] }}</li>
+                                    <li><strong>{{ translations['Reduce'] }}</strong>: {{ translations['Reduce Debt'] }}</li>
+                                    <li><strong>{{ translations['Boost'] }}</strong>: {{ translations['Boost Income'] }}</li>
                                 {% endif %}
                             </ul>
                         </div>
@@ -445,27 +445,27 @@
             <div class="col-12">
                 <div class="card full-width-card">
                     <div class="card-header">
-                        <span class="emoji">⚖️</span> {{ translations[language]['How You Compare'] }}
+                        <span class="emoji">⚖️</span> {{ translations['How You Compare'] }}
                     </div>
                     <div class="card-body">
                         <div class="header-subsection">
                             <div class="chart-container">
-                                <div id="compare-others-chart" role="img" aria-label="{{ translations[language]['Comparison to Peers Chart'] }}"></div>
-                                <div class="chart-loading" id="comparison-loading">{{ translations[language]['Loading Chart'] }}</div>
-                                <div class="chart-error" id="comparison-error" style="display: none;">{{ translations[language]['Chart Unavailable'] }}</div>
+                                <div id="compare-others-chart" role="img" aria-label="{{ translations['Comparison to Peers Chart'] }}"></div>
+                                <div class="chart-loading" id="comparison-loading">{{ translations['Loading Chart'] }}</div>
+                                <div class="chart-error" id="comparison-error" style="display: none;">{{ translations['Chart Unavailable'] }}</div>
                             </div>
                             <p class="insight-text">
-                                {{ translations[language]['Your Rank'] }} #{{ rank }} {{ translations[language]['out of'] }} {{ total_users }} {{ translations[language]['users'] }} {{ translations[language]['places you'] }}:
+                                {{ translations['Your Rank'] }} #{{ rank }} {{ translations['out of'] }} {{ total_users }} {{ translations['users'] }} {{ translations['places you'] }}:
                                 {% if rank <= total_users * 0.1 %}
-                                    {{ translations[language]['Top 10%'] }}
+                                    {{ translations['Top 10%'] }}
                                 {% elif rank <= total_users * 0.3 %}
-                                    {{ translations[language]['Top 30%'] }}
+                                    {{ translations['Top 30%'] }}
                                 {% elif rank <= total_users * 0.7 %}
-                                    {{ translations[language]['Middle Range'] }}
+                                    {{ translations['Middle Range'] }}
                                 {% else %}
-                                    {{ translations[language]['Lower Range'] }}
+                                    {{ translations['Lower Range'] }}
                                 {% endif %}
-                                {{ translations[language]['Regular Submissions'] }}
+                                {{ translations['Regular Submissions'] }}
                             </p>
                         </div>
                     </div>
@@ -478,18 +478,18 @@
             <div class="col-12">
                 <div class="card full-width-card">
                     <div class="card-header">
-                        <span class="emoji">🔓</span> {{ translations[language]['Whats Next'] }}
+                        <span class="emoji">🔓</span> {{ translations['Whats Next'] }}
                     </div>
                     <div class="card-body">
                         <div class="header-subsection">
                             <div class="d-flex flex-wrap justify-content-center gap-2 mb-3">
-                                <a href="{{ url_for('home') }}" class="btn btn-primary" aria-label="{{ translations[language]['Back to Home'] }}">{{ translations[language]['Back to Home'] }}</a>
-                                <a href="{{ FEEDBACK_FORM_URL }}" class="btn btn-secondary" target="_blank" aria-label="{{ translations[language]['Provide Feedback'] }}">{{ translations[language]['Provide Feedback'] }}</a>
-                                <a href="{{ WAITLIST_FORM_URL }}" class="btn btn-secondary" target="_blank" aria-label="{{ translations[language]['Join Waitlist'] }}">{{ translations[language]['Join Waitlist'] }}</a>
-                                <a href="{{ CONSULTANCY_FORM_URL }}" class="btn btn-secondary" target="_blank" aria-label="{{ translations[language]['Book Consultancy'] }}">{{ translations[language]['Book Consultancy'] }}</a>
-                                <button class="btn btn-share" id="share-button" aria-label="{{ translations[language]['Share Your Results'] }}">{{ translations[language]['Share Your Results'] }}</button>
+                                <a href="{{ url_for('home') }}" class="btn btn-primary" aria-label="{{ translations['Back to Home'] }}">{{ translations['Back to Home'] }}</a>
+                                <a href="{{ FEEDBACK_FORM_URL }}" class="btn btn-secondary" target="_blank" aria-label="{{ translations['Provide Feedback'] }}">{{ translations['Provide Feedback'] }}</a>
+                                <a href="{{ WAITLIST_FORM_URL }}" class="btn btn-secondary" target="_blank" aria-label="{{ translations['Join Waitlist'] }}">{{ translations['Join Waitlist'] }}</a>
+                                <a href="{{ CONSULTANCY_FORM_URL }}" class="btn btn-secondary" target="_blank" aria-label="{{ translations['Book Consultancy'] }}">{{ translations['Book Consultancy'] }}</a>
+                                <button class="btn btn-share" id="share-button" aria-label="{{ translations['Share Your Results'] }}">{{ translations['Share Your Results'] }}</button>
                             </div>
-                            <p class="text-center">{{ translations[language]['Contact Us'] }} <a href="mailto:ficore.ai.africa@gmail.com" aria-label="{{ translations[language]['Email Ficore Africa Support'] }}">ficore.ai.africa@gmail.com</a> {{ translations[language]['for support'] }}</p>
+                            <p class="text-center">{{ translations['Contact Us'] }} <a href="mailto:ficore.ai.africa@gmail.com" aria-label="{{ translations['Email Ficore Africa Support'] }}">ficore.ai.africa@gmail.com</a> {{ translations['for support'] }}</p>
                         </div>
                     </div>
                 </div>
@@ -542,9 +542,9 @@
 
             // Share Results Button
             document.getElementById('share-button').addEventListener('click', function () {
-                const shareText = `${translations[language]['My Financial Health Score']}: ${healthScore}/100\n${translations[language]['Ranked']}: #${{{ rank }}}                ${translations[language]['out of']}: ${{{ total_users }}}                ${translations[language]['Check yours at']}: ${window.location.origin}`;
+                const shareText = `${translations['My Financial Health Score']}: ${healthScore}/100\n${translations['Ranked']}: #${{{ rank }}}                ${translations['out of']}: ${{{ total_users }}}                ${translations['Check yours at']}: ${window.location.origin}`;
                 const shareData = {
-                    title: translations[language]['My Financial Health Score'],
+                    title: translations['My Financial Health Score'],
                     text: shareText,
                     url: window.location.origin
                 };
@@ -557,11 +557,11 @@
                     // Fallback: Copy to clipboard
                     navigator.clipboard.writeText(shareText)
                         .then(() => {
-                            alert(translations[language]['Results copied to clipboard']);
+                            alert(translations['Results copied to clipboard']);
                         })
                         .catch((error) => {
                             console.error('Error copying to clipboard:', error);
-                            alert(translations[language]['Failed to copy results']);
+                            alert(translations['Failed to copy results']);
                         });
                 }
             });
