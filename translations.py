@@ -216,7 +216,28 @@ translations = {
         'Housing': 'Housing',
         'Utilities': 'Utilities',
         'Entertainment': 'Entertainment',
-        'Other': 'Other'
+        'Other': 'Other',
+        'Unlock Your Financial Freedom': 'Unlock Your Financial Freedom',
+        'Access essential tools and insights to understand, manage, and grow your finances across Africa': 'Access essential tools and insights to understand, manage, and grow your finances across Africa',
+        'Why Ficore Africa?': 'Why Ficore Africa?',
+        'Localized for Africa with support for Naira and regional financial contexts': 'Localized for Africa with support for Naira and regional financial contexts',
+        'Empowers financial literacy with easy-to-use tools': 'Empowers financial literacy with easy-to-use tools',
+        'Provides actionable insights for better financial decisions': 'Provides actionable insights for better financial decisions',
+        'Assess your financial health with a personalized score and insights': 'Assess your financial health with a personalized score and insights',
+        'This tool evaluates your income, expenses, and debt to provide a health score': 'This tool evaluates your income, expenses, and debt to provide a health score',
+        'Get Started with Financial Health Score': 'Get Started with Financial Health Score',
+        'Calculate your net worth by evaluating your assets and liabilities': 'Calculate your net worth by evaluating your assets and liabilities',
+        'Net worth is calculated as assets minus liabilities': 'Net worth is calculated as assets minus liabilities',
+        'Get Started with Net Worth Calculator': 'Get Started with Net Worth Calculator',
+        'Plan your emergency fund to cover unexpected expenses': 'Plan your emergency fund to cover unexpected expenses',
+        'Aims to cover 3-6 months of expenses for financial security': 'Aims to cover 3-6 months of expenses for financial security',
+        'Get Started with Emergency Fund Calculator': 'Get Started with Emergency Fund Calculator',
+        'Test your financial knowledge and get personalized tips': 'Test your financial knowledge and get personalized tips',
+        'Answer a series of questions to assess your financial literacy': 'Answer a series of questions to assess your financial literacy',
+        'Get Started with Financial Personality Quiz': 'Get Started with Financial Personality Quiz',
+        'Create a budget to manage your income and expenses effectively': 'Create a budget to manage your income and expenses effectively',
+        'Helps you allocate your income across various expense categories': 'Helps you allocate your income across various expense categories',
+        'Get Started with Weekly Budget Planner': 'Get Started with Weekly Budget Planner'
     },
     'Hausa': {
         'Welcome': 'Barka da Zuwa',
@@ -293,7 +314,7 @@ translations = {
                     <li><strong>Matsayi</strong>: #{rank} daga cikin {total_users} masu amfani</li>
                 </ul>
                 <p>Bi shawarar da ke sama don inganta lafiyar kuɗin ka.</p>
-                <p style="margin-bottom: 10px;">
+                <p style="margin-bottom -bottom: 10px;">
                     Kana son ƙarin koyo? Duba wannan kwas: 
                     <a href="{course_url}" style="display: inline-block; padding: 10px 20px; background-color: #FBC02D; color: #333; text-decoration: none; border-radius: 5px; font-size: 0.9rem;">{course_title}</a>
                 </p>
@@ -435,6 +456,27 @@ translations = {
         'Housing': 'Gidaje',
         'Utilities': 'Kayan Aiki',
         'Entertainment': 'Nishaɗi',
-        'Other': 'Sauran'
+        'Other': 'Sauran',
+        'Unlock Your Financial Freedom': 'Buɗe 'Yancin Kuɗin Ku',
+        'Access essential tools and insights to understand, manage, and grow your finances across Africa': 'Samun kayan aiki masu mahimmanci da fahimta don fahimta, sarrafawa, da haɓaka kuɗin ku a duk faɗin Afirka',
+        'Why Ficore Africa?': 'Me yasa Ficore Afirka?',
+        'Localized for Africa with support for Naira and regional financial contexts': 'An keɓance shi don Afirka tare da tallafi ga Naira da yanayin kuɗi na yanki',
+        'Empowers financial literacy with easy-to-use tools': 'Yana ƙarfafa ilimin kuɗi tare da kayan aiki masu sauƙin amfani',
+        'Provides actionable insights for better financial decisions': 'Yana ba da fahimta mai aiki don mafi kyawun yanke shawara na kuɗi',
+        'Assess your financial health with a personalized score and insights': 'Tantance lafiyar kuɗin ku tare da maki na keɓaɓɓu da fahimta',
+        'This tool evaluates your income, expenses, and debt to provide a health score': 'Wannan kayan aiki yana kimanta kuɗin shiga, kashe kuɗi, da bashi don samar da makin lafiya',
+        'Get Started with Financial Health Score': 'Fara da Makin Lafiyar Kuɗi',
+        'Calculate your net worth by evaluating your assets and liabilities': 'Lissafa darajar net ɗin ku ta hanyar kimanta kadarori da alhaki',
+        'Net worth is calculated as assets minus liabilities': 'Darajar net ana lissafa kamar kadarori ban da alhaki',
+        'Get Started with Net Worth Calculator': 'Fara da Kalkuletar Darajar Net',
+        'Plan your emergency fund to cover unexpected expenses': 'Shirya asusun gaggawa don rufe kashe kuɗin da ba a ji tsammani ba',
+        'Aims to cover 3-6 months of expenses for financial security': 'Yana nufin rufe kashe kuɗin watanni 3-6 don tsaron kuɗi',
+        'Get Started with Emergency Fund Calculator': 'Fara da Kalkuletar Asusun Gaggawa',
+        'Test your financial knowledge and get personalized tips': 'Gwada ilimin kuɗin ku kuma sami shawarwari na keɓaɓɓu',
+        'Answer a series of questions to assess your financial literacy': 'Amsa jerin tambayoyi don tantance ilimin kuɗin ku',
+        'Get Started with Financial Personality Quiz': 'Fara da Gwajin Halin Kuɗi',
+        'Create a budget to manage your income and expenses effectively': 'Ƙirƙiri kasafin kuɗi don sarrafa kuɗin shiga da kashe kuɗi yadda ya kamata',
+        'Helps you allocate your income across various expense categories': 'Yana taimakawa wajen raba kuɗin shiga a cikin nau’ikan kashe kuɗi daban-daban',
+        'Get Started with Weekly Budget Planner': 'Fara da Mai Tsara Kasafin Mako-mako'
     }
 }
