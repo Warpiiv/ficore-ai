@@ -15,8 +15,8 @@ from dateutil import parser
 import random
 
 # Initialize Flask app with custom template and static folders
-# Set template_folder to 'ficore_templates' to match repository structure and fix TemplateNotFound error
-# Set static_folder to 'static' to explicitly point to the static assets directory
+# Set template_folder to 'ficore_templates' to match repository structure
+# Set static_folder to 'static' to point to the static assets directory
 app = Flask(__name__, template_folder='ficore_templates', static_folder='static')
 app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'your-secret-key')
 app.config['SESSION_COOKIE_SECURE'] = True
@@ -223,8 +223,7 @@ def generate_insights(email):
 @app.route('/')
 def index():
     language = session.get('language', 'English')
-    form = SubmissionForm()
-    return render_template('index.html', form=form, language=language, translations=translations[language])
+    return render_template('landing.html', language=language, translations=translations[language], FEEDBACK_FORM_URL=FEEDBACK_FORM_URL)
 
 @app.route('/set_language', methods=['POST'])
 def set_language():
@@ -235,7 +234,8 @@ def set_language():
 @app.route('/financial_health')
 def financial_health():
     language = session.get('language', 'English')
-    return render_template('index.html', form=SubmissionForm(), language=language, translations=translations[language])
+    form = SubmissionForm()
+    return render_template('index.html', form=form, language=language, translations=translations[language])
 
 @app.route('/submit', methods=['POST'])
 def submit():
@@ -244,7 +244,7 @@ def submit():
     if form.validate_on_submit():
         if form.email.data != form.auto_email.data:
             flash(translations[language]['Emails Do Not Match'], 'error')
-            return redirect(url_for('index'))
+            return redirect(url_for('financial_health'))
         worksheet = ensure_sheet_and_headers(SHEET_NAMES['submissions'], PREDETERMINED_HEADERS['Submissions'])
         submission_id = str(uuid.uuid4())
         timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
@@ -272,7 +272,7 @@ def submit():
         for field, errors in form.errors.items():
             for error in errors:
                 flash(error, 'error')
-        return redirect(url_for('index'))
+        return redirect(url_for('financial_health'))
 
 @app.route('/dashboard')
 def dashboard():
