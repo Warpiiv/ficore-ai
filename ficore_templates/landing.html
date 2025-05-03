@@ -6,7 +6,7 @@
     <meta name="description" content="Welcome to Ficore Africa - Your financial growth passport for Africa. Access tools to calculate your financial health, net worth, emergency fund, and more.">
     <meta name="keywords" content="ficore africa, financial health, net worth, emergency fund, financial quiz, budget planner">
     <meta name="author" content="Ficore Africa">
-    <title>Ficore Africa - {{ translations[language]['Financial Growth Tools'] }}</title>
+    <title>Ficore Africa - {{ translations['Financial Growth Tools'] }}</title>
     <link href="{{ url_for('static', filename='css/bootstrap.min.css') }}" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;600&display=swap" rel="stylesheet">
     <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
@@ -198,7 +198,7 @@
         <!-- Language Selector -->
         <div class="language-selector my-3 text-center">
             <form method="POST" action="{{ url_for('set_language') }}">
-                <select name="language" class="form-select" onchange="this.form.submit()" aria-label="{{ translations[language]['Select Language'] }}">
+                <select name="language" class="form-select" onchange="this.form.submit()" aria-label="{{ translations['Select Language'] }}">
                     <option value="English" {% if language == 'English' %}selected{% endif %}>English</option>
                     <option value="Hausa" {% if language == 'Hausa' %}selected{% endif %}>Hausa</option>
                 </select>
@@ -209,8 +209,8 @@
             <div class="logo-container">
                 <img src="{{ url_for('static', filename='img/ficore_logo.png') }}" alt="Ficore Africa Logo" class="img-fluid">
             </div>
-            <h1>{{ translations[language]['Welcome to Ficore Africa'] }}</h1>
-            <p class="lead">{{ translations[language]['Your Financial Growth Passport'] }}</p>
+            <h1>{{ translations['Welcome to Ficore Africa'] }}</h1>
+            <p class="lead">{{ translations['Your Financial Growth Passport'] }}</p>
         </header>
 
         <!-- Flash Messages -->
@@ -233,14 +233,14 @@
             <div class="col-md-4 mb-4">
                 <div class="card">
                     <div class="card-header">
-                        <span class="emoji">📊</span> {{ translations[language]['Financial Health Score'] }}
+                        <span class="emoji">📊</span> {{ translations['Financial Health Score'] }}
                     </div>
                     <div class="card-body">
                         <p class="tool-description">
-                            {{ translations[language]['Assess your financial health with a personalized score and insights.'] }}
-                            <span class="info-icon" data-tooltip-target="health-score-tooltip" title="{{ translations[language]['This tool evaluates your income, expenses, and debt to provide a health score.'] }}" aria-label="More info">ℹ️</span>
+                            {{ translations['Assess your financial health with a personalized score and insights.'] }}
+                            <span class="info-icon" data-tooltip-target="health-score-tooltip" title="{{ translations['This tool evaluates your income, expenses, and debt to provide a health score.'] }}" aria-label="More info">ℹ️</span>
                         </p>
-                        <a href="{{ url_for('financial_health') }}" class="btn btn-primary" aria-label="{{ translations[language]['Get Started with Financial Health Score'] }}">{{ translations[language]['Get Started'] }}</a>
+                        <a href="{{ url_for('financial_health') }}" class="btn btn-primary" aria-label="{{ translations['Get Started with Financial Health Score'] }}">{{ translations['Get Started'] }}</a>
                         <div class="tooltip-fallback" id="health-score-tooltip">
                             <button class="close-btn" aria-label="Close tooltip">×</button>
                             <span></span>
@@ -253,14 +253,14 @@
             <div class="col-md-4 mb-4">
                 <div class="card">
                     <div class="card-header">
-                        <span class="emoji">💰</span> {{ translations[language]['Net Worth Calculator'] }}
+                        <span class="emoji">💰</span> {{ translations['Net Worth Calculator'] }}
                     </div>
                     <div class="card-body">
                         <p class="tool-description">
-                            {{ translations[language]['Calculate your net worth by evaluating your assets and liabilities.'] }}
-                            <span class="info-icon" data-tooltip-target="net-worth-tooltip" title="{{ translations[language]['Net worth is calculated as assets minus liabilities.'] }}" aria-label="More info">ℹ️</span>
+                            {{ translations['Calculate your net worth by evaluating your assets and liabilities.'] }}
+                            <span class="info-icon" data-tooltip-target="net-worth-tooltip" title="{{ translations['Net worth is calculated as assets minus liabilities.'] }}" aria-label="More info">ℹ️</span>
                         </p>
-                        <a href="{{ url_for('net_worth') }}" class="btn btn-primary" aria-label="{{ translations[language]['Get Started with Net Worth Calculator'] }}">{{ translations[language]['Get Started'] }}</a>
+                        <a href="{{ url_for('net_worth') }}" class="btn btn-primary" aria-label="{{ translations['Get Started with Net Worth Calculator'] }}">{{ translations['Get Started'] }}</a>
                         <div class="tooltip-fallback" id="net-worth-tooltip">
                             <button class="close-btn" aria-label="Close tooltip">×</button>
                             <span></span>
@@ -273,14 +273,14 @@
             <div class="col-md-4 mb-4">
                 <div class="card">
                     <div class="card-header">
-                        <span class="emoji">🏦</span> {{ translations[language]['Emergency Fund Calculator'] }}
+                        <span class="emoji">🏦</span> {{ translations['Emergency Fund Calculator'] }}
                     </div>
                     <div class="card-body">
                         <p class="tool-description">
-                            {{ translations[language]['Plan your emergency fund to cover unexpected expenses.'] }}
-                            <span class="info-icon" data-tooltip-target="emergency-fund-tooltip" title="{{ translations[language]['Aims to cover 3-6 months of expenses for financial security.'] }}" aria-label="More info">ℹ️</span>
+                            {{ translations['Plan your emergency fund to cover unexpected expenses.'] }}
+                            <span class="info-icon" data-tooltip-target="emergency-fund-tooltip" title="{{ translations['Aims to cover 3-6 months of expenses for financial security.'] }}" aria-label="More info">ℹ️</span>
                         </p>
-                        <a href="{{ url_for('emergency_fund') }}" class="btn btn-primary" aria-label="{{ translations[language]['Get Started with Emergency Fund Calculator'] }}">{{ translations[language]['Get Started'] }}</a>
+                        <a href="{{ url_for('emergency_fund') }}" class="btn btn-primary" aria-label="{{ translations['Get Started with Emergency Fund Calculator'] }}">{{ translations['Get Started'] }}</a>
                         <div class="tooltip-fallback" id="emergency-fund-tooltip">
                             <button class="close-btn" aria-label="Close tooltip">×</button>
                             <span></span>
@@ -293,14 +293,14 @@
             <div class="col-md-4 mb-4">
                 <div class="card">
                     <div class="card-header">
-                        <span class="emoji">❓</span> {{ translations[language]['Financial Personality Quiz'] }}
+                        <span class="emoji">❓</span> {{ translations['Financial Personality Quiz'] }}
                     </div>
                     <div class="card-body">
                         <p class="tool-description">
-                            {{ translations[language]['Test your financial knowledge and get personalized tips.'] }}
-                            <span class="info-icon" data-tooltip-target="quiz-tooltip" title="{{ translations[language]['Answer a series of questions to assess your financial literacy.'] }}" aria-label="More info">ℹ️</span>
+                            {{ translations['Test your financial knowledge and get personalized tips.'] }}
+                            <span class="info-icon" data-tooltip-target="quiz-tooltip" title="{{ translations['Answer a series of questions to assess your financial literacy.'] }}" aria-label="More info">ℹ️</span>
                         </p>
-                        <a href="{{ url_for('quiz') }}" class="btn btn-primary" aria-label="{{ translations[language]['Get Started with Financial Personality Quiz'] }}">{{ translations[language]['Get Started'] }}</a>
+                        <a href="{{ url_for('quiz') }}" class="btn btn-primary" aria-label="{{ translations['Get Started with Financial Personality Quiz'] }}">{{ translations['Get Started'] }}</a>
                         <div class="tooltip-fallback" id="quiz-tooltip">
                             <button class="close-btn" aria-label="Close tooltip">×</button>
                             <span></span>
@@ -313,14 +313,14 @@
             <div class="col-md-4 mb-4">
                 <div class="card">
                     <div class="card-header">
-                        <span class="emoji">📅</span> {{ translations[language]['Weekly Budget Planner'] }}
+                        <span class="emoji">📅</span> {{ translations['Weekly Budget Planner'] }}
                     </div>
                     <div class="card-body">
                         <p class="tool-description">
-                            {{ translations[language]['Create a budget to manage your income and expenses effectively.'] }}
-                            <span class="info-icon" data-tooltip-target="budget-tooltip" title="{{ translations[language]['Helps you allocate your income across various expense categories.'] }}" aria-label="More info">ℹ️</span>
+                            {{ translations['Create a budget to manage your income and expenses effectively.'] }}
+                            <span class="info-icon" data-tooltip-target="budget-tooltip" title="{{ translations['Helps you allocate your income across various expense categories.'] }}" aria-label="More info">ℹ️</span>
                         </p>
-                        <a href="{{ url_for('budget') }}" class="btn btn-primary" aria-label="{{ translations[language]['Get Started with Weekly Budget Planner'] }}">{{ translations[language]['Get Started'] }}</a>
+                        <a href="{{ url_for('budget') }}" class="btn btn-primary" aria-label="{{ translations['Get Started with Weekly Budget Planner'] }}">{{ translations['Get Started'] }}</a>
                         <div class="tooltip-fallback" id="budget-tooltip">
                             <button class="close-btn" aria-label="Close tooltip">×</button>
                             <span></span>
@@ -332,12 +332,12 @@
 
         <!-- Contact Information -->
         <div class="text-center my-4">
-            <p>{{ translations[language]['Contact Us'] }} <a href="mailto:ficore.ai.africa@gmail.com" class="btn btn-email" aria-label="{{ translations[language]['Email Ficore Africa Support'] }}">{{ translations[language]['Click to Email'] }}</a> {{ translations[language]['for support'] }}.</p>
+            <p>{{ translations['Contact Us'] }} <a href="mailto:ficore.ai.africa@gmail.com" class="btn btn-email" aria-label="{{ translations['Email Ficore Africa Support'] }}">{{ translations['Click to Email'] }}</a> {{ translations['for support'] }}.</p>
         </div>
 
         <!-- Feedback Link -->
         <div class="text-center my-4">
-            <a href="{{ FEEDBACK_FORM_URL }}" class="btn btn-secondary" target="_blank" aria-label="{{ translations[language]['Provide Feedback'] }}">{{ translations[language]['Provide Feedback'] }}</a>
+            <a href="{{ FEEDBACK_FORM_URL }}" class="btn btn-secondary" target="_blank" aria-label="{{ translations['Provide Feedback'] }}">{{ translations['Provide Feedback'] }}</a>
         </div>
     </div>
 
